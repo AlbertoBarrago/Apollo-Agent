@@ -1,14 +1,15 @@
-from google.generativeai.types import AuthorError
 from transformers.agents import CodeAgent
 from transformers import Tool, AutoTokenizer, AutoModelForCausalLM
 from typing import Dict, Any, List
 
 from agent import ApolloAgent
 
+
 class HuggingFaceTools:
     """
-
+     HuggingFaceTools Code Agent
     """
+
     def __init__(self, apollo_agent: ApolloAgent):
         """
         Inizializza HuggingFaceTools con un'istanza esistente di ApolloAgent.
@@ -17,14 +18,23 @@ class HuggingFaceTools:
         self.code_agent = None
         self._prepared_tools: List[dict] = []
         try:
-            # Prova ad autenticarti automaticamente se hai usato huggingface-cli login
-            self.tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct", token=True)
-            self.model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.1-8B-Instruct", token=True)
-            print("Modello Llama 3.1-8B-Instruct caricato con autenticazione automatica.")
-        except AuthorError as e:
-            print(f"Errore durante il caricamento del modello con autenticazione automatica: {e}")
-            print("Assicurati di aver richiesto l'accesso al modello e di essere loggato con 'huggingface-cli login'.")
-            # Puoi scegliere di caricare un modello di fallback qui se necessario
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                "meta-llama/Llama-3.1-8B-Instruct"
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                "meta-llama/Llama-3.1-8B-Instruct"
+            )
+            print(
+                "Modello Llama 3.1-8B-Instruct caricato con autenticazione automatica."
+            )
+        except RuntimeError as e:
+            print(
+                f"Errore durante il caricamento del modello con autenticazione automatica: {e}"
+            )
+            print(
+                "Assicurati di aver richiesto l'accesso al modello e di essere loggato con 'huggingface-cli login'."
+            )
+
             self.tokenizer = None
             self.model = None
 
@@ -37,14 +47,19 @@ class HuggingFaceTools:
             tool_name = tool_spec["name"]
             if hasattr(self.apollo_agent, tool_name):
                 tool_function = getattr(self.apollo_agent, tool_name)
-                tool = Tool(
-                    name=tool_name,
-                    func=tool_function,
-                    description=tool_spec["description"],
-                    parameters=tool_spec["parameters"],
-                )
+                tool = Tool()
+                tool.name = tool_name
+                tool.func = tool_function
+                tool.description = tool_spec["description"]
+
+                tool.inputs = {
+                    param["name"]: {"type": param["type"], "description": param["description"]}
+                    for param in tool_spec["parameters"]
+                }
+                tool.output_type = "string"
+
                 tools.append(tool)
-                self._prepared_tools.append(tool_spec) # Popola anche la lista di specifiche
+                self._prepared_tools.append(tool_spec)
         return tools
 
     def prepare_code_agent(self):
@@ -52,27 +67,32 @@ class HuggingFaceTools:
         Prepara e inizializza il CodeAgent.
         """
         tools = self._prepare_tools_for_code_agent()
-        self.code_agent = CodeAgent(
-            tools=tools # Passa direttamente la lista di oggetti Tool
-        )
+        self.code_agent = CodeAgent(tools=tools)
 
     def get_tools(self) -> list[dict]:
         """
         Restituisce la lista delle specifiche degli strumenti preparati per l'integrazione.
         """
-        return self._prepared_tools # Restituisce la lista di specifiche preparata
+        return self._prepared_tools  # Restituisce la lista di specifiche preparata
 
     async def run_code_agent(self, instruction: str):
         """
-        Esegue l'Hugging Face CodeAgent con un'istruzione in linguaggio naturale.
+        Esegue l'inferenza del modello Llama direttamente con l'istruzione fornita.
         """
-        if not self.code_agent:
-            return {"error": "CodeAgent non ancora inizializzato."}
+        if not self.model or not self.tokenizer:
+            return {"error": "Modello Llama o tokenizer non caricati correttamente."}
         try:
-            result = await self.code_agent.run(instruction)
-            return result
+            inputs = self.tokenizer(instruction, return_tensors="pt").to(
+                self.model.device)  # Move inputs to the model's device
+
+            generate_ids = self.model.generate(inputs.input_ids, max_length=200, num_beams=5, no_repeat_ngram_size=2,
+                                               early_stopping=True)
+
+            outputs = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True,
+                                                  clean_up_tokenization_spaces=False)
+            return {"result": outputs[0]}
         except RuntimeError as e:
-            return {"error": f"Esecuzione di CodeAgent fallita: {str(e)}"}
+            return {"error": f"Errore durante l'esecuzione dell'inferenza locale: {str(e)}"}
 
     async def execute_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
         """

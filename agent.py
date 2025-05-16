@@ -3,6 +3,7 @@ ApolloAgent is a custom AI agent that implements various functions for code assi
 Author: Alberto Barrago
 License: MIT - 2025
 """
+
 import asyncio
 import os
 import re
@@ -38,132 +39,170 @@ class ApolloAgent:
         tools = [
             {
                 "name": "codebase_search",
-                "description": "Find snippets of code from the codebase most "
-                "relevant to the search query.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query to find relevant code.",
-                        },
-                        "target_directories": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Glob patterns for directories to search over.",
-                        },
+                "description": "Find snippets of code from the codebase most relevant to the search query.\nThis is a semantic search tool, so the query should ask for something semantically matching what is needed.\nIf it makes sense to only search in particular directories, please specify them in the target_directories field.\nUnless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording.\nTheir exact wording/phrasing can often be helpful for the semantic search query. Keeping the same exact question format can also be helpful.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "The search query to find relevant code. You should reuse the user's exact query/most recent message with their wording unless there is a clear reason not to.",
                     },
-                    "required": ["query"],
-                },
+                    {
+                        "name": "target_directories",
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Glob patterns for directories to search over",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "list_dir",
-                "description": "List the contents of a directory.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "relative_workspace_path": {
-                            "type": "string",
-                            "description": "Path to list contents of, relative to the workspace root.",
-                        },
+                "description": "List the contents of a directory. The quick tool to use for discovery, before using more targeted tools like semantic search or file reading. Useful to try to understand the file structure before diving deeper into specific files. Can be used to explore the codebase.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "relative_workspace_path",
+                        "type": "string",
+                        "description": "Path to list contents of, relative to the workspace root.",
                     },
-                    "required": ["relative_workspace_path"],
-                },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "grep_search",
-                "description": "Fast text-based regex search that finds exact pattern "
-                "matches within files or directories.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The regex pattern to search for.",
-                        },
-                        "case_sensitive": {
-                            "type": "boolean",
-                            "description": "Whether the search should be case-sensitive.",
-                        },
-                        "include_pattern": {
-                            "type": "string",
-                            "description": "Glob pattern for files to include.",
-                        },
-                        "exclude_pattern": {
-                            "type": "string",
-                            "description": "Glob pattern for files to exclude.",
-                        },
+                "description": "Fast text-based regex search that finds exact pattern matches within files or directories, utilizing the ripgrep command for efficient searching.\nResults will be formatted in the style of ripgrep and can be configured to include line numbers and content.\nTo avoid overwhelming output, the results are capped at 50 matches.\nUse the include or exclude patterns to filter the search scope by file type or specific paths.\n\nThis is best for finding exact text matches or regex patterns.\nMore precise than semantic search for finding specific strings or patterns.\nThis is preferred over semantic search when we know the exact symbol/function name/etc. to search in some set of directories/file types.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "The regex pattern to search for",
                     },
-                    "required": ["query"],
-                },
+                    {
+                        "name": "case_sensitive",
+                        "type": "boolean",
+                        "description": "Whether the search should be case sensitive",
+                    },
+                    {
+                        "name": "include_pattern",
+                        "type": "string",
+                        "description": "Glob pattern for files to include (e.g. '*.ts' for TypeScript files)",
+                    },
+                    {
+                        "name": "exclude_pattern",
+                        "type": "string",
+                        "description": "Glob pattern for files to exclude",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "file_search",
-                "description": "Fast file search based on fuzzy matching against a file path.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Fuzzy filename to search for.",
-                        },
+                "description": "Fast file search based on fuzzy matching against file path. Use if you know part of the file path but don't know where it's located exactly. The Response will be capped to 10 results. Make your query more specific if need to filter results further.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "Fuzzy filename to search for",
                     },
-                    "required": ["query"],
-                },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "delete_file",
-                "description": "Deletes a file at the specified path.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "target_file": {
-                            "type": "string",
-                            "description": "The path of the file to delete, relative to the workspace root.",
-                        },
+                "description": "Deletes a file at the specified path. The operation will fail gracefully if:\n    - The file doesn't exist\n    - The operation is rejected for security reasons\n    - The file cannot be deleted",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The path of the file to delete, relative to the workspace root.",
                     },
-                    "required": ["target_file"],
-                },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "edit_file",
-                "description": "Edit a file with the provided content.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "target_file": {
-                            "type": "string",
-                            "description": "The path of the file to edit, relative to the workspace root.",
-                        },
-                        "content": {
-                            "type": "string",
-                            "description": "The new content for the file.",
-                        },
+                "description": "Use this tool to propose an edit to an existing file.\n\nThis will be read by a less intelligent model, which will quickly apply the edit. You should make it clear what the edit is, while also minimizing the unchanged code you write.\nWhen writing the edit, you should specify each edit in sequence, with the special comment `// ... existing code ...` to represent unchanged code in between edited lines.\n\nFor example:\n\n```\n// ... existing code ...\nFIRST_EDIT\n// ... existing code ...\nSECOND_EDIT\n// ... existing code ...\nTHIRD_EDIT\n// ... existing code ...\n```\n\nYou should still bias towards repeating as few lines of the original file as possible to convey the change.\nBut, each edit should contain sufficient context of unchanged lines around the code you're editing to resolve ambiguity.\nDO NOT omit spans of pre-existing code (or comments) without using the `// ... existing code ...` comment to indicate its absence. If you omit the existing code comment, the model may inadvertently delete these lines.\nMake sure it is clear what the edit should be, and where it should be applied.\n\nYou should specify the following arguments before the others: [target_file]",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The target file to modify. Always specify the target file as the first argument. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
                     },
-                    "required": ["target_file", "content"],
-                },
+                    {
+                        "name": "instructions",
+                        "type": "string",
+                        "description": "A single sentence instruction describing what you are going to do for the sketched edit. This is used to assist the less intelligent model in applying the edit. Please use the first person to describe what you are going to do. Dont repeat what you have said previously in normal messages. And use it to disambiguate uncertainty in the edit.",
+                    },
+                    {
+                        "name": "code_edit",
+                        "type": "string",
+                        "description": "Specify ONLY the precise lines of code that you wish to edit. **NEVER specify or write out unchanged code**. Instead, represent all unchanged code using the comment of the language you're editing in - example: `// ... existing code ...`",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
             {
                 "name": "reapply",
-                "description": "Reapplies the last edit to the specified file.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "target_file": {
-                            "type": "string",
-                            "description": "The path of the file to reapply the last edit to.",
-                        },
+                "description": "Calls a smarter model to apply the last edit to the specified file.\nUse this tool immediately after the result of an edit_file tool call ONLY IF the diff is not what you expected, indicating the model applying the changes was not smart enough to follow your instructions.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The relative path to the file to reapply the last edit to. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
                     },
-                    "required": ["target_file"],
-                },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "what_is_luck",
+                "description": "Explains the concept of luck.",
+                "parameters": [  # Changed to a list
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
             },
         ]
         tools.extend(self.hf_tools.get_tools())
         return tools
 
-    async def execute_tool(self, tool_name: str, **kwargs: Any) -> Dict[str, Any] | None:
+    async def execute_tool(
+        self, tool_name: str, **kwargs: Any
+    ) -> Dict[str, Any] | None:
         """Execute a tool by name with given parameters."""
-        if hasattr(self.hf_tools, "code_agent") and tool_name in self.hf_tools.code_agent.tools:
+        if (
+            hasattr(self.hf_tools, "code_agent")
+            and tool_name in self.hf_tools.code_agent.tools
+        ):
             print(f"CodeAgent is calling tool: {tool_name} with arguments: {kwargs}")
             # Use a dictionary to map tool names to methods for cleaner code
             tool_methods = {
@@ -182,7 +221,9 @@ class ApolloAgent:
 
         # Handle existing tools (if you intend to call them directly as well)
         if tool_name == "list_dir":
-            return await self.list_dir(**kwargs)  # Ensure consistency with async if needed
+            return await self.list_dir(
+                **kwargs
+            )  # Ensure consistency with async if needed
         return None
 
     async def codebase_search(
@@ -204,7 +245,9 @@ class ApolloAgent:
         # In a real implementation, this would use a vector database or similar technology
         results = []
 
-        search_dirs = target_directories if target_directories else [self.workspace_path]
+        search_dirs = (
+            target_directories if target_directories else [self.workspace_path]
+        )
 
         for directory in search_dirs:
             for root, _, files in os.walk(directory):
@@ -270,11 +313,11 @@ class ApolloAgent:
         }
 
     async def grep_search(
-            self,
-            query: str,
-            case_sensitive: bool = False,
-            include_pattern: str = None,
-            exclude_pattern: str = None
+        self,
+        query: str,
+        case_sensitive: bool = False,
+        include_pattern: str = None,
+        exclude_pattern: str = None,
     ) -> Dict[str, Any]:
         """
         Fast text-based regex search that finds exact pattern matches within files or directories.
@@ -361,7 +404,7 @@ class ApolloAgent:
             for file in files:
                 if query.lower() in file.lower():
                     file_path = os.path.join(root, file)
-                    results.append({"file_path": file_path, "filename": file});
+                    results.append({"file_path": file_path, "filename": file})
 
                     # Cap results at 10
                     if len(results) >= 10:
@@ -448,7 +491,9 @@ class ApolloAgent:
 
         return await self.edit_file(target_file, self.last_edit_content)
 
-    async def _generate_response(self, message: str) -> Coroutine[Any, Any, Dict[str, Any]] | Dict[str, Any]:
+    async def _generate_response(
+        self, message: str
+    ) -> Coroutine[Any, Any, Dict[str, Any]] | Dict[str, Any]:
         """
         Generate a response to the user's message using the HuggingFace CodeAgent.
 
@@ -485,7 +530,8 @@ class ApolloAgent:
 
         return fnmatch.fnmatch(filename, pattern)
 
-    async def chat(self, message: str, interactive: bool = False, execute_python: bool = False
+    async def chat(
+        self, message: str, interactive: bool = False, execute_python: bool = False
     ) -> Dict[str, Any]:
         """
         Simulates a chat conversation with the agent, similar to ChatGPT.
@@ -520,7 +566,9 @@ class ApolloAgent:
         if execute_python:
             if isinstance(response, dict) and "response" in response:
                 response_content = response["response"]
-                execution_result = await self._execute_python_if_present(response_content)
+                execution_result = await self._execute_python_if_present(
+                    response_content
+                )
                 if execution_result:
                     response["response"] += f"\n\nExecution result:\n{execution_result}"
                     # Update the chat history with the execution result
@@ -656,13 +704,14 @@ class ApolloAgent:
 
         while True:
             user_input = input("> You: ")
-            if user_input.lower() == 'exit':
+            if user_input.lower() == "exit":
                 break
 
             print("Apollo thinking...")
             response = await agent_apollo.chat(user_input, interactive=True)
             if response and "error" in response:
                 pass
+
 
 # Example usage
 if __name__ == "__main__":
