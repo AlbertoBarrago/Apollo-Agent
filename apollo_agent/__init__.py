@@ -8,4 +8,4 @@ License: MIT - 2025
 
 from apollo_agent.agent import ApolloAgent
 
-__all__ = ['ApolloAgent']
+__all__ = ["ApolloAgent"]

@@ -8,22 +8,13 @@ import asyncio
 import os
 from typing import List, Dict, Any
 
-from apollo_agent.file_operations import (
-    list_dir, 
-    delete_file, 
-    edit_file, 
-    reapply
-)
-from apollo_agent.search_operations import (
-    codebase_search, 
-    grep_search, 
-    file_search
-)
+from apollo_agent.file_operations import list_dir, delete_file, edit_file, reapply
+from apollo_agent.search_operations import codebase_search, grep_search, file_search
 from apollo_agent.chat_operations import (
-    chat, 
-    _execute_tool_call, 
+    chat,
+    _execute_tool_call,
     _fallback_response,
-    get_available_tools
+    get_available_tools,
 )
 
 
@@ -80,7 +71,9 @@ class ApolloAgent:
         return await reapply(self, target_file)
 
     # Search operations
-    async def codebase_search(self, query: str, target_directories: List[str] = None) -> Dict[str, Any]:
+    async def codebase_search(
+        self, query: str, target_directories: List[str] = None
+    ) -> Dict[str, Any]:
         """
         Find snippets of code from the codebase most relevant to the search query.
         This is a semantic search tool.
@@ -88,17 +81,19 @@ class ApolloAgent:
         return await codebase_search(self.workspace_path, query, target_directories)
 
     async def grep_search(
-            self,
-            query: str,
-            case_sensitive: bool = False,
-            include_pattern: str = None,
-            exclude_pattern: str = None
+        self,
+        query: str,
+        case_sensitive: bool = False,
+        include_pattern: str = None,
+        exclude_pattern: str = None,
     ) -> Dict[str, Any]:
         """
         Fast text-based regex search that finds exact pattern matches within files or directories.
         Best for finding specific strings or patterns.
         """
-        return await grep_search(self.workspace_path, query, case_sensitive, include_pattern, exclude_pattern)
+        return await grep_search(
+            self.workspace_path, query, case_sensitive, include_pattern, exclude_pattern
+        )
 
     async def file_search(self, query: str) -> Dict[str, Any]:
         """Fast file search based on fuzzy matching against a file path."""

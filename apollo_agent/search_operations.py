@@ -15,24 +15,22 @@ from typing import List, Dict, Any
 
 
 async def codebase_search(
-        workspace_path: str, query: str, target_directories: List[str] = None
+    workspace_path: str, query: str, target_directories: List[str] = None
 ) -> Dict[str, Any]:
     """
     Find snippets of code from the codebase most relevant to the search query.
     This is a semantic search tool.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         query: The search query.
         target_directories: List of directories to search in, relative to workspace_path.
-        
+
     Returns:
         Dictionary with search results.
     """
     results = []
-    search_dirs = (
-        target_directories if target_directories else [workspace_path]
-    )
+    search_dirs = target_directories if target_directories else [workspace_path]
 
     for directory in search_dirs:
         absolute_dir = os.path.abspath(directory)
@@ -47,17 +45,17 @@ async def codebase_search(
         for root, _, files in os.walk(absolute_dir):
             for file in files:
                 if file.endswith(
-                        (
-                                ".py",
-                                ".js",
-                                ".ts",
-                                ".html",
-                                ".css",
-                                ".java",
-                                ".c",
-                                ".cpp",
-                                ".txt",
-                        )
+                    (
+                        ".py",
+                        ".js",
+                        ".ts",
+                        ".html",
+                        ".css",
+                        ".java",
+                        ".c",
+                        ".cpp",
+                        ".txt",
+                    )
                 ):
                     file_path = os.path.join(root, file)
                     try:
@@ -86,11 +84,11 @@ async def codebase_search(
 def _match_pattern_sync(filename: str, pattern: str) -> bool:
     """
     Synchronous check if a filename matches a glob pattern.
-    
+
     Args:
         filename: The filename to check.
         pattern: The glob pattern to match against.
-        
+
     Returns:
         True if the filename matches the pattern, False otherwise.
     """
@@ -98,23 +96,23 @@ def _match_pattern_sync(filename: str, pattern: str) -> bool:
 
 
 async def grep_search(
-        workspace_path: str,
-        query: str,
-        case_sensitive: bool = False,
-        include_pattern: str = None,
-        exclude_pattern: str = None
+    workspace_path: str,
+    query: str,
+    case_sensitive: bool = False,
+    include_pattern: str = None,
+    exclude_pattern: str = None,
 ) -> Dict[str, Any]:
     """
     Fast text-based regex search that finds exact pattern matches within files or directories.
     Best for finding specific strings or patterns.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         query: The regex pattern to search for.
         case_sensitive: Whether the search should be case sensitive.
         include_pattern: Glob pattern for files to include (e.g. '*.ts').
         exclude_pattern: Glob pattern for files to exclude.
-        
+
     Returns:
         Dictionary with search results.
     """
@@ -129,9 +127,7 @@ async def grep_search(
             file_path = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, workspace_path)
 
-            if include_pattern and not _match_pattern_sync(
-                    file, include_pattern
-            ):
+            if include_pattern and not _match_pattern_sync(file, include_pattern):
                 continue
             if exclude_pattern and _match_pattern_sync(file, exclude_pattern):
                 continue
@@ -170,11 +166,11 @@ async def grep_search(
 async def file_search(workspace_path: str, query: str) -> Dict[str, Any]:
     """
     Fast file search based on fuzzy matching against a file path.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         query: Fuzzy filename to search for.
-        
+
     Returns:
         Dictionary with search results.
     """
@@ -186,9 +182,7 @@ async def file_search(workspace_path: str, query: str) -> Dict[str, Any]:
                 file_path = os.path.join(root, file)
                 results.append(
                     {
-                        "file_path": os.path.relpath(
-                            file_path, workspace_path
-                        ),
+                        "file_path": os.path.relpath(file_path, workspace_path),
                         "filename": file,
                     }
                 )

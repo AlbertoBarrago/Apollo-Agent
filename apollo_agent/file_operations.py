@@ -15,11 +15,11 @@ from typing import Dict, Any
 async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[str, Any]:
     """
     List the contents of a directory relative to the workspace root.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         relative_workspace_path: Path relative to the workspace root.
-        
+
     Returns:
         Dictionary with directory contents information.
     """
@@ -27,7 +27,9 @@ async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[st
     absolute_target_path = os.path.abspath(target_path)
 
     if not absolute_target_path.startswith(os.path.abspath(workspace_path)):
-        error_msg = f"Attempted to list directory outside workspace: {relative_workspace_path}"
+        error_msg = (
+            f"Attempted to list directory outside workspace: {relative_workspace_path}"
+        )
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
@@ -63,11 +65,11 @@ async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[st
 async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
     """
     Deletes a file at the specified path relative to the workspace root.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         target_file: The path to the file to delete, relative to the workspace root.
-        
+
     Returns:
         Dictionary with success status and message or error.
     """
@@ -98,18 +100,20 @@ async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
         return {"success": False, "error": error_msg}
 
 
-async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Dict[str, Any]:
+async def edit_file(
+    workspace_path: str, target_file: str, code_edit: str
+) -> Dict[str, Any]:
     """
     Edit a file at the specified path (relative to workspace root) or CREATE A NEW ONE.
     Provide instructions and the FULL DESIRED CONTENT in `code_edit`.
     When editing existing files, use `// ... existing code ...` (or the appropriate comment style for the language) to represent unchanged lines.
     When creating a NEW file, provide the FULL content for that file in `code_edit`.
-    
+
     Args:
         workspace_path: The root path of the workspace.
         target_file: The path to the file to edit or create, relative to the workspace root.
         code_edit: The full content for the file.
-        
+
     Returns:
         Dictionary with success status and message or error.
     """
@@ -118,9 +122,7 @@ async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Di
     absolute_workspace_path = os.path.abspath(workspace_path)
 
     if not absolute_file_path.startswith(absolute_workspace_path):
-        error_msg = (
-            f"Attempted to edit/create file outside workspace: {target_file}"
-        )
+        error_msg = f"Attempted to edit/create file outside workspace: {target_file}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
@@ -141,18 +143,16 @@ async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Di
 async def reapply(agent, target_file: str) -> Dict[str, Any]:
     """
     Reapplies the last edit to the specified file.
-    
+
     Args:
         agent: The ApolloAgent instance.
         target_file: The path to the file to reapply edits to, relative to the workspace root.
-        
+
     Returns:
         Dictionary with success status and message or error.
     """
     if agent.last_edit_file != target_file or agent.last_edit_content is None:
-        error_msg = (
-            "No previous edit found for this file or edit content is missing."
-        )
+        error_msg = "No previous edit found for this file or edit content is missing."
         print(f"[WARNING] {error_msg}")
         return {
             "success": False,

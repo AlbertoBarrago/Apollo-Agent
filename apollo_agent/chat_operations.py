@@ -95,9 +95,7 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
                             "tool_call_id": getattr(
                                 tool_call, "id", tool_call.get("id", "N/A")
                             ),
-                            "content": str(
-                                tool_result
-                            ),
+                            "content": str(tool_result),
                         }
                     )
                     # print(f"[INFO] Tool execution result for call {getattr(tool_call, 'id', tool_call.get('id', 'N/A'))} added to history.") # Keep if helpful
@@ -149,9 +147,9 @@ async def _execute_tool_call(agent, tool_call):
 
     # Try accessing as attributes first (likely for ollama-python custom objects like Message.ToolCall)
     if (
-            hasattr(tool_call, "function")
-            and hasattr(tool_call.function, "name")
-            and hasattr(tool_call.function, "arguments")
+        hasattr(tool_call, "function")
+        and hasattr(tool_call.function, "name")
+        and hasattr(tool_call.function, "arguments")
     ):
         func = tool_call.function
         func_name = func.name
@@ -204,9 +202,7 @@ async def _execute_tool_call(agent, tool_call):
             f"[ERROR] Received tool_call does not match expected format or is "
             f"missing name/arguments dict after parsing. Type: {type(tool_call)}. Raw: {tool_call}"
         )
-        return (
-            "[ERROR] Received tool call in unexpected format or missing details."
-        )
+        return "[ERROR] Received tool call in unexpected format or missing details."
 
     # --- Tool Name Redirection and Argument Mapping ---
     redirect_mapping = {
@@ -236,12 +232,16 @@ async def _execute_tool_call(agent, tool_call):
         if func_name == "print" and actual_func_name == "chat":
             # Get the message content from various possible argument names
             message = arguments_dict.get(
-                "text", 
-                arguments_dict.get("message", 
-                    arguments_dict.get("content", 
-                        str(arguments_dict)  # Fallback: convert the entire args dict to string
-                    )
-                )
+                "text",
+                arguments_dict.get(
+                    "message",
+                    arguments_dict.get(
+                        "content",
+                        str(
+                            arguments_dict
+                        ),  # Fallback: convert the entire args dict to string
+                    ),
+                ),
             )
             mapped_args_for_redirect["text"] = message
             print(f"[INFO] Mapped print arguments to chat 'text': {message}")
@@ -394,6 +394,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
     Returns:
         List of tool definitions.
     """
+
     def create_parameters_dict(params_list):
         properties = {}
         required = []
@@ -416,8 +417,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "name": "codebase_search",
             "description": "Find snippets of code from the codebase most "
-                           "relevant to the search query. This is a semantic search tool. "
-                           "Reuse the user's exact query/most recent message with their wording unless there is a clear reason not to.",
+            "relevant to the search query. This is a semantic search tool. "
+            "Reuse the user's exact query/most recent message with their wording unless there is a clear reason not to.",
             "parameters": create_parameters_dict(
                 [
                     {
