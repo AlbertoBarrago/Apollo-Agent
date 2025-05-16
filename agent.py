@@ -361,7 +361,8 @@ class ApolloAgent:
             print(error_message)
             return error_message
 
-    async def chat(self, text: str) -> Dict[str, Any]:
+    @staticmethod
+    async def chat(text: str) -> Dict[str, Any]:
         """
         Responds to the user's message in a normal conversational way.
 
@@ -598,134 +599,6 @@ class ApolloAgent:
 
         return fnmatch.fnmatch(filename, pattern)
 
-    async def chat(
-        self, message: str, interactive: bool = False, execute_python: bool = False
-    ) -> Dict[str, Any] | str:  # Update the return type hint
-        """
-        Simulates a chat conversation with the agent, similar to ChatGPT.
-        Can also execute Python code if requested.
-
-        Args:
-            message: The user's message
-            interactive: Whether to run in interactive mode (for CLI)
-            execute_python: Whether to execute Python code found in the message or response
-
-        Returns:
-            The agent's response as a dictionary or a string.
-        """
-        # Add a user message to the chat history
-        self.chat_history.append({"role": "user", "content": message})
-
-        # Check if the message contains Python code to execute
-        python_result = None
-        if execute_python:
-            python_result = await self._execute_python_if_present(message)
-            if python_result:
-                message += f"\n\nExecution result:\n{python_result}"
-
-        # Generate a response based on the message
-        response = await self._generate_response(message)
-
-        # Add agent response to chat history
-        self.chat_history.append({"role": "assistant", "content": response})
-
-        # Check if the response contains Python code to execute
-        response_python_result = None
-        if execute_python:
-            if isinstance(response, dict) and "response" in response:
-                response_content = response["response"]
-                execution_result = await self._execute_python_if_present(
-                    response_content
-                )
-                if execution_result:
-                    response["response"] += f"\n\nExecution result:\n{execution_result}"
-                    # Update the chat history with the execution result
-                    self.chat_history[-1]["content"] = response["response"]
-            elif isinstance(response, str):
-                execution_result = await self._execute_python_if_present(response)
-                if execution_result:
-                    response += f"\n\nExecution result:\n{execution_result}"
-                    # Update the chat history with the execution result
-                    self.chat_history[-1]["content"] = response
-
-        if interactive:
-            # In interactive mode, print the response directly
-            if isinstance(response, dict) and "response" in response:
-                print(f"\nApollo: {response['response']}")
-                return {"success": True}
-            elif isinstance(response, dict) and "message" in response:
-                print(f"\nApollo: {response['message']}")
-                return {"success": True}
-            elif isinstance(response, dict) and "error" in response:
-                print(f"\nApollo (Error): {response['error']}")
-                return {"success": False, "error": response["error"]}
-            elif isinstance(response, str):
-                print(f"\nApollo: {response}")
-                return {"success": True}
-            else:
-                print(f"\nApollo: {response}")
-                return {"success": True}
-
-        # In non-interactive mode, return the response as part of the result
-        result_resp = {
-            "message": message,
-            "history_length": len(self.chat_history),
-        }
-
-        if isinstance(response, dict) and "response" in response:
-            result_resp["response"] = response["response"]
-        elif isinstance(response, dict) and "message" in response:
-            result_resp["response"] = response["message"]
-        elif isinstance(response, str):
-            result_resp["response"] = response
-
-        if python_result:
-            result_resp["user_code_execution"] = python_result
-        if response_python_result:
-            result_resp["assistant_code_execution"] = response_python_result
-
-        return response
-
-    @staticmethod
-    async def _execute_python_if_present(text: str) -> str | None:
-        """
-        Extracts and executes Python code blocks from a text.
-
-        Args:
-            text: Text that may contain Python code blocks
-
-        Returns:
-            Execution result as string, or None if no code was executed
-        """
-        import re
-        import sys
-        from io import StringIO
-
-        # Find Python code blocks (```python ... ```)
-        code_blocks = re.findall(r"```python\s+(.*?)\s+```", text, re.DOTALL)
-
-        if not code_blocks:
-            return None
-
-        results = []
-        for code in code_blocks:
-            # Capture stdout
-            old_stdout = sys.stdout
-            redirected_output = StringIO()
-            sys.stdout = redirected_output
-
-            try:
-                exec(code)
-                execution_result = redirected_output.getvalue()
-                results.append(f"Execution successful:\n{execution_result}")
-            except Exception as e:
-                results.append(f"Execution failed: {str(e)}")
-            finally:
-                # Restore stdout
-                sys.stdout = old_stdout
-
-        return "\n\n".join(results)
-
     @staticmethod
     async def _fallback_response(message: str) -> str:
         """
@@ -768,6 +641,10 @@ class ApolloAgent:
 
     @staticmethod
     async def chat_terminal():
+        """
+        Start Chat Session
+        :return:
+        """
         agent_apollo = ApolloAgent()
         print("Welcome to ApolloAgent Chat Mode!")
         print("Type 'exit' to end the conversation.")
