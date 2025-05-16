@@ -129,17 +129,10 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
         return {"error": error_message}
 
 
-async def _execute_tool_call(agent, tool_call):
+async def _execute_tool_call(self, tool_call):
     """
     Executes a tool call based on the provided information from ollama.chat response.
     Handles custom object structure from ollama-python, maps arguments, and redirects known invented tool names.
-
-    Args:
-        agent: The ApolloAgent instance.
-        tool_call: The tool call object from the LLM response.
-
-    Returns:
-        Result of the tool call execution.
     """
     func_name = None
     arguments_dict = {}
@@ -147,9 +140,9 @@ async def _execute_tool_call(agent, tool_call):
 
     # Try accessing as attributes first (likely for ollama-python custom objects like Message.ToolCall)
     if (
-        hasattr(tool_call, "function")
-        and hasattr(tool_call.function, "name")
-        and hasattr(tool_call.function, "arguments")
+            hasattr(tool_call, "function")
+            and hasattr(tool_call.function, "name")
+            and hasattr(tool_call.function, "arguments")
     ):
         func = tool_call.function
         func_name = func.name
@@ -202,20 +195,21 @@ async def _execute_tool_call(agent, tool_call):
             f"[ERROR] Received tool_call does not match expected format or is "
             f"missing name/arguments dict after parsing. Type: {type(tool_call)}. Raw: {tool_call}"
         )
-        return "[ERROR] Received tool call in unexpected format or missing details."
+        return (
+            "[ERROR] Received tool call in unexpected format or missing details."
+        )
 
     # --- Tool Name Redirection and Argument Mapping ---
     redirect_mapping = {
         "open": "edit_file",
         "touch": "edit_file",
+        "edit": "edit_file",
         "create_file": "edit_file",
         "generate_html_file": "edit_file",
         "create_html_file": "edit_file",
-        "print": "chat",
     }
 
     actual_func_name = func_name
-    redirected_arguments = {}
 
     if func_name in redirect_mapping:
         actual_func_name = redirect_mapping[func_name]
@@ -224,103 +218,72 @@ async def _execute_tool_call(agent, tool_call):
             f"'{actual_func_name}' (Call ID: {tool_call_id})."
         )
 
-        # --- Attempt to map arguments from the invented tool's schema to the target function's schema ---
-        # This mapping is heuristic and based on common patterns of args
+        # --- Attempt to map arguments from the invented tool's schema to edit_file's schema ---
+        # This mapping is heuristic and based on common patterns of file manipulation args
         mapped_args_for_redirect = {}
 
-        # Special handling for print -> chat redirection
-        if func_name == "print" and actual_func_name == "chat":
-            # Get the message content from various possible argument names
-            message = arguments_dict.get(
-                "text",
-                arguments_dict.get(
-                    "message",
-                    arguments_dict.get(
-                        "content",
-                        str(
-                            arguments_dict
-                        ),  # Fallback: convert the entire args dict to string
-                    ),
-                ),
-            )
-            mapped_args_for_redirect["text"] = message
-            print(f"[INFO] Mapped print arguments to chat 'text': {message}")
-
-        # Handle different redirections based on the function names
-        if func_name == "print" and actual_func_name == "chat":
-            # We've already handled the mapping above for print->chat, so skip the file path handling
-            pass
-        else:
-            # For file operations like edit_file, we need to handle file paths
-            # Check for common filename/path keys
-            target_file_val = arguments_dict.get(
-                "path",
-                arguments_dict.get("filename", arguments_dict.get("target_file")),
+        # Check for common filename/path keys
+        target_file_val = arguments_dict.get(
+            "path",
+            arguments_dict.get("filename", arguments_dict.get("target_file")),
+        )
+        if target_file_val:
+            # Basic path sanitization and workspace check for redirected calls
+            abs_workspace = os.path.abspath(self.workspace_path)
+            provided_path = str(target_file_val)  # Ensure it's a string
+            # Join with workspace first to handle relative input like 'file.txt' gracefully
+            abs_provided_path = os.path.abspath(
+                os.path.join(self.workspace_path, provided_path)
             )
 
-            if target_file_val:
-                # Basic path sanitization and workspace check for redirected calls
-                abs_workspace = os.path.abspath(agent.workspace_path)
-                provided_path = str(target_file_val)  # Ensure it's a string
-                # Join with workspace first to handle relative input like 'file.txt' gracefully
-                abs_provided_path = os.path.abspath(
-                    os.path.join(agent.workspace_path, provided_path)
+            if abs_provided_path.startswith(abs_workspace):
+                # Convert to relative if path is within workspace
+                mapped_args_for_redirect["target_file"] = os.path.relpath(
+                    abs_provided_path, abs_workspace
                 )
-
-                if abs_provided_path.startswith(abs_workspace):
-                    # Convert to relative if path is within workspace
-                    mapped_args_for_redirect["target_file"] = os.path.relpath(
-                        abs_provided_path, abs_workspace
-                    )
-                    print(
-                        f"[INFO] Mapped path argument '{provided_path}' to relative 'target_file': {mapped_args_for_redirect['target_file']}"
-                    )
-                else:
-                    # Path outside workspace
-                    print(
-                        f"[ERROR] Redirected call: Provided path '{provided_path}' is outside workspace. Cannot execute."
-                    )
-                    return f"[ERROR] Cannot execute redirected tool call: Provided path '{provided_path}' is outside the allowed workspace."
-            else:
-                # No path/filename found in arguments for a redirected call
                 print(
-                    f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument after mapping. Provided args for invented tool: {arguments_dict}"
+                    f"[INFO] Mapped path argument '{provided_path}' to relative 'target_file': {mapped_args_for_redirect['target_file']}"
                 )
-                return f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument."
-
-        # Skip content keys handling for print->chat redirection
-        if func_name == "print" and actual_func_name == "chat":
-            # We've already handled the mapping above for print->chat
-            pass
-        else:
-            # For file operations like edit_file, we need to handle content keys
-            # Check for common content keys
-            code_edit_val = arguments_dict.get(
-                "content", arguments_dict.get("text", arguments_dict.get("code_edit"))
-            )
-            if code_edit_val is not None:  # Allow empty string content
-                mapped_args_for_redirect["code_edit"] = str(
-                    code_edit_val
-                )  # Ensure it's a string
-                print("[INFO] Mapped content argument to 'code_edit'.")
             else:
+                # Path outside workspace
                 print(
-                    f"[WARNING] Redirected call to '{actual_func_name}' missing content argument. "
-                    f"Defaulting to empty content. Provided args for invented tool: {arguments_dict}"
+                    f"[ERROR] Redirected call: Provided path '{provided_path}' is outside workspace. Cannot execute."
                 )
-                mapped_args_for_redirect["code_edit"] = ""
+                return f"[ERROR] Cannot execute redirected tool call: Provided path '{provided_path}' is outside the allowed workspace."
+        else:
+            # No path/filename found in arguments for a redirected call
+            print(
+                f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument after mapping. Provided args for invented tool: {arguments_dict}"
+            )
+            return f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument."
 
-            # Provide placeholders for instructions and explanation if not present in original args
-            mapped_args_for_redirect["instructions"] = arguments_dict.get(
-                "instructions",
-                arguments_dict.get(
-                    "instruction", f"Redirected call from invented tool '{func_name}'."
-                ),
+        # Check for common content keys
+        code_edit_val = arguments_dict.get(
+            "content", arguments_dict.get("text", arguments_dict.get("code_edit"))
+        )
+        if code_edit_val is not None:  # Allow empty string content
+            mapped_args_for_redirect["code_edit"] = str(
+                code_edit_val
+            )  # Ensure it's a string
+            print("[INFO] Mapped content argument to 'code_edit'.")
+        else:
+            print(
+                f"[WARNING] Redirected call to '{actual_func_name}' missing content argument. "
+                f"Defaulting to empty content. Provided args for invented tool: {arguments_dict}"
             )
-            mapped_args_for_redirect["explanation"] = arguments_dict.get(
-                "explanation",
-                f"Executed via redirection from invented tool '{func_name}'.",
-            )
+            mapped_args_for_redirect["code_edit"] = ""
+
+        # Provide placeholders for instructions and explanation if not present in original args
+        mapped_args_for_redirect["instructions"] = arguments_dict.get(
+            "instructions",
+            arguments_dict.get(
+                "instruction", f"Redirected call from invented tool '{func_name}'."
+            ),
+        )
+        mapped_args_for_redirect["explanation"] = arguments_dict.get(
+            "explanation",
+            f"Executed via redirection from invented tool '{func_name}'.",
+        )
 
         redirected_arguments = mapped_args_for_redirect
         # print(f"[INFO] Final arguments for a redirected call to '{actual_func_name}': {redirected_arguments}") # Keep detailed args for debugging
@@ -331,8 +294,8 @@ async def _execute_tool_call(agent, tool_call):
         # print(f"[INFO] No redirection for tool '{func_name}' (Call ID: {tool_call_id}). Using provided arguments directly: {redirected_arguments}") # Keep detailed args for debugging
 
     # --- Execute the actual function ---
-    if actual_func_name in agent.available_functions:
-        function_to_call = agent.available_functions[actual_func_name]
+    if actual_func_name in self.available_functions:
+        function_to_call = self.available_functions[actual_func_name]
         # print(f"[INFO] Calling function '{actual_func_name}' (Call ID: {tool_call_id}) with args: {redirected_arguments}") # Keep args for debugging
         try:
             if asyncio.iscoroutinefunction(function_to_call):
