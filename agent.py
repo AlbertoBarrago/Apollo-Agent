@@ -6,7 +6,7 @@ License: MIT - 2025
 import asyncio
 import os
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Coroutine
 
 
 class ApolloAgent:
@@ -17,11 +17,11 @@ class ApolloAgent:
 
     def __init__(self, workspace_path: str = None):
         """
-        Initialize the ApolloAgent with a workspace path and configure Gemini API.
+        Initialize the ApolloAgent with a workspace path and configure HuggingFace tools.
 
         Args:
-            workspace_path: The root path of the workspace to operate on
-            to use GOOGLE_API_KEY environment variable
+            workspace_path: The root path of the workspace to operate on.
+                            Defaults to the current working directory if None.
         """
         self.workspace_path = workspace_path or os.getcwd()
         self.last_edit_file = None
@@ -29,186 +29,154 @@ class ApolloAgent:
         self.chat_history = []
 
         from code_agent import HuggingFaceTools
+
         self.hf_tools = HuggingFaceTools(self)
         self.hf_tools.prepare_code_agent()
 
-    def get_available_tools(self):
-        """Get all available tools including HuggingFace CodeAgent tools"""
+    def get_available_tools(self) -> List[Dict[str, Any]]:
+        """Get all available tools, including HuggingFace CodeAgent tools."""
         tools = [
             {
                 "name": "codebase_search",
                 "description": "Find snippets of code from the codebase most "
-                               "relevant to the search query",
+                "relevant to the search query.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The search query to find relevant code"
+                            "description": "The search query to find relevant code.",
                         },
                         "target_directories": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Glob patterns for directories to search over"
-                        }
+                            "description": "Glob patterns for directories to search over.",
+                        },
                     },
-                    "required": ["query"]
-                }
+                    "required": ["query"],
+                },
             },
             {
                 "name": "list_dir",
-                "description": "List the contents of a directory",
+                "description": "List the contents of a directory.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "relative_workspace_path": {
                             "type": "string",
-                            "description": "Path to list contents of, relative to the workspace root"
-                        }
+                            "description": "Path to list contents of, relative to the workspace root.",
+                        },
                     },
-                    "required": ["relative_workspace_path"]
-                }
+                    "required": ["relative_workspace_path"],
+                },
             },
             {
                 "name": "grep_search",
                 "description": "Fast text-based regex search that finds exact pattern "
-                               "matches within files or directories",
+                "matches within files or directories.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The regex pattern to search for"
+                            "description": "The regex pattern to search for.",
                         },
                         "case_sensitive": {
                             "type": "boolean",
-                            "description": "Whether the search should be case-sensitive"
+                            "description": "Whether the search should be case-sensitive.",
                         },
                         "include_pattern": {
                             "type": "string",
-                            "description": "Glob pattern for files to include"
+                            "description": "Glob pattern for files to include.",
                         },
                         "exclude_pattern": {
                             "type": "string",
-                            "description": "Glob pattern for files to exclude"
-                        }
+                            "description": "Glob pattern for files to exclude.",
+                        },
                     },
-                    "required": ["query"]
-                }
+                    "required": ["query"],
+                },
             },
             {
                 "name": "file_search",
-                "description": "Fast file search based on fuzzy matching against a file path",
+                "description": "Fast file search based on fuzzy matching against a file path.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Fuzzy filename to search for"
-                        }
+                            "description": "Fuzzy filename to search for.",
+                        },
                     },
-                    "required": ["query"]
-                }
+                    "required": ["query"],
+                },
             },
             {
                 "name": "delete_file",
-                "description": "Deletes a file at the specified path",
+                "description": "Deletes a file at the specified path.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "The path of the file to delete, relative to the workspace root"
-                        }
+                            "description": "The path of the file to delete, relative to the workspace root.",
+                        },
                     },
-                    "required": ["target_file"]
-                }
+                    "required": ["target_file"],
+                },
             },
             {
                 "name": "edit_file",
-                "description": "Edit a file with the provided content",
+                "description": "Edit a file with the provided content.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "The path of the file to edit, relative to the workspace root"
+                            "description": "The path of the file to edit, relative to the workspace root.",
                         },
                         "content": {
                             "type": "string",
-                            "description": "The new content for the file"
-                        }
+                            "description": "The new content for the file.",
+                        },
                     },
-                    "required": ["target_file", "content"]
-                }
+                    "required": ["target_file", "content"],
+                },
             },
             {
                 "name": "reapply",
-                "description": "Reapplies the last edit to the specified file",
+                "description": "Reapplies the last edit to the specified file.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "The path of the file to reapply the last edit to"
-                        }
+                            "description": "The path of the file to reapply the last edit to.",
+                        },
                     },
-                    "required": ["target_file"]
-                }
+                    "required": ["target_file"],
+                },
             },
-            {
-                "name": "web_search",
-                "description": "Search the web for real-time information about any topic",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "search_term": {
-                            "type": "string",
-                            "description": "The search term to look up on the web"
-                        }
-                    },
-                    "required": ["search_term"]
-                }
-            },
-            {
-                "name": "diff_history",
-                "description": "Retrieve the history of recent changes made "
-                               "to files in the workspace",
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            }
         ]
         tools.extend(self.hf_tools.get_tools())
         return tools
 
-    async def execute_tool(self, tool_name: str, **kwargs):
-        """Execute a tool by name with given parameters"""
+    async def execute_tool(self, tool_name: str, **kwargs: Any) -> Dict[str, Any] | None:
+        """Execute a tool by name with given parameters."""
         if hasattr(self.hf_tools, "code_agent") and tool_name in self.hf_tools.code_agent.tools:
             print(f"CodeAgent is calling tool: {tool_name} with arguments: {kwargs}")
-            if tool_name == "codebase_search":
-                return await self.codebase_search(query=kwargs["query"],
-                                                  target_directories=kwargs.get("target_directories"))
-            if tool_name == "list_dir":
-                return await self.list_dir(relative_workspace_path=kwargs["relative_workspace_path"])
-            if tool_name == "grep_search":
-                return await self.grep_search(query=kwargs["query"], case_sensitive=kwargs.get("case_sensitive", False),
-                                              include_pattern=kwargs.get("include_pattern"),
-                                              exclude_pattern=kwargs.get("exclude_pattern"))
-            if tool_name == "file_search":
-                return await self.file_search(query=kwargs["query"])
-            if tool_name == "delete_file":
-                return await self.delete_file(target_file=kwargs["target_file"])
-            if tool_name == "edit_file":
-                return await self.edit_file(target_file=kwargs["target_file"], content=kwargs["content"])
-            if tool_name == "reapply":
-                return await self.reapply(target_file=kwargs["target_file"])
-            if tool_name == "web_search":
-                return await self.web_search(search_term=kwargs["search_term"])
-            if tool_name == "diff_history":
-                return await self.diff_history()
+            # Use a dictionary to map tool names to methods for cleaner code
+            tool_methods = {
+                "codebase_search": self.codebase_search,
+                "list_dir": self.list_dir,
+                "grep_search": self.grep_search,
+                "file_search": self.file_search,
+                "delete_file": self.delete_file,
+                "edit_file": self.edit_file,
+                "reapply": self.reapply,
+            }
+            if tool_name in tool_methods:
+                return await tool_methods[tool_name](**kwargs)
 
             return {"error": f"Tool '{tool_name}' not implemented in ApolloAgent"}
 
@@ -218,17 +186,17 @@ class ApolloAgent:
         return None
 
     async def codebase_search(
-            self, query: str, target_directories: List[str] = None
+        self, query: str, target_directories: List[str] = None
     ) -> Dict[str, Any]:
         """
         Find snippets of code from the codebase most relevant to the search query.
 
         Args:
-            query: The search query to find relevant code
-            target_directories: Glob patterns for directories to search over
+            query: The search query to find relevant code.
+            target_directories: Glob patterns for directories to search over.
 
         Returns:
-            Dictionary containing search results
+            Dictionary containing search results.
         """
         print(f"Performing semantic search for: {query}")
 
@@ -236,16 +204,13 @@ class ApolloAgent:
         # In a real implementation, this would use a vector database or similar technology
         results = []
 
-        if target_directories:
-            search_dirs = target_directories
-        else:
-            search_dirs = [self.workspace_path]
+        search_dirs = target_directories if target_directories else [self.workspace_path]
 
         for directory in search_dirs:
             for root, _, files in os.walk(directory):
                 for file in files:
                     if file.endswith(
-                            (".py", ".js", ".ts", ".html", ".css", ".java", ".c", ".cpp")
+                        (".py", ".js", ".ts", ".html", ".css", ".java", ".c", ".cpp")
                     ):
                         file_path = os.path.join(root, file)
                         try:
@@ -263,7 +228,7 @@ class ApolloAgent:
                                             "relevance_score": 0.8,  # Placeholder score
                                         }
                                     )
-                        except ValueError as e:
+                        except OSError as e:  # Changed ValueError to OSError
                             print(f"Error reading file {file_path}: {e}")
 
         return {"query": query, "results": results}
@@ -273,10 +238,10 @@ class ApolloAgent:
         List the contents of a directory.
 
         Args:
-            relative_workspace_path: Path to list contents of relative to the workspace root
+            relative_workspace_path: Path to list contents of, relative to the workspace root.
 
         Returns:
-            Dictionary containing directory contents
+            Dictionary containing directory contents.
         """
         target_path = os.path.join(self.workspace_path, relative_workspace_path)
 
@@ -309,19 +274,19 @@ class ApolloAgent:
             query: str,
             case_sensitive: bool = False,
             include_pattern: str = None,
-            exclude_pattern: str = None,
+            exclude_pattern: str = None
     ) -> Dict[str, Any]:
         """
         Fast text-based regex search that finds exact pattern matches within files or directories.
 
         Args:
-            query: The regex pattern to search for
-            case_sensitive: Whether the search should be case-sensitive
-            include_pattern: Glob pattern for files to include
-            exclude_pattern: Glob pattern for files to exclude
+            query: The regex pattern to search for.
+            case_sensitive: Whether the search should be case-sensitive.
+            include_pattern: Glob pattern for files to include.
+            exclude_pattern: Glob pattern for files to exclude.
 
         Returns:
-            Dictionary containing search results
+            Dictionary containing search results.
         """
         results = []
         flags = 0 if case_sensitive else re.IGNORECASE
@@ -351,32 +316,44 @@ class ApolloAgent:
                                 # Cap results at 50 matches
                                 if len(results) >= 50:
                                     break
-                except Exception as e:
+                except OSError as e:
                     print(f"Error reading file {file_path}: {e}")
 
                 # Cap results at 50 matches
                 if len(results) >= 50:
                     break
 
-        return {
-            "query": query,
-            "case_sensitive": case_sensitive,
-            "include_pattern": include_pattern,
-            "exclude_pattern": exclude_pattern,
-            "results": results,
-            "total_matches": len(results),
-            "capped": len(results) >= 50,
-        }
+        return (
+            {
+                "query": query,
+                "case_sensitive": case_sensitive,
+                "include_pattern": include_pattern,
+                "exclude_pattern": exclude_pattern,
+                "results": results,
+                "total_matches": len(results),
+                "capped": len(results) >= 50,
+            }
+            if results
+            else {
+                "query": query,
+                "case_sensitive": case_sensitive,
+                "include_pattern": include_pattern,
+                "exclude_pattern": exclude_pattern,
+                "results": [],
+                "total_matches": 0,
+                "capped": False,
+            }
+        )
 
     async def file_search(self, query: str) -> Dict[str, Any]:
         """
         Fast file search based on fuzzy matching against a file path.
 
         Args:
-            query: Fuzzy filename to search for
+            query: Fuzzy filename to search for.
 
         Returns:
-            Dictionary containing search results
+            Dictionary containing search results.
         """
         results = []
 
@@ -384,7 +361,7 @@ class ApolloAgent:
             for file in files:
                 if query.lower() in file.lower():
                     file_path = os.path.join(root, file)
-                    results.append({"file_path": file_path, "filename": file})
+                    results.append({"file_path": file_path, "filename": file});
 
                     # Cap results at 10
                     if len(results) >= 10:
@@ -406,10 +383,10 @@ class ApolloAgent:
         Deletes a file at the specified path.
 
         Args:
-            target_file: The path of the file to delete, relative to the workspace root
+            target_file: The path of the file to delete, relative to the workspace root.
 
         Returns:
-            Dictionary containing an operation result
+            Dictionary containing an operation result.
         """
         file_path = os.path.join(self.workspace_path, target_file)
 
@@ -422,7 +399,7 @@ class ApolloAgent:
         try:
             os.remove(file_path)
             return {"success": True, "message": f"File deleted: {target_file}"}
-        except Exception as e:
+        except OSError as e:  # Changed RuntimeError to OSError
             return {"success": False, "error": f"Failed to delete file: {str(e)}"}
 
     async def edit_file(self, target_file: str, content: str) -> Dict[str, Any]:
@@ -430,11 +407,11 @@ class ApolloAgent:
         Edit a file with the provided content.
 
         Args:
-            target_file: The path of the file to edit, relative to the workspace root
-            content: The new content for the file
+            target_file: The path of the file to edit, relative to the workspace root.
+            content: The new content for the file.
 
         Returns:
-            Dictionary containing an operation result
+            Dictionary containing an operation result.
         """
         file_path = os.path.join(self.workspace_path, target_file)
 
@@ -450,7 +427,7 @@ class ApolloAgent:
                 f.write(content)
 
             return {"success": True, "message": f"File edited: {target_file}"}
-        except Exception as e:
+        except OSError as e:  # Changed RuntimeError to OSError
             return {"success": False, "error": f"Failed to edit file: {str(e)}"}
 
     async def reapply(self, target_file: str) -> Dict[str, Any]:
@@ -458,77 +435,39 @@ class ApolloAgent:
         Reapplies the last edit to the specified file.
 
         Args:
-            target_file: The path of the file to reapply the last edit to
+            target_file: The path of the file to reapply the last edit to.
 
         Returns:
-            Dictionary containing an operation result
+            Dictionary containing an operation result.
         """
         if self.last_edit_file != target_file or self.last_edit_content is None:
             return {
                 "success": False,
-                "error": "No previous edit found for this file or edit content is missing",
+                "error": "No previous edit found for this file or edit content is missing.",
             }
 
-        return self.edit_file(target_file, self.last_edit_content)
+        return await self.edit_file(target_file, self.last_edit_content)
 
-    async def web_search(self, search_term: str) -> Dict[str, Any]:
+    async def _generate_response(self, message: str) -> Coroutine[Any, Any, Dict[str, Any]] | Dict[str, Any]:
         """
-        Search the web for real-time information about any topic.
-
-        Args:
-            search_term: The search term to look up on the web
-
-        Returns:
-            Dictionary containing search results
-        """
-        # This is a placeholder implementation
-        # In a real implementation, this would use a search API
-        print(f"Performing web search for: {search_term}")
-
-        return {
-            "search_term": search_term,
-            "message": "Web search functionality requires integration with a search API.",
-        }
-
-    async  def _generate_response(self, message: str) -> str:
-        """
-        Generate a response to the user's message using Gemini Flash if available.
+        Generate a response to the user's message using the HuggingFace CodeAgent.
 
         Args:
             message: The user's message
 
         Returns:
-            The agent's response
+            A dictionary containing the agent's response (and potential additional information).
         """
-        # Use Gemini Flash if available
-        if hasattr(self, "gemini_available") and self.gemini_available:
+        if hasattr(self, "hf_tools") and self.hf_tools.code_agent:
             try:
-                # Send a message to Gemini and get a response
-                response = self.chat_session.send_message(message)
-                return response.text
-            except SystemError as e:
-                print(f"Error generating response with Gemini: {str(e)}")
-                # Fall back to placeholder implementation if Gemini fails
-                return self._fallback_response(message)
+                response = await self.hf_tools.run_code_agent(message)
+                return {"response": response}
+            except Exception as e:
+                print(f"Errore durante l'esecuzione del CodeAgent: {e}")
+                return {"error": f"Errore durante l'esecuzione del CodeAgent: {e}"}
         else:
-            # Use placeholder implementation if Gemini is not available
-            return self._fallback_response(message)
-
-    @staticmethod
-    async def diff_history() -> Dict[str, Any]:
-        """
-        Retrieve the history of recent changes made to files in the workspace.
-
-        Returns:
-            Dictionary containing diff history
-        """
-        # This is a placeholder implementation
-        # In a real implementation, this would track file changes
-        # TODO: please fix me
-        return {
-            "message": "Diff history functionality requires "
-                       "integration with a version control system."
-        }
+            print("HuggingFace CodeAgent non inizializzato.")
+            return {"message": await self._fallback_response(message)}
 
     @staticmethod
     async def _match_pattern(filename: str, pattern: str) -> bool:
@@ -546,8 +485,7 @@ class ApolloAgent:
 
         return fnmatch.fnmatch(filename, pattern)
 
-    async def chat(
-            self, message: str, interactive: bool = False, execute_python: bool = False
+    async def chat(self, message: str, interactive: bool = False, execute_python: bool = False
     ) -> Dict[str, Any]:
         """
         Simulates a chat conversation with the agent, similar to ChatGPT.
@@ -567,12 +505,12 @@ class ApolloAgent:
         # Check if the message contains Python code to execute
         python_result = None
         if execute_python:
-            python_result = self._execute_python_if_present(message)
+            python_result = await self._execute_python_if_present(message)
             if python_result:
                 message += f"\n\nExecution result:\n{python_result}"
 
         # Generate a response based on the message
-        response = self._generate_response(message)
+        response = await self._generate_response(message)
 
         # Add agent response to chat history
         self.chat_history.append({"role": "assistant", "content": response})
@@ -580,23 +518,47 @@ class ApolloAgent:
         # Check if the response contains Python code to execute
         response_python_result = None
         if execute_python:
-            response_python_result = self._execute_python_if_present(response)
-            if response_python_result:
-                response += f"\n\nExecution result:\n{response_python_result}"
-                # Update the chat history with the execution result
-                self.chat_history[-1]["content"] = response
+            if isinstance(response, dict) and "response" in response:
+                response_content = response["response"]
+                execution_result = await self._execute_python_if_present(response_content)
+                if execution_result:
+                    response["response"] += f"\n\nExecution result:\n{execution_result}"
+                    # Update the chat history with the execution result
+                    self.chat_history[-1]["content"] = response["response"]
+            elif isinstance(response, str):
+                execution_result = await self._execute_python_if_present(response)
+                if execution_result:
+                    response += f"\n\nExecution result:\n{execution_result}"
+                    # Update the chat history with the execution result
+                    self.chat_history[-1]["content"] = response
 
         if interactive:
             # In interactive mode, print the response directly
-            print(f"\nApollo: {response}")
-            return {"success": True}
+            if isinstance(response, dict) and "response" in response:
+                print(f"\nApollo: {response['response']}")
+                return {"success": True}
+            elif isinstance(response, dict) and "message" in response:
+                print(f"\nApollo: {response['message']}")
+                return {"success": True}
+            elif isinstance(response, dict) and "error" in response:
+                print(f"\nApollo (Error): {response['error']}")
+                return {"success": False, "error": response["error"]}
+            else:
+                print(f"\nApollo: {response}")
+                return {"success": True}
 
         # In non-interactive mode, return the response as part of the result
         result_resp = {
             "message": message,
-            "response": response,
             "history_length": len(self.chat_history),
         }
+
+        if isinstance(response, dict) and "response" in response:
+            result_resp["response"] = response["response"]
+        elif isinstance(response, dict) and "message" in response:
+            result_resp["response"] = response["message"]
+        elif isinstance(response, str):
+            result_resp["response"] = response
 
         if python_result:
             result_resp["user_code_execution"] = python_result
@@ -634,7 +596,6 @@ class ApolloAgent:
             sys.stdout = redirected_output
 
             try:
-                # Execute the code
                 exec(code)
                 execution_result = redirected_output.getvalue()
                 results.append(f"Execution successful:\n{execution_result}")
@@ -649,7 +610,7 @@ class ApolloAgent:
     @staticmethod
     async def _fallback_response(message: str) -> str:
         """
-        Generate a fallback response when Gemini is not available.
+        Generate a fallback response when the CodeAgent is not available.
 
         Args:
             message: The user's message
@@ -659,8 +620,8 @@ class ApolloAgent:
         """
         # Check for greetings
         if any(
-                greeting in message.lower()
-                for greeting in ["hello", "hi", "hey", "greetings"]
+            greeting in message.lower()
+            for greeting in ["hello", "hi", "hey", "greetings"]
         ):
             return "Hello! I'm Apollo, your AI assistant. How can I help you today?"
 
@@ -672,14 +633,14 @@ class ApolloAgent:
                 "- Listing directory contents\n"
                 "- Searching for files\n"
                 "- Editing files\n"
-                "- Answering questions about programming\n"
+                "- Reapplying the last edit\n"
                 "Just let me know what you need!"
             )
 
         # Check for code-related questions
         if any(
-                code_term in message.lower()
-                for code_term in ["code", "program", "function", "class", "method"]
+            code_term in message.lower()
+            for code_term in ["code", "program", "function", "class", "method"]
         ):
             return "I can help with coding questions. Could you provide more details about what you're working on?"
 
@@ -699,16 +660,9 @@ class ApolloAgent:
                 break
 
             print("Apollo thinking...")
-            response = await agent_apollo.chat(user_input)
-            if response and "response" in response:
-                print(f"Apollo: {response['response']}")
-            elif response and "message" in response:
-                print(f"Apollo: {response['message']}")
-            elif response and "error" in response:
-                print(f"Apollo (Error): {response['error']}")
-            else:
-                print("Apollo: (No response)")
-
+            response = await agent_apollo.chat(user_input, interactive=True)
+            if response and "error" in response:
+                pass
 
 # Example usage
 if __name__ == "__main__":
