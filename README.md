@@ -22,7 +22,7 @@ ApolloAgent provides the following functionality:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ApolloAgent.git
+git clone https://github.com/albertobarrago/ApolloAgent.git
 
 # Navigate to the project directory
 cd ApolloAgent

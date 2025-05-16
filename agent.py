@@ -5,9 +5,11 @@ License: MIT - 2025
 """
 
 import asyncio
+import json
 import os
 import re
-from typing import List, Dict, Any, Coroutine
+import ollama
+from typing import List, Dict, Any
 
 
 class ApolloAgent:
@@ -28,203 +30,15 @@ class ApolloAgent:
         self.last_edit_file = None
         self.last_edit_content = None
         self.chat_history = []
-
-        from code_agent import HuggingFaceTools
-
-        self.hf_tools = HuggingFaceTools(self)
-        self.hf_tools.prepare_code_agent()
-
-    def get_available_tools(self) -> List[Dict[str, Any]]:
-        """Get all available tools, including HuggingFace CodeAgent tools."""
-        tools = [
-            {
-                "name": "codebase_search",
-                "description": "Find snippets of code from the codebase most relevant to the search query.\nThis is a semantic search tool, so the query should ask for something semantically matching what is needed.\nIf it makes sense to only search in particular directories, please specify them in the target_directories field.\nUnless there is a clear reason to use your own search query, please just reuse the user's exact query with their wording.\nTheir exact wording/phrasing can often be helpful for the semantic search query. Keeping the same exact question format can also be helpful.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "The search query to find relevant code. You should reuse the user's exact query/most recent message with their wording unless there is a clear reason not to.",
-                    },
-                    {
-                        "name": "target_directories",
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Glob patterns for directories to search over",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "list_dir",
-                "description": "List the contents of a directory. The quick tool to use for discovery, before using more targeted tools like semantic search or file reading. Useful to try to understand the file structure before diving deeper into specific files. Can be used to explore the codebase.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "relative_workspace_path",
-                        "type": "string",
-                        "description": "Path to list contents of, relative to the workspace root.",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "grep_search",
-                "description": "Fast text-based regex search that finds exact pattern matches within files or directories, utilizing the ripgrep command for efficient searching.\nResults will be formatted in the style of ripgrep and can be configured to include line numbers and content.\nTo avoid overwhelming output, the results are capped at 50 matches.\nUse the include or exclude patterns to filter the search scope by file type or specific paths.\n\nThis is best for finding exact text matches or regex patterns.\nMore precise than semantic search for finding specific strings or patterns.\nThis is preferred over semantic search when we know the exact symbol/function name/etc. to search in some set of directories/file types.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "The regex pattern to search for",
-                    },
-                    {
-                        "name": "case_sensitive",
-                        "type": "boolean",
-                        "description": "Whether the search should be case sensitive",
-                    },
-                    {
-                        "name": "include_pattern",
-                        "type": "string",
-                        "description": "Glob pattern for files to include (e.g. '*.ts' for TypeScript files)",
-                    },
-                    {
-                        "name": "exclude_pattern",
-                        "type": "string",
-                        "description": "Glob pattern for files to exclude",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "file_search",
-                "description": "Fast file search based on fuzzy matching against file path. Use if you know part of the file path but don't know where it's located exactly. The Response will be capped to 10 results. Make your query more specific if need to filter results further.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "Fuzzy filename to search for",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "delete_file",
-                "description": "Deletes a file at the specified path. The operation will fail gracefully if:\n    - The file doesn't exist\n    - The operation is rejected for security reasons\n    - The file cannot be deleted",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The path of the file to delete, relative to the workspace root.",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "edit_file",
-                "description": "Use this tool to propose an edit to an existing file.\n\nThis will be read by a less intelligent model, which will quickly apply the edit. You should make it clear what the edit is, while also minimizing the unchanged code you write.\nWhen writing the edit, you should specify each edit in sequence, with the special comment `// ... existing code ...` to represent unchanged code in between edited lines.\n\nFor example:\n\n```\n// ... existing code ...\nFIRST_EDIT\n// ... existing code ...\nSECOND_EDIT\n// ... existing code ...\nTHIRD_EDIT\n// ... existing code ...\n```\n\nYou should still bias towards repeating as few lines of the original file as possible to convey the change.\nBut, each edit should contain sufficient context of unchanged lines around the code you're editing to resolve ambiguity.\nDO NOT omit spans of pre-existing code (or comments) without using the `// ... existing code ...` comment to indicate its absence. If you omit the existing code comment, the model may inadvertently delete these lines.\nMake sure it is clear what the edit should be, and where it should be applied.\n\nYou should specify the following arguments before the others: [target_file]",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The target file to modify. Always specify the target file as the first argument. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
-                    },
-                    {
-                        "name": "instructions",
-                        "type": "string",
-                        "description": "A single sentence instruction describing what you are going to do for the sketched edit. This is used to assist the less intelligent model in applying the edit. Please use the first person to describe what you are going to do. Dont repeat what you have said previously in normal messages. And use it to disambiguate uncertainty in the edit.",
-                    },
-                    {
-                        "name": "code_edit",
-                        "type": "string",
-                        "description": "Specify ONLY the precise lines of code that you wish to edit. **NEVER specify or write out unchanged code**. Instead, represent all unchanged code using the comment of the language you're editing in - example: `// ... existing code ...`",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "reapply",
-                "description": "Calls a smarter model to apply the last edit to the specified file.\nUse this tool immediately after the result of an edit_file tool call ONLY IF the diff is not what you expected, indicating the model applying the changes was not smart enough to follow your instructions.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The relative path to the file to reapply the last edit to. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-            {
-                "name": "what_is_luck",
-                "description": "Explains the concept of luck.",
-                "parameters": [  # Changed to a list
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
-                    },
-                ],
-            },
-        ]
-        tools.extend(self.hf_tools.get_tools())
-        return tools
-
-    async def execute_tool(
-        self, tool_name: str, **kwargs: Any
-    ) -> Dict[str, Any] | None:
-        """Execute a tool by name with given parameters."""
-        if (
-            hasattr(self.hf_tools, "code_agent")
-            and tool_name in self.hf_tools.code_agent.tools
-        ):
-            print(f"CodeAgent is calling tool: {tool_name} with arguments: {kwargs}")
-            # Use a dictionary to map tool names to methods for cleaner code
-            tool_methods = {
-                "codebase_search": self.codebase_search,
-                "list_dir": self.list_dir,
-                "grep_search": self.grep_search,
-                "file_search": self.file_search,
-                "delete_file": self.delete_file,
-                "edit_file": self.edit_file,
-                "reapply": self.reapply,
-            }
-            if tool_name in tool_methods:
-                return await tool_methods[tool_name](**kwargs)
-
-            return {"error": f"Tool '{tool_name}' not implemented in ApolloAgent"}
-
-        # Handle existing tools (if you intend to call them directly as well)
-        if tool_name == "list_dir":
-            return await self.list_dir(
-                **kwargs
-            )  # Ensure consistency with async if needed
-        return None
+        self.available_functions = {
+            "codebase_search": self.codebase_search,
+            "list_dir": self.list_dir,
+            "grep_search": self.grep_search,
+            "file_search": self.file_search,
+            "delete_file": self.delete_file,
+            "edit_file": self.edit_file,
+            "reapply": self.reapply,
+        }
 
     async def codebase_search(
         self, query: str, target_directories: List[str] = None
@@ -491,28 +305,282 @@ class ApolloAgent:
 
         return await self.edit_file(target_file, self.last_edit_content)
 
-    async def _generate_response(
-        self, message: str
-    ) -> Coroutine[Any, Any, Dict[str, Any]] | Dict[str, Any]:
+    async def _generate_response(self, message: str) -> Dict[str, Any]:
+        print(f"[_generate_response] Received message: {message}")
+
+        try:
+            llm_response = ollama.chat(
+                model="llama3.1",
+                messages=[{"role": "user", "content": message}],
+                tools=self.get_available_tools()
+            )
+
+            print(llm_response["message"])
+
+        except RuntimeError as e:
+            print(f"[_generate_response] Error: {str(e)}")
+            return {"error": f"Error generating response: {str(e)}"}
+
+    async def _execute_tool_call(self, tool_call):
         """
-        Generate a response to the user's message using the HuggingFace CodeAgent.
+        Executes a tool call based on the provided information.
 
         Args:
-            message: The user's message
+            tool_call: An object containing information about the tool to execute,
+                       including the function name and arguments.
 
         Returns:
-            A dictionary containing the agent's response (and potential additional information).
+            The result of the tool execution, or an error message if execution fails
+            or the tool is not found. Returns None if the tool call format is invalid.
         """
-        if hasattr(self, "hf_tools") and self.hf_tools.code_agent:
+        if not (hasattr(tool_call, "function") and hasattr(tool_call.function, "name")):
+            print(
+                "[ERROR] Invalid tool call format: Missing 'function' or 'name' attribute."
+            )
+            return None
+
+        func_name = tool_call.function.name
+        arguments = tool_call.function.arguments
+
+        if func_name in self.available_functions:
+            function_to_call = self.available_functions[func_name]
+            print(
+                f"[_tool_execution] Calling function: {func_name} with args: {arguments}"
+            )
             try:
-                response = await self.hf_tools.run_code_agent(message)
-                return {"response": response}
-            except Exception as e:
-                print(f"Errore durante l'esecuzione del CodeAgent: {e}")
-                return {"error": f"Errore durante l'esecuzione del CodeAgent: {e}"}
+                response = await function_to_call(**arguments)
+                return response
+            except Exception as e:  # Catch broader exceptions for robustness
+                error_message = f"[ERROR] Error executing tool '{func_name}': {e}"
+                print(error_message)
+                return error_message
         else:
-            print("HuggingFace CodeAgent non inizializzato.")
-            return {"message": await self._fallback_response(message)}
+            error_message = (
+                f"[ERROR] Tool '{func_name}' not found in available functions."
+            )
+            print(error_message)
+            return error_message
+
+    async def chat(self, text: str) -> Dict[str, Any]:
+        """
+        Responds to the user's message in a normal conversational way.
+
+        Args:
+            text: The user's message.
+
+        Returns:
+            A dictionary containing the chat response.
+        """
+        print(f"[_tool_execution] Executing chat with text: {text}")
+        # Here, you would typically call the language model again
+        # without any tools to get a natural chat response.
+        try:
+            llm_response = ollama.chat(
+                model="llama3.1",
+                messages=[{"role": "user", "content": text}],
+            )
+            response_content = (
+                llm_response.message.content
+                if hasattr(llm_response, "message")
+                else str(llm_response)
+            )
+            print(f"[_tool_execution] Chat response: {response_content}")
+            return {"response": response_content}
+        except RuntimeError as e:
+            error_message = f"[ERROR] Error generating chat response: {e}"
+            print(error_message)
+            return {"error": error_message}
+
+    @staticmethod
+    def get_available_tools() -> List[Dict[str, Any]]:
+        """Get all available tools"""
+        tools = [
+            {
+                "name": "codebase_search",
+                "description": "Find snippets of code from the codebase most "
+                "relevant to the search query.\nThis is a semantic search tool, "
+                "so the query should ask for something semantically matching what "
+                "is needed.\nIf it makes sense to only search in particular directories, "
+                "please specify them in the target_directories field.\nUnless there is a "
+                "clear reason to use your own search query, please just reuse the user's "
+                "exact query with their wording.\nTheir exact wording/phrasing can often "
+                "be helpful for the semantic search query. Keeping the same exact question "
+                "format can also be helpful.",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "The search query to find relevant code. "
+                        "You should reuse the user's exact query/most recent message with "
+                        "their wording unless there is a clear reason not to.",
+                    },
+                    {
+                        "name": "target_directories",
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Glob patterns for directories to search over",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool "
+                        "is being used, and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "list_dir",
+                "description": "List the contents of a directory. The quick tool to use "
+                "for discovery, before using more targeted tools like semantic "
+                "search or file reading. Useful to try to understand the file "
+                "structure before diving deeper into specific files. Can be used "
+                "to explore the codebase.",
+                "parameters": [
+                    {
+                        "name": "relative_workspace_path",
+                        "type": "string",
+                        "description": "Path to list contents of, relative to the workspace root.",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, "
+                        "and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "grep_search",
+                "description": "Fast text-based regex search that finds exact pattern matches within files "
+                "or directories, utilizing the ripgrep command for efficient searching."
+                "Results will be formatted in the style of ripgrep and can be configured to include line numbers and content.\nTo avoid overwhelming output, the results are capped at 50 matches.\nUse the include or exclude patterns to filter the search scope by file type or specific paths.\n\nThis is best for finding exact text matches or regex patterns.\nMore precise than semantic search for finding specific strings or patterns.\nThis is preferred over semantic search when we know the exact symbol/function name/etc. to search in some set of directories/file types.",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "The regex pattern to search for",
+                    },
+                    {
+                        "name": "case_sensitive",
+                        "type": "boolean",
+                        "description": "Whether the search should be case sensitive",
+                    },
+                    {
+                        "name": "include_pattern",
+                        "type": "string",
+                        "description": "Glob pattern for files to include (e.g. '*.ts' for TypeScript files)",
+                    },
+                    {
+                        "name": "exclude_pattern",
+                        "type": "string",
+                        "description": "Glob pattern for files to exclude",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, "
+                        "and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "file_search",
+                "description": "Fast file search based on fuzzy matching against file path. "
+                "Use if you know part of the file path but don't know where it's "
+                "located exactly. The Response will be capped to 10 results. "
+                "Make your query more specific if need to filter results further.",
+                "parameters": [
+                    {
+                        "name": "query",
+                        "type": "string",
+                        "description": "Fuzzy filename to search for",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, "
+                        "and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "delete_file",
+                "description": "Deletes a file at the specified path. The operation will fail gracefully if:\n    - The file doesn't exist\n    - The operation is rejected for security reasons\n    - The file cannot be deleted",
+                "parameters": [
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The path of the file to delete, relative to the workspace root.",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "edit_file",
+                "description": "Use this tool to propose an edit to an existing file.\n\n"
+                "This will be read by a less intelligent model, which will quickly apply the edit. "
+                "You should make it clear what the edit is, "
+                "while also minimizing the unchanged code you write.\n"
+                "When writing the edit, you should specify each edit in sequence, "
+                "with the special comment `// ... existing code ...` to represent "
+                "unchanged code in between edited lines.\n\nFor example:\n\n```\n// ... "
+                "existing code ...\nFIRST_EDIT\n// ... existing code ...\nSECOND_EDIT\n// ... existing code ...\nTHIRD_EDIT\n// ... existing code ...\n```\n\nYou should still bias towards repeating as few lines of the original file as possible to convey the change.\nBut, each edit should contain sufficient context of unchanged lines around the code you're editing to resolve ambiguity.\nDO NOT omit spans of pre-existing code (or comments) without using the `// ... existing code ...` comment to indicate its absence. If you omit the existing code comment, the model may inadvertently delete these lines.\nMake sure it is clear what the edit should be, and where it should be applied.\n\nYou should specify the following arguments before the others: [target_file]",
+                "parameters": [
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The target file to modify. Always specify the target file as the first argument. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
+                    },
+                    {
+                        "name": "instructions",
+                        "type": "string",
+                        "description": "A single sentence instruction describing what you are going to do for the sketched edit. This is used to assist the less intelligent model in applying the edit. Please use the first person to describe what you are going to do. Dont repeat what you have said previously in normal messages. And use it to disambiguate uncertainty in the edit.",
+                    },
+                    {
+                        "name": "code_edit",
+                        "type": "string",
+                        "description": "Specify ONLY the precise lines of code that you wish to edit. **NEVER specify or write out unchanged code**. Instead, represent all unchanged code using the comment of the language you're editing in - example: `// ... existing code ...`",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "reapply",
+                "description": "Calls a smarter model to apply the last edit to the specified file.\nUse this tool immediately after the result of an edit_file tool call ONLY IF the diff is not what you expected, indicating the model applying the changes was not smart enough to follow your instructions.",
+                "parameters": [
+                    {
+                        "name": "target_file",
+                        "type": "string",
+                        "description": "The relative path to the file to reapply the last edit to. You can use either a relative path in the workspace or an absolute path. If an absolute path is provided, it will be preserved as is.",
+                    },
+                    {
+                        "name": "explanation",
+                        "type": "string",
+                        "description": "One sentence explanation as to why this tool is being used, and how it contributes to the goal.",
+                    },
+                ],
+            },
+            {
+                "name": "chat",
+                "description": "Engage in a normal conversational exchange with the user. Use this when the user's request doesn't seem to require a specific tool or code-related action.",
+                "parameters": [
+                    {
+                        "name": "text",
+                        "type": "string",
+                        "description": "The user's message to respond to in a conversational manner.",
+                    },
+                ],
+            },
+        ]
+        return tools
 
     @staticmethod
     async def _match_pattern(filename: str, pattern: str) -> bool:
@@ -532,7 +600,7 @@ class ApolloAgent:
 
     async def chat(
         self, message: str, interactive: bool = False, execute_python: bool = False
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any] | str:  # Update the return type hint
         """
         Simulates a chat conversation with the agent, similar to ChatGPT.
         Can also execute Python code if requested.
@@ -543,7 +611,7 @@ class ApolloAgent:
             execute_python: Whether to execute Python code found in the message or response
 
         Returns:
-            Dictionary containing the agent's response
+            The agent's response as a dictionary or a string.
         """
         # Add a user message to the chat history
         self.chat_history.append({"role": "user", "content": message})
@@ -591,6 +659,9 @@ class ApolloAgent:
             elif isinstance(response, dict) and "error" in response:
                 print(f"\nApollo (Error): {response['error']}")
                 return {"success": False, "error": response["error"]}
+            elif isinstance(response, str):
+                print(f"\nApollo: {response}")
+                return {"success": True}
             else:
                 print(f"\nApollo: {response}")
                 return {"success": True}
@@ -613,7 +684,7 @@ class ApolloAgent:
         if response_python_result:
             result_resp["assistant_code_execution"] = response_python_result
 
-        return result_resp
+        return response
 
     @staticmethod
     async def _execute_python_if_present(text: str) -> str | None:
@@ -697,7 +768,6 @@ class ApolloAgent:
 
     @staticmethod
     async def chat_terminal():
-        """Runs an interactive chat session with the ApolloAgent in the terminal."""
         agent_apollo = ApolloAgent()
         print("Welcome to ApolloAgent Chat Mode!")
         print("Type 'exit' to end the conversation.")
@@ -709,8 +779,14 @@ class ApolloAgent:
 
             print("Apollo thinking...")
             response = await agent_apollo.chat(user_input, interactive=True)
-            if response and "error" in response:
-                pass
+            if response and isinstance(response, dict) and "error" in response:
+                print(f"\nApollo (Error): {response['error']}")
+            elif response and isinstance(response, dict) and "response" in response:
+                print(f"\nApollo: {response['response']}")
+            elif response and isinstance(response, str):
+                print(f"\nApollo: {response}")
+            elif response:
+                print(f"\nApollo: {response}")
 
 
 # Example usage
