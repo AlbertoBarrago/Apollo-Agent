@@ -23,13 +23,6 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
     Returns:
         Response from the chat model or error information.
     """
-    print("""                          
-       # #   #####   ####  #      #       ####                # #    ####  ###### #    # ##### 
-      #   #  #    # #    # #      #      #    #              #   #  #    # #      ##   #   #   
-     #     # #    # #    # #      #      #    #    #####    #     # #      #####  # #  #   #   
-     ####### #####  #    # #      #      #    #             ####### #  ### #      #  # #   #   
-     #     # #      #    # #      #      #    #             #     # #    # #      #   ##   #   
-     #     # #       ####  ###### ######  ####              #     #  ####  ###### #    #   #""")
     print(f"\n>>> You: {text}")
 
     agent.chat_history.append({"role": "user", "content": text})

@@ -118,6 +118,14 @@ class ApolloAgent:
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
+        print("""                          
+              # #   #####   ####  #      #       ####                # #    ####  ###### #    # ##### 
+             #   #  #    # #    # #      #      #    #              #   #  #    # #      ##   #   #   
+            #     # #    # #    # #      #      #    #    #####    #     # #      #####  # #  #   #   
+            ####### #####  #    # #      #      #    #             ####### #  ### #      #  # #   #   
+            #     # #      #    # #      #      #    #             #     # #    # #      #   ##   #   
+            #     # #       ####  ###### ######  ####              #     #  ####  ###### #    #   #""")
+
         if not os.path.exists("./workspace"):
             os.makedirs("./workspace")
             print("Created a dummy './workspace' directory for testing.")
