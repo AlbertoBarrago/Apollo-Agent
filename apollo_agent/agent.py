@@ -13,7 +13,6 @@ from apollo_agent.search_operations import codebase_search, grep_search, file_se
 from apollo_agent.chat_operations import (
     chat,
     _execute_tool_call,
-    _fallback_response,
     get_available_tools,
 )
 
@@ -59,7 +58,7 @@ class ApolloAgent:
     async def edit_file(self, target_file: str, code_edit: str) -> Dict[str, Any]:
         """
         Edit a file at the specified path (relative to workspace root) or CREATE A NEW ONE.
-        Provide instructions and the FULL DESIRED CONTENT in `code_edit`.
+        Provide instructions and the FULL-DESIRED CONTENT in `code_edit`.
         """
         result = await edit_file(self.workspace_path, target_file, code_edit)
         self.last_edit_file = target_file
@@ -99,7 +98,6 @@ class ApolloAgent:
         """Fast file search based on fuzzy matching against a file path."""
         return await file_search(self.workspace_path, query)
 
-    # Chat operations
     async def _execute_tool_call(self, tool_call):
         """
         Executes a tool call based on the provided information from ollama.chat response.
@@ -118,13 +116,8 @@ class ApolloAgent:
         return get_available_tools()
 
     @staticmethod
-    async def _fallback_response(message: str) -> str:
-        """Generate a fallback response. (Not used in the main chat loop)"""
-        return await _fallback_response(message)
-
-    @staticmethod
     async def chat_terminal():
-        """Start Chat Session in the terminal."""
+        """Start a Chat Session in the terminal."""
         if not os.path.exists("./workspace"):
             os.makedirs("./workspace")
             print("Created a dummy './workspace' directory for testing.")

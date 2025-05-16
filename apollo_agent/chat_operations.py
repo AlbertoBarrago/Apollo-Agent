@@ -12,7 +12,7 @@ import json
 import os
 import ollama
 import asyncio
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None]:
@@ -163,7 +163,8 @@ async def _execute_tool_call(self, tool_call):
             arguments_dict = arguments_payload
         else:
             print(
-                f"[WARNING] Unexpected type for arguments payload ({type(arguments_payload)}) from tool call {tool_call_id}. Payload: {arguments_payload}"
+                f"[WARNING] Unexpected type for arguments payload ({type(arguments_payload)}) "
+                f"from tool call {tool_call_id}. Payload: {arguments_payload}"
             )
 
     # Fallback: Try accessing as dictionary keys (less likely for ollama-python ToolCall)
@@ -333,23 +334,6 @@ async def _execute_tool_call(self, tool_call):
         return error_message
 
 
-async def _fallback_response(message: str) -> str:
-    """
-    Generate a fallback response. (Not used in the main chat loop)
-
-    Args:
-        message: The user's message.
-
-    Returns:
-        A fallback response string.
-    """
-    if any(g in message.lower() for g in ["hello", "hi", "hey"]):
-        return "Hello! I'm Apollo, your AI assistant. How can I help you today?"
-    if "what can you do" in message.lower() or "help" in message.lower():
-        return "I can help with code tasks using tools like search, file listing, editing, and deleting."
-    return "I'm here to assist with your coding tasks. What do you need help with?"
-
-
 def get_available_tools() -> List[Dict[str, Any]]:
     """
     Get all available tools in the Ollama tools format.
@@ -357,213 +341,235 @@ def get_available_tools() -> List[Dict[str, Any]]:
     Returns:
         List of tool definitions.
     """
-
-    def create_parameters_dict(params_list):
-        properties = {}
-        required = []
-        for param in params_list:
-            param_name = param["name"]
-            properties[param_name] = {
-                "type": param["type"],
-                "description": param["description"],
-            }
-            if param.get("required", False):
-                required.append(param_name)
-
-        parameters_dict = {"properties": properties}
-        if required:
-            parameters_dict["required"] = required
-
-        return parameters_dict
-
     tools = [
         {
-            "name": "codebase_search",
-            "description": "Find snippets of code from the codebase most "
-            "relevant to the search query. This is a semantic search tool. "
-            "Reuse the user's exact query/most recent message with their wording unless there is a clear reason not to.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "The search query.",
-                        "required": True,
-                    },
-                    {
-                        "name": "target_directories",
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Glob patterns for directories to search over.",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "codebase_search",
+                "description": (
+                    "Find snippets of code from the codebase most relevant to the search query. "
+                    "This is a semantic search tool. Reuse the user's exact query/most recent "
+                    "message with their wording unless there is a clear reason not to."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["query", "explanation"],
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query."
+                        },
+                        "target_directories": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Glob patterns for directories to search over."
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "list_dir",
-            "description": "List the contents of a directory, relative to the workspace root. Useful for exploring the file structure.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "relative_workspace_path",
-                        "type": "string",
-                        "description": "Path to list contents of, relative to the workspace root.",
-                        "required": True,
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "list_dir",
+                "description": (
+                    "List the contents of a directory, relative to the workspace root. "
+                    "Useful for exploring the file structure."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["relative_workspace_path", "explanation"],
+                    "properties": {
+                        "relative_workspace_path": {
+                            "type": "string",
+                            "description": (
+                                "Path to list contents of, relative to the workspace root."
+                            )
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "grep_search",
-            "description": "Fast text-based regex search that finds exact pattern matches within files or directories. Best for finding specific strings or patterns. Use include/exclude patterns to filter scope.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "The regex pattern to search for.",
-                        "required": True,
-                    },
-                    {
-                        "name": "case_sensitive",
-                        "type": "boolean",
-                        "description": "Whether the search should be case sensitive.",
-                    },
-                    {
-                        "name": "include_pattern",
-                        "type": "string",
-                        "description": "Glob pattern for files to include (e.g. '*.ts').",
-                    },
-                    {
-                        "name": "exclude_pattern",
-                        "type": "string",
-                        "description": "Glob pattern for files to exclude.",
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "grep_search",
+                "description": (
+                    "Fast text-based regex search that finds exact pattern matches within files "
+                    "or directories. Best for finding specific strings or patterns. Use "
+                    "include/exclude patterns to filter scope."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["query", "explanation"],
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The regex pattern to search for."
+                        },
+                        "case_sensitive": {
+                            "type": "boolean",
+                            "description": "Whether the search should be case sensitive."
+                        },
+                        "include_pattern": {
+                            "type": "string",
+                            "description": "Glob pattern for files to include (e.g. '*.ts')."
+                        },
+                        "exclude_pattern": {
+                            "type": "string",
+                            "description": "Glob pattern for files to exclude."
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "file_search",
-            "description": "Fast file search based on fuzzy matching against file path. Use if you know part of the file path.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "query",
-                        "type": "string",
-                        "description": "Fuzzy filename to search for.",
-                        "required": True,
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "file_search",
+                "description": (
+                    "Fast file search based on fuzzy matching against file path. "
+                    "Use if you know part of the file path."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["query", "explanation"],
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Fuzzy filename to search for."
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "delete_file",
-            "description": "Deletes a file at the specified path, relative to the workspace root.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The path of the file to delete, relative to the workspace root.",
-                        "required": True,
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "delete_file",
+                "description": (
+                    "Deletes a file at the specified path, relative to the workspace root."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["target_file", "explanation"],
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": (
+                                "The path of the file to delete, relative to the workspace root."
+                            )
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "edit_file",
-            "description": "Edit a file at the specified path (relative to workspace root) or CREATE A NEW ONE. This tool is used for creating ANY type of file (text, code, HTML, etc.). Provide instructions and the FULL DESIRED CONTENT in the `code_edit` parameter. For example, to create an HTML file, provide the full HTML content in `code_edit`. When editing existing files, use `// ... existing code ...` (or the appropriate comment style) to represent unchanged lines.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The path to the file to create or modify, relative to the workspace root (e.g., 'src/index.html').",
-                        "required": True,
-                    },
-                    {
-                        "name": "instructions",
-                        "type": "string",
-                        "description": "A single sentence instruction describing the edit/creation (e.g., 'Creating a new HTML file for the showroom').",
-                    },
-                    {
-                        "name": "code_edit",
-                        "type": "string",
-                        "description": "The FULL code content for the file (for new files like HTML) or the edited sections with placeholders (for existing files).",
-                        "required": True,
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "edit_file",
+                "description": (
+                    "Edit a file at the specified path (relative to workspace root) or CREATE A "
+                    "NEW ONE. This tool is used for creating ANY type of file (text, code, HTML, "
+                    "etc.). Provide instructions and the FULL DESIRED CONTENT in the `code_edit` "
+                    "parameter. For example, to create an HTML file, provide the full HTML content "
+                    "in `code_edit`. When editing existing files, use `// ... existing code ...` "
+                    "(or the appropriate comment style) to represent unchanged lines."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["target_file", "code_edit", "explanation"],
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": (
+                                "The path to the file to create or modify, relative to the "
+                                "workspace root (e.g., 'src/index.html')."
+                            )
+                        },
+                        "instructions": {
+                            "type": "string",
+                            "description": (
+                                "A single sentence instruction describing the edit/creation "
+                                "(e.g., 'Creating a new HTML file for the showroom')."
+                            )
+                        },
+                        "code_edit": {
+                            "type": "string",
+                            "description": (
+                                "The FULL code content for the file (for new files like HTML) or "
+                                "the edited sections with placeholders (for existing files)."
+                            )
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "reapply",
-            "description": "Reapplies the last edit attempt to the specified file.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "target_file",
-                        "type": "string",
-                        "description": "The relative path to the file.",
-                        "required": True,
-                    },
-                    {
-                        "name": "explanation",
-                        "type": "string",
-                        "description": "One sentence explanation.",
-                        "required": True,
-                    },
-                ]
-            ),
+            "type": "function",
+            "function": {
+                "name": "reapply",
+                "description": "Reapplies the last edit attempt to the specified file.",
+                "parameters": {
+                    "type": "object",
+                    "required": ["target_file", "explanation"],
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": "The relative path to the file."
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation."
+                        }
+                    }
+                }
+            }
         },
         {
-            "name": "chat",
-            "description": "Engage in a normal conversational exchange with the user. Use when a specific tool is not required.",
-            "parameters": create_parameters_dict(
-                [
-                    {
-                        "name": "text",
-                        "type": "string",
-                        "description": "The user's message.",
-                        "required": True,
-                    },
-                ]
-            ),
-        },
+            "type": "function",
+            "function": {
+                "name": "chat",
+                "description": (
+                    "Engage in a normal conversational exchange with the user. "
+                    "Use when a specific tool is not required."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": ["text"],
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                            "description": "The user's message."
+                        }
+                    }
+                }
+            }
+        }
     ]
+
     return tools
