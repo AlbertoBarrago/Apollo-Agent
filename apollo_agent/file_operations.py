@@ -10,7 +10,7 @@ License: MIT - 2025
 
 import os
 from typing import Dict, Any
-
+from bs4 import BeautifulSoup
 
 async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[str, Any]:
     """
@@ -61,7 +61,6 @@ async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[st
         "files": files,
     }
 
-
 async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
     """
     Deletes a file at the specified path relative to the workspace root.
@@ -101,27 +100,15 @@ async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
 
 async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Dict[str, Any]:
     """
-    Edit or create a file at the specified path within the workspace.
-    If `// ... existing code ...` is found in `code_edit`, it will be replaced with the file's original content.
-
-    Args:
-        workspace_path: Root of the workspace
-        target_file: File to create or modify, relative to the workspace root
-        code_edit: New content or template, possibly including a placeholder
-
-    Returns:
-        Dict with success or error details.
+    Edits an HTML file intelligently by merging new content into the <body>.
+    Falls back to append or overwrite if file is not HTML.
     """
-    import os
-
     file_path = os.path.join(workspace_path, target_file)
     absolute_file_path = os.path.abspath(file_path)
     absolute_workspace_path = os.path.abspath(workspace_path)
 
     if not absolute_file_path.startswith(absolute_workspace_path):
-        error_msg = f"Attempted to access outside workspace: {target_file}"
-        print(f"[ERROR] {error_msg}")
-        return {"success": False, "error": error_msg}
+        return {"success": False, "error": "Unsafe file path outside of workspace"}
 
     try:
         os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
@@ -131,20 +118,35 @@ async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Di
             with open(absolute_file_path, "r", encoding="utf-8") as f:
                 original = f.read()
 
-        if "// ... existing code ..." in code_edit:
-            merged = code_edit.replace("// ... existing code ...", original)
+        # Simple check: is this an HTML file?
+        is_html = target_file.lower().endswith(".html")
+
+        if is_html and original.strip():
+            soup_original = BeautifulSoup(original, "html.parser")
+            soup_new = BeautifulSoup(code_edit, "html.parser")
+
+            # Insert all body content from new into old <body>
+            body_orig = soup_original.body
+            body_new = soup_new.body
+
+            if body_orig and body_new:
+                for el in body_new.contents:
+                    body_orig.append(el)
+                merged = str(soup_original)
+            else:
+                # If <body> not found, just append raw content
+                merged = original + "\n\n" + code_edit
         else:
-            merged = code_edit
+            # Not HTML or no original content – append or create
+            merged = original + "\n\n" + code_edit if original else code_edit
 
         with open(absolute_file_path, "w", encoding="utf-8") as f:
             f.write(merged)
 
-        return {"success": True, "message": f"File edited/created: {target_file}"}
+        return {"success": True, "message": f"File updated: {target_file}"}
 
-    except OSError as e:
-        error_msg = f"Failed to edit/create file {target_file}: {str(e)}"
-        print(f"[ERROR] {error_msg}")
-        return {"success": False, "error": error_msg}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 async def reapply(agent, target_file: str) -> Dict[str, Any]:
     """
