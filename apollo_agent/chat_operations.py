@@ -7,12 +7,9 @@ fallback_response, and get_available_tools.
 Author: Alberto Barrago
 License: MIT - 2025
 """
-
-import json
-import os
 import ollama
-import asyncio
 from typing import List, Dict, Any
+import inspect
 
 
 async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None]:
@@ -27,7 +24,6 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
         Response from the chat model or error information.
     """
     print(f"\n>>> You: {text}")
-    # No "Apollo thinking..." print here, the response will appear when ready.
 
     agent.chat_history.append({"role": "user", "content": text})
 
@@ -36,15 +32,13 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
             llm_response = ollama.chat(
                 model="llama3.1",
                 messages=agent.chat_history,
-                tools=get_available_tools(),  # Always provide the list of *actual* tools
+                tools=get_available_tools(),
                 stream=False,
             )
 
-            # Access 'message' key first defensively
             message = llm_response.get("message")
             if not message:
                 print("[WARNING] LLM response missing 'message' field.")
-                # Add something to history to prevent potential loops with empty messages
                 agent.chat_history.append(
                     {
                         "role": "assistant",
@@ -53,23 +47,18 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
                 )
                 return {"response": "Received an empty message from the model."}
 
-            # --- Access tool_calls and content from the message object/dict ---
-            # Use .get() for dictionaries and getattr() for objects defensively
-            tool_calls = None
-            content = None
-
             if isinstance(message, dict):
                 tool_calls = message.get("tool_calls")
                 content = message.get("content")
-            else:  # Assume object with attributes like ollama._types.Message
+            else:
                 tool_calls = getattr(message, "tool_calls", None)
                 content = getattr(message, "content", None)
 
             if tool_calls:
-                # Ensure tool_calls is a list before iterating
                 if not isinstance(tool_calls, list):
                     print(
-                        f"[ERROR] Received non-list 'tool_calls' from LLM Message. Type: {type(tool_calls)}. Value: {tool_calls}"
+                        f"[ERROR] Received non-list 'tool_calls' from LLM Message. "
+                        f"Type: {type(tool_calls)}. Value: {tool_calls}"
                     )
                     agent.chat_history.append(
                         {
@@ -81,12 +70,10 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
                         "error": f"Received unexpected tool_calls format from LLM: {tool_calls}"
                     }
 
-                # print(f"[INFO] LLM requested tool calls: {len(tool_calls)}") # Keep this log if helpful, removed for 'dumb comments'
                 agent.chat_history.append(message)
 
                 tool_outputs = []
                 for tool_call in tool_calls:
-                    # _execute_tool_call is now robust to the object/dict format, maps args, and redirects names
                     tool_result = await _execute_tool_call(agent, tool_call)
 
                     tool_outputs.append(
@@ -98,19 +85,13 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
                             "content": str(tool_result),
                         }
                     )
-                    # print(f"[INFO] Tool execution result for call {getattr(tool_call, 'id', tool_call.get('id', 'N/A'))} added to history.") # Keep if helpful
-
                 agent.chat_history.extend(tool_outputs)
 
-                continue
-
             elif content is not None:
-                # print(f"[INFO] LLM responded with content.") # Keep if helpful
                 agent.chat_history.append(message)
                 return {"response": content}
 
             else:
-                # LLM response had neither tool_calls nor content.
                 print("[WARNING] LLM response had neither tool_calls nor content.")
                 agent.chat_history.append(message)
                 return {
@@ -128,79 +109,37 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
         print(error_message)
         return {"error": error_message}
 
-
 async def _execute_tool_call(self, tool_call):
     """
-    Executes a tool call based on the provided information from ollama.chat response.
-    Handles custom object structure from ollama-python, maps arguments, and redirects known invented tool names.
+    Execute a tool function call (from LLM) with validated arguments and secure redirection.
     """
-    func_name = None
-    arguments_dict = {}
-    tool_call_id = "N/A"
 
-    # Try accessing as attributes first (likely for ollama-python custom objects like Message.ToolCall)
-    if (
-            hasattr(tool_call, "function")
-            and hasattr(tool_call.function, "name")
-            and hasattr(tool_call.function, "arguments")
-    ):
-        func = tool_call.function
-        func_name = func.name
-        arguments_payload = func.arguments
-        tool_call_id = getattr(tool_call, "id", "N/A")
+    def filter_valid_args(valid_func, args_dict):
+        valid_params = valid_func.__code__.co_varnames[:valid_func.__code__.co_argcount]
+        return {k: v for k, v in args_dict.items() if k in valid_params}
 
-        if isinstance(arguments_payload, str):
-            try:
-                arguments_dict = json.loads(arguments_payload)
-            except json.JSONDecodeError:
-                print(
-                    f"[ERROR] Failed to parse arguments JSON string for tool {func_name} (Call ID: {tool_call_id}). Payload: {arguments_payload}"
-                )
-                # If JSON parsing fails, try treating the whole string as a single 'code_edit' arg if redirecting to edit_file?
-                # Or just return error. Let's return error for now to be safe.
-                return f"[ERROR] Failed to parse tool call arguments for tool {func_name}: {arguments_payload}"
-        elif isinstance(arguments_payload, dict):
-            arguments_dict = arguments_payload
+    try:
+        if hasattr(tool_call, "function"):
+            func_name = getattr(tool_call.function, "name", None)
+            raw_args = getattr(tool_call.function, "arguments", {})
+        elif isinstance(tool_call, dict) and "function" in tool_call:
+            func_name = tool_call["function"].get("name")
+            raw_args = tool_call["function"].get("arguments", {})
         else:
-            print(
-                f"[WARNING] Unexpected type for arguments payload ({type(arguments_payload)}) "
-                f"from tool call {tool_call_id}. Payload: {arguments_payload}"
-            )
+            return "[ERROR] Invalid tool_call format or missing 'function'."
 
-    # Fallback: Try accessing as dictionary keys (less likely for ollama-python ToolCall)
-    elif isinstance(tool_call, dict) and "function" in tool_call:
-        func = tool_call["function"]
-        if isinstance(func, dict):
-            func_name = func.get("name")
-            arguments_payload = func.get("arguments", "{}")
-            tool_call_id = tool_call.get("id", "N/A")
+        if not func_name:
+            return "[ERROR] Function name not provided in tool call."
 
-            if isinstance(arguments_payload, str):
-                try:
-                    arguments_dict = json.loads(arguments_payload)
-                except json.JSONDecodeError:
-                    print(
-                        f"[ERROR] Failed to parse arguments JSON string from dict-like tool call {func_name} (Call ID: {tool_call_id}). Payload: {arguments_payload}"
-                    )
-                    return f"[ERROR] Failed to parse tool call arguments for tool {func_name}: {arguments_payload}"
-            elif isinstance(arguments_payload, dict):
-                arguments_dict = arguments_payload
-            else:
-                print(
-                    f"[WARNING] Unexpected type for arguments payload ({type(arguments_payload)}) from dict-like tool call {tool_call_id}. Payload: {arguments_payload}"
-                )
+        if isinstance(raw_args, str):
+            arguments_dict = __import__('json').loads(raw_args)
+        elif isinstance(raw_args, dict):
+            arguments_dict = raw_args
+        else:
+            return f"[ERROR] Unsupported arguments type: {type(raw_args)}"
+    except Exception as e:
+        return f"[ERROR] Failed to parse tool call: {e}"
 
-    # If neither format matched or name/arguments weren't found
-    if not func_name or not isinstance(arguments_dict, dict):
-        print(
-            f"[ERROR] Received tool_call does not match expected format or is "
-            f"missing name/arguments dict after parsing. Type: {type(tool_call)}. Raw: {tool_call}"
-        )
-        return (
-            "[ERROR] Received tool call in unexpected format or missing details."
-        )
-
-    # --- Tool Name Redirection and Argument Mapping ---
     redirect_mapping = {
         "open": "edit_file",
         "touch": "edit_file",
@@ -209,129 +148,55 @@ async def _execute_tool_call(self, tool_call):
         "generate_html_file": "edit_file",
         "create_html_file": "edit_file",
     }
+    redirected_name = redirect_mapping.get(func_name, func_name)
 
-    actual_func_name = func_name
-
-    if func_name in redirect_mapping:
-        actual_func_name = redirect_mapping[func_name]
-        print(
-            f"[INFO] Redirecting tool call '{func_name}' to "
-            f"'{actual_func_name}' (Call ID: {tool_call_id})."
+    if redirected_name == "edit_file":
+        file_key = (
+                arguments_dict.get("path") or
+                arguments_dict.get("filename") or
+                arguments_dict.get("target_file")
         )
+        if not file_key:
+            return "[ERROR] Missing file path for 'edit_file' operation."
 
-        # --- Attempt to map arguments from the invented tool's schema to edit_file's schema ---
-        # This mapping is heuristic and based on common patterns of file manipulation args
-        mapped_args_for_redirect = {}
+        abs_workspace = __import__('os').path.abspath(self.workspace_path)
+        abs_target_path = __import__('os').path.abspath(__import__('os').path.join(self.workspace_path, file_key))
 
-        # Check for common filename/path keys
-        target_file_val = arguments_dict.get(
-            "path",
-            arguments_dict.get("filename", arguments_dict.get("target_file")),
-        )
-        if target_file_val:
-            # Basic path sanitization and workspace check for redirected calls
-            abs_workspace = os.path.abspath(self.workspace_path)
-            provided_path = str(target_file_val)  # Ensure it's a string
-            # Join with workspace first to handle relative input like 'file.txt' gracefully
-            abs_provided_path = os.path.abspath(
-                os.path.join(self.workspace_path, provided_path)
-            )
+        if not abs_target_path.startswith(abs_workspace):
+            return f"[ERROR] Unsafe path: '{file_key}' is outside workspace."
 
-            if abs_provided_path.startswith(abs_workspace):
-                # Convert to relative if path is within workspace
-                mapped_args_for_redirect["target_file"] = os.path.relpath(
-                    abs_provided_path, abs_workspace
-                )
-                print(
-                    f"[INFO] Mapped path argument '{provided_path}' to relative 'target_file': {mapped_args_for_redirect['target_file']}"
-                )
+        arguments_dict = {
+            "target_file": __import__('os').path.relpath(abs_target_path, abs_workspace),
+            "code_edit": arguments_dict.get("content") or arguments_dict.get("text") or arguments_dict.get("code_edit",
+                                                                                                           ""),
+            "instructions": arguments_dict.get("instructions") or arguments_dict.get("instruction", "")
+        }
+
+    if redirected_name not in self.available_functions:
+        return f"[ERROR] Tool '{redirected_name}' is not available."
+
+    func = self.available_functions[redirected_name]
+
+    filtered_args = filter_valid_args(func, arguments_dict)
+
+    print(f"Executing... {filtered_args}")
+
+    try:
+        if getattr(func, "__call__") and getattr(func, "__code__", None):
+            if inspect.iscoroutinefunction(func):
+                result = await func(**filtered_args)
             else:
-                # Path outside workspace
-                print(
-                    f"[ERROR] Redirected call: Provided path '{provided_path}' is outside workspace. Cannot execute."
-                )
-                return f"[ERROR] Cannot execute redirected tool call: Provided path '{provided_path}' is outside the allowed workspace."
+                result = func(**filtered_args)
         else:
-            # No path/filename found in arguments for a redirected call
-            print(
-                f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument after mapping. Provided args for invented tool: {arguments_dict}"
-            )
-            return f"[ERROR] Redirected call to '{actual_func_name}' missing required filename/path argument."
+            return "[ERROR] Function is not callable."
 
-        # Check for common content keys
-        code_edit_val = arguments_dict.get(
-            "content", arguments_dict.get("text", arguments_dict.get("code_edit"))
-        )
-        if code_edit_val is not None:  # Allow empty string content
-            mapped_args_for_redirect["code_edit"] = str(
-                code_edit_val
-            )  # Ensure it's a string
-            print("[INFO] Mapped content argument to 'code_edit'.")
-        else:
-            print(
-                f"[WARNING] Redirected call to '{actual_func_name}' missing content argument. "
-                f"Defaulting to empty content. Provided args for invented tool: {arguments_dict}"
-            )
-            mapped_args_for_redirect["code_edit"] = ""
-
-        # Provide placeholders for instructions and explanation if not present in original args
-        mapped_args_for_redirect["instructions"] = arguments_dict.get(
-            "instructions",
-            arguments_dict.get(
-                "instruction", f"Redirected call from invented tool '{func_name}'."
-            ),
-        )
-        mapped_args_for_redirect["explanation"] = arguments_dict.get(
-            "explanation",
-            f"Executed via redirection from invented tool '{func_name}'.",
-        )
-
-        redirected_arguments = mapped_args_for_redirect
-        # print(f"[INFO] Final arguments for a redirected call to '{actual_func_name}': {redirected_arguments}") # Keep detailed args for debugging
-
-    # --- No redirection, use the original arguments extracted ---
-    else:
-        redirected_arguments = arguments_dict
-        # print(f"[INFO] No redirection for tool '{func_name}' (Call ID: {tool_call_id}). Using provided arguments directly: {redirected_arguments}") # Keep detailed args for debugging
-
-    # --- Execute the actual function ---
-    if actual_func_name in self.available_functions:
-        function_to_call = self.available_functions[actual_func_name]
-        # print(f"[INFO] Calling function '{actual_func_name}' (Call ID: {tool_call_id}) with args: {redirected_arguments}") # Keep args for debugging
-        try:
-            if asyncio.iscoroutinefunction(function_to_call):
-                response = await function_to_call(**redirected_arguments)
-            else:
-                print(
-                    f"[WARNING] Calling non-async function {actual_func_name} synchronously (Call ID: {tool_call_id})."
-                )
-                response = function_to_call(**redirected_arguments)
-
-            if isinstance(response, (dict, list)):
-                response_str = json.dumps(response)
-                # print(f"[INFO] Converted tool response to JSON string for tool {actual_func_name} (Call ID: {tool_call_id}).") # Keep if needed
-                return response_str
-            elif not isinstance(response, (str, int, float, bool, type(None))):
-                response_str = str(response)
-                # print(f"[INFO] Converted non-basic tool response type ({type(response)}) to string for tool {actual_func_name} (Call ID: {tool_call_id}).") # Keep if needed
-                return response_str
-
-            return response
-
-        except TypeError as e:
-            print(
-                f"[ERROR] Argument mismatch when calling function '{actual_func_name}' (Call ID: {tool_call_id}): {e}. Attempted args: {redirected_arguments}. Original provided args (if redirected): {arguments_dict}"
-            )
-            return f"[ERROR] Argument mismatch for tool '{actual_func_name}': {e}. Attempted args: {redirected_arguments}"
-        except Exception as e:
-            error_message = f"[ERROR] Error executing tool '{actual_func_name}' (Call ID: {tool_call_id}): {e}"
-            print(error_message)
-            return f"[ERROR] Failed to execute tool '{actual_func_name}': {str(e)}"
-    else:
-        # This block handles cases where the *actual* func name is not found
-        error_message = f"[ERROR] Actual tool '{actual_func_name}' (redirected from '{func_name}' or original) not found in available functions (Call ID: {tool_call_id})."
-        print(error_message)
-        return error_message
+        if isinstance(result, (dict, list)):
+            return __import__('json').dumps(result)
+        return str(result)
+    except TypeError as e:
+        return f"[ERROR] Argument mismatch in '{redirected_name}': {e}"
+    except Exception as e:
+        return f"[ERROR] Exception during execution of '{redirected_name}': {e}"
 
 
 def get_available_tools() -> List[Dict[str, Any]]:
