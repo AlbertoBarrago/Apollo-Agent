@@ -137,7 +137,7 @@ async def _execute_tool_call(self, tool_call):
             arguments_dict = raw_args
         else:
             return f"[ERROR] Unsupported arguments type: {type(raw_args)}"
-    except Exception as e:
+    except RuntimeError as e:
         return f"[ERROR] Failed to parse tool call: {e}"
 
     redirect_mapping = {
@@ -146,9 +146,10 @@ async def _execute_tool_call(self, tool_call):
         "edit": "edit_file",
         "create_file": "edit_file",
         "generate_html_file": "edit_file",
-        "create_html_file": "edit_file",
+        "create_html_file": "edit_file"
     }
     redirected_name = redirect_mapping.get(func_name, func_name)
+    print(f"Redirecting '{func_name}' to '{redirected_name}'")
 
     if redirected_name == "edit_file":
         file_key = (
@@ -160,16 +161,19 @@ async def _execute_tool_call(self, tool_call):
             return "[ERROR] Missing file path for 'edit_file' operation."
 
         abs_workspace = __import__('os').path.abspath(self.workspace_path)
-        abs_target_path = __import__('os').path.abspath(__import__('os').path.join(self.workspace_path, file_key))
+        abs_target_path = (__import__('os')
+                           .path.abspath(__import__('os').path.join(self.workspace_path, file_key)))
 
         if not abs_target_path.startswith(abs_workspace):
             return f"[ERROR] Unsafe path: '{file_key}' is outside workspace."
 
         arguments_dict = {
-            "target_file": __import__('os').path.relpath(abs_target_path, abs_workspace),
-            "code_edit": arguments_dict.get("content") or arguments_dict.get("text") or arguments_dict.get("code_edit",
-                                                                                                           ""),
-            "instructions": arguments_dict.get("instructions") or arguments_dict.get("instruction", "")
+            "target_file": __import__('os').path.relpath(abs_target_path,
+                                                         abs_workspace),
+            "code_edit": arguments_dict.get("content") or
+                         arguments_dict.get("text") or
+                         arguments_dict.get("code_edit"),
+            "instructions": arguments_dict.get("instructions")
         }
 
     if redirected_name not in self.available_functions:
