@@ -14,15 +14,14 @@ import fnmatch
 from typing import List, Dict, Any
 
 
-async def codebase_search(
-    workspace_path: str, query: str, target_directories: List[str] = None
+async def codebase_search(agent, query: str, target_directories: List[str] = None
 ) -> Dict[str, Any]:
     """
     Find snippets of code from the codebase most relevant to the search query.
     This is a semantic search tool.
 
     Args:
-        workspace_path: The root path of the workspace.
+        agent: The root path of the workspace.
         query: The search query.
         target_directories: List of directories to search in, relative to workspace_path.
 
@@ -30,11 +29,11 @@ async def codebase_search(
         Dictionary with search results.
     """
     results = []
-    search_dirs = target_directories if target_directories else [workspace_path]
+    search_dirs = target_directories if target_directories else [agent.workspace_path]
 
     for directory in search_dirs:
         absolute_dir = os.path.abspath(directory)
-        if not absolute_dir.startswith(os.path.abspath(workspace_path)):
+        if not absolute_dir.startswith(os.path.abspath(agent.workspace_path)):
             print(f"[WARNING] Skipping directory outside workspace: {directory}")
             continue
 
@@ -65,8 +64,7 @@ async def codebase_search(
                                 results.append(
                                     {
                                         "file_path": os.path.relpath(
-                                            file_path, workspace_path
-                                        ),
+                                            file_path, agent.workspace_path),
                                         "content_snippet": (
                                             content[:500] + "..."
                                             if len(content) > 500
@@ -96,7 +94,7 @@ def _match_pattern_sync(filename: str, pattern: str) -> bool:
 
 
 async def grep_search(
-    workspace_path: str,
+    agent,
     query: str,
     case_sensitive: bool = False,
     include_pattern: str = None,
@@ -107,9 +105,9 @@ async def grep_search(
     Best for finding specific strings or patterns.
 
     Args:
-        workspace_path: The root path of the workspace.
+        agent: Apollo agent instance.
         query: The regex pattern to search for.
-        case_sensitive: Whether the search should be case sensitive.
+        case_sensitive: Whether the search should be case-sensitive.
         include_pattern: Glob pattern for files to include (e.g. '*.ts').
         exclude_pattern: Glob pattern for files to exclude.
 
@@ -122,10 +120,10 @@ async def grep_search(
     # Note: A real implementation would ideally use `ripgrep` via a subprocess
     # for better performance and features.
 
-    for root, _, files in os.walk(workspace_path):
+    for root, _, files in os.walk(agent.workspace_path):
         for file in files:
             file_path = os.path.join(root, file)
-            relative_file_path = os.path.relpath(file_path, workspace_path)
+            relative_file_path = os.path.relpath(file_path, agent.workspace_path)
 
             if include_pattern and not _match_pattern_sync(file, include_pattern):
                 continue
@@ -163,12 +161,12 @@ async def grep_search(
     }
 
 
-async def file_search(workspace_path: str, query: str) -> Dict[str, Any]:
+async def file_search(agent, query: str) -> Dict[str, Any]:
     """
     Fast file search based on fuzzy matching against a file path.
 
     Args:
-        workspace_path: The root path of the workspace.
+        agent: Apollo agent instance.
         query: Fuzzy filename to search for.
 
     Returns:
@@ -176,13 +174,13 @@ async def file_search(workspace_path: str, query: str) -> Dict[str, Any]:
     """
     results = []
 
-    for root, _, files in os.walk(workspace_path):
+    for root, _, files in os.walk(agent.workspace_path):
         for file in files:
             if query.lower() in file.lower():
                 file_path = os.path.join(root, file)
                 results.append(
                     {
-                        "file_path": os.path.relpath(file_path, workspace_path),
+                        "file_path": os.path.relpath(file_path, agent.workspace_path),
                         "filename": file,
                     }
                 )

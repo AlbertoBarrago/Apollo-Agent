@@ -4,17 +4,31 @@ Author: Alberto Barrago
 License: MIT - 2025
 """
 
-import asyncio
+import inspect
 import os
-from typing import List, Dict, Any
 
-from apollo_agent.file_operations import list_dir, delete_file, edit_file, reapply
-from apollo_agent.search_operations import codebase_search, grep_search, file_search
+from apollo_agent.search_operations import codebase_search, file_search
 from apollo_agent.chat_operations import (
     chat,
-    _execute_tool_call,
-    get_available_tools,
 )
+from apollo_agent.file_operations import (
+    list_dir,
+    delete_file,
+    edit_file,
+    reapply,
+)
+
+APPOLO_WELCOME = """                          
+              # #   #####   ####  #      #       ####                # #    ####  ###### #    # ##### 
+             #   #  #    # #    # #      #      #    #              #   #  #    # #      ##   #   #   
+            #     # #    # #    # #      #      #    #    #####    #     # #      #####  # #  #   #   
+            ####### #####  #    # #      #      #    #             ####### #  ### #      #  # #   #   
+            #     # #      #    # #      #      #    #             #     # #    # #      #   ##   #   
+            #     # #       ####  ###### ######  ####              #     #  ####  ###### #    #   #
+            
+            By Alberto Barrago, MIT License - 2025.
+            
+            """
 
 
 class ApolloAgent:
@@ -34,98 +48,88 @@ class ApolloAgent:
         self.workspace_path = workspace_path or os.getcwd()
         self.last_edit_file = None
         self.last_edit_content = None
-        self.chat_history = []
         self.available_functions = {
-            "codebase_search": self.codebase_search,
-            "list_dir": self.list_dir,
-            "grep_search": self.grep_search,
-            "file_search": self.file_search,
-            "delete_file": self.delete_file,
-            "edit_file": self.edit_file,
-            "reapply": self.reapply,
-            "chat": self.chat,
+            "codebase_search": codebase_search,
+            "list_dir": list_dir,
+            "file_search": file_search,
+            "delete_file": delete_file,
+            "edit_file": edit_file,
+            "reapply": reapply,
+            "chat": chat,
+        }
+        self.chat_history = []
+        self.redirect_mapping = {
+            "open": "edit_file",
+            "touch": "edit_file",
+            "edit": "edit_file",
+            "create_file": "edit_file"
         }
 
-    # File operations
-    async def list_dir(self, relative_workspace_path: str) -> Dict[str, Any]:
-        """List the contents of a directory relative to the workspace root."""
-        return await list_dir(self.workspace_path, relative_workspace_path)
+    async def execute_tool(self, tool_call):
+        """
+        Execute a tool function call (from LLM) with validated arguments and secure redirection.
+        """
+        def filter_valid_args(valid_func, args_dict):
+            valid_params = valid_func.__code__.co_varnames[
+                           : valid_func.__code__.co_argcount
+                           ]
+            return {k: v for k, v in args_dict.items() if k in valid_params}
 
-    async def delete_file(self, target_file: str) -> Dict[str, Any]:
-        """Deletes a file at the specified path relative to the workspace root."""
-        return await delete_file(self.workspace_path, target_file)
+        try:
+            if hasattr(tool_call, "function"):
+                func_name = getattr(tool_call.function, "name", None)
+                raw_args = getattr(tool_call.function, "arguments", {})
+            elif isinstance(tool_call, dict) and "function" in tool_call:
+                func_name = tool_call["function"].get("name")
+                raw_args = tool_call["function"].get("arguments", {})
+            else:
+                return "[ERROR] Invalid tool_call format or missing 'function'."
 
-    async def edit_file(self, target_file: str, code_edit: str) -> Dict[str, Any]:
-        """
-        Edit a file at the specified path (relative to workspace root) or CREATE A NEW ONE.
-        Provide instructions and the FULL-DESIRED CONTENT in `code_edit`.
-        """
-        result = await edit_file(self.workspace_path, target_file, code_edit)
-        self.last_edit_file = target_file
-        self.last_edit_content = code_edit
-        return result
+            if not func_name:
+                return "[ERROR] Function name not provided in tool call."
 
-    async def reapply(self, target_file: str) -> Dict[str, Any]:
-        """Reapplies the last edit to the specified file."""
-        return await reapply(self, target_file)
+            if isinstance(raw_args, str):
+                arguments_dict = __import__("json").loads(raw_args)
+            elif isinstance(raw_args, dict):
+                arguments_dict = raw_args
+            else:
+                return f"[ERROR] Unsupported arguments type: {type(raw_args)}"
+        except RuntimeError as e:
+            return f"[ERROR] Failed to parse tool call: {e}"
 
-    # Search operations
-    async def codebase_search(
-        self, query: str, target_directories: List[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Find snippets of code from the codebase most relevant to the search query.
-        This is a semantic search tool.
-        """
-        return await codebase_search(self.workspace_path, query, target_directories)
+        redirected_name = self.redirect_mapping.get(func_name, func_name)
+        print(f"Redirecting from '{func_name}' to '{redirected_name}'")
 
-    async def grep_search(
-        self,
-        query: str,
-        case_sensitive: bool = False,
-        include_pattern: str = None,
-        exclude_pattern: str = None,
-    ) -> Dict[str, Any]:
-        """
-        Fast text-based regex search that finds exact pattern matches within files or directories.
-        Best for finding specific strings or patterns.
-        """
-        return await grep_search(
-            self.workspace_path, query, case_sensitive, include_pattern, exclude_pattern
-        )
+        func = self.available_functions.get(redirected_name)
+        if not func:
+            return f"[ERROR] Function '{redirected_name}' not found."
 
-    async def file_search(self, query: str) -> Dict[str, Any]:
-        """Fast file search based on fuzzy matching against a file path."""
-        return await file_search(self.workspace_path, query)
+        filtered_args = filter_valid_args(func, arguments_dict)
 
-    async def _execute_tool_call(self, tool_call):
-        """
-        Executes a tool call based on the provided information from ollama.chat response.
-        """
-        return await _execute_tool_call(self, tool_call)
-
-    async def chat(self, text: str) -> None | dict[str, str] | dict[str, Any | None]:
-        """
-        Responds to the user's message, handling potential tool calls and multi-turn interactions.
-        """
-        return await chat(self, text)
-
-    @staticmethod
-    def get_available_tools() -> List[Dict[str, Any]]:
-        """Get all available tools in the Ollama tools format."""
-        return get_available_tools()
+        try:
+            if inspect.iscoroutinefunction(func):
+                result = await func(self, **filtered_args)
+            else:
+                result = func(self, **filtered_args)
+            return result
+        except RuntimeError as e:
+            return f"[ERROR] Exception while executing '{redirected_name}': {e}"
 
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
-        if not os.path.exists("./workspace"):
-            os.makedirs("./workspace")
-            print("Created a dummy './workspace' directory for testing.")
+        print(APPOLO_WELCOME)
+        workspace_path = input("Enter the workspace path (or press Enter for current directory): ")
+        if not workspace_path:
+            workspace_path = os.getcwd()
 
-        agent_apollo = ApolloAgent(workspace_path="./workspace")
+        if not os.path.exists(workspace_path):
+            os.makedirs(workspace_path)
+
+        agent = ApolloAgent(workspace_path=workspace_path)
         print("Welcome to ApolloAgent Chat Mode!")
         print("Type 'exit' to end the conversation.")
-        print("Workspace set to:", os.path.abspath("./workspace"))
+        print("Workspace set to:", os.path.abspath(workspace_path))
 
         while True:
             try:
@@ -133,7 +137,13 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                response = await agent_apollo.chat(user_input)
+                text_improved = """
+                You are pair programming with a USER to solve their coding task.
+                The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
+                Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have opened, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more.
+                This information may or may not be relevant to the coding task, it is up to you to decide.
+                """
+                response = await chat(agent, text_improved + user_input)
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"\n>>> Apollo: {response['response']}")
@@ -148,12 +158,5 @@ class ApolloAgent:
             except KeyboardInterrupt:
                 print("\nExiting chat.")
                 break
-            except Exception as e:
-                print(
-                    f"\nAn unexpected error occurred during chat_terminal execution: {e}"
-                )
 
 
-# Example usage
-if __name__ == "__main__":
-    asyncio.run(ApolloAgent.chat_terminal())
