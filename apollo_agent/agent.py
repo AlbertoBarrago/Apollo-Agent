@@ -65,8 +65,6 @@ class ApolloAgent:
             "create_file": "edit_file"
         }
 
-        print(self.available_functions)
-
     async def execute_tool(self, tool_call):
         """
         Execute a tool function call (from LLM) with validated arguments and secure redirection.
@@ -107,7 +105,6 @@ class ApolloAgent:
             return f"[ERROR] Function '{redirected_name}' not found."
 
         filtered_args = filter_valid_args(func, arguments_dict)
-        print(f"Try to execute -> {filtered_args}")
 
         try:
             if inspect.iscoroutinefunction(func):
@@ -124,8 +121,7 @@ class ApolloAgent:
         print(APPOLO_WELCOME)
         workspace_path = input("Enter the workspace path (or press Enter for current directory): ")
         if not workspace_path:
-            #workspace_path = "./" + os.getcwd()
-            workspace_path = "./workspace"
+            workspace_path = os.getcwd()
 
         if not os.path.exists(workspace_path):
             os.makedirs(workspace_path)
@@ -141,7 +137,13 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                response = await chat(agent, user_input)
+                text_improved = """
+                You are pair programming with a USER to solve their coding task.
+                The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
+                Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have opened, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more.
+                This information may or may not be relevant to the coding task, it is up to you to decide.
+                """
+                response = await chat(agent, text_improved + user_input)
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"\n>>> Apollo: {response['response']}")

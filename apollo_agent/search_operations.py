@@ -64,8 +64,7 @@ async def codebase_search(agent, query: str, target_directories: List[str] = Non
                                 results.append(
                                     {
                                         "file_path": os.path.relpath(
-                                            file_path, agent.workspace_path
-                                        ),
+                                            file_path, agent.workspace_path),
                                         "content_snippet": (
                                             content[:500] + "..."
                                             if len(content) > 500
@@ -108,7 +107,7 @@ async def grep_search(
     Args:
         agent: Apollo agent instance.
         query: The regex pattern to search for.
-        case_sensitive: Whether the search should be a case sensitive.
+        case_sensitive: Whether the search should be case-sensitive.
         include_pattern: Glob pattern for files to include (e.g. '*.ts').
         exclude_pattern: Glob pattern for files to exclude.
 

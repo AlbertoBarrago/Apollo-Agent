@@ -36,8 +36,7 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
             llm_response = ollama.chat(
                 model="llama3.1",
                 messages=agent.chat_history,
-                tools=get_available_tools(),
-                stream=False,
+                tools=get_available_tools()
             )
 
             message = llm_response.get("message")
@@ -112,6 +111,7 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
         )
         print(error_message)
         return {"error": error_message}
+
 
 def get_available_tools() -> List[Dict[str, Any]]:
     """
@@ -269,8 +269,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "NEW ONE. This tool is used for creating ANY type of file (text, code, HTML, "
                     "etc.). Provide instructions and the FULL DESIRED CONTENT in the `code_edit` "
                     "parameter. For example, to create an HTML file, provide the full HTML content "
-                    "in `code_edit`. When editing existing files, use `// ... existing code ...` "
-                    "(or the appropriate comment style) to represent unchanged lines."
+                    "in `code_edit`."
                 ),
                 "parameters": {
                     "type": "object",
@@ -292,9 +291,19 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         },
                         "code_edit": {
                             "type": "string",
-                            "description": (
-                                "The FULL code content for the file (for new files like HTML) or "
-                                "the edited sections with placeholders (for existing files)."
+                            "description": ("""When making code changes, NEVER output code to the USER, unless requested. 
+                                    Instead, use one of the code edit tools to implement the change.
+                                    Use the code edit tools at most once per turn.
+                                    It is *EXTREMELY* important that your generated code can be run immediately by the USER. To ensure this, follow these instructions carefully:
+                                    1. Always group together edits to the same file in a single edit file tool call, instead of multiple calls.
+                                    2. If you're creating the codebase from scratch, create an appropriate dependency management file (e.g., requirements.txt) with package versions and a helpful README.
+                                    3. If you're building a web app from scratch, give it a beautiful and modern UI, imbued with the best UX practices.
+                                    4. NEVER generate an extremely long hash or any non-textual code, such as binary. These are not helpful to the USER and are very expensive.
+                                    5. Unless you are appending some small easy-to-apply edit to a file or creating a new file, you MUST read the contents or section of what you're editing before editing it.
+                                    6. If you've introduced (linter) errors, fix them if clear how to (or you can easy figure out how to). Do not make uneducated guesses. 
+                                    And DO NOT loop more than 3 times on fixing linter errors on the same file. On the third time, you should stop and ask the user what to do next.
+                                    7. If you've suggested a reasonable code_edit that wasn't followed by the applied model, you should try reapplying the edit.
+                                """
                             ),
                         },
                         "explanation": {
