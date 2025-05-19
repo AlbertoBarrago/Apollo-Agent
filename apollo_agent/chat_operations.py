@@ -29,14 +29,15 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
 
     agent.chat_history.append({"role": "user", "content": text})
 
-    print("🤖 Give me a second... ", flush=True)
+    print("🤖 Give me a second, be patience and kind ", flush=True)
 
     try:
         while True:
             llm_response = ollama.chat(
                 model="llama3.1",
                 messages=agent.chat_history,
-                tools=get_available_tools()
+                tools=get_available_tools(),
+                stream=False
             )
 
             message = llm_response.get("message")

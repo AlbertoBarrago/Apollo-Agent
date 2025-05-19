@@ -98,7 +98,6 @@ class ApolloAgent:
             return f"[ERROR] Failed to parse tool call: {e}"
 
         redirected_name = self.redirect_mapping.get(func_name, func_name)
-        print(f"Redirecting from '{func_name}' to '{redirected_name}'")
 
         func = self.available_functions.get(redirected_name)
         if not func:
@@ -127,7 +126,7 @@ class ApolloAgent:
             os.makedirs(workspace_path)
 
         agent = ApolloAgent(workspace_path=workspace_path)
-        print("Welcome to ApolloAgent Chat Mode!")
+        print("🌟 Welcome to ApolloAgent Chat Mode!")
         print("Type 'exit' to end the conversation.")
         print("Workspace set to:", os.path.abspath(workspace_path))
 
@@ -146,11 +145,11 @@ class ApolloAgent:
                 response = await chat(agent, text_improved + user_input)
 
                 if response and isinstance(response, dict) and "response" in response:
-                    print(f"\n>>> Apollo: {response['response']}")
+                    print(f"🤖 Apollo: {response['response']}")
                 elif response and isinstance(response, dict) and "error" in response:
-                    print(f"\n>>> Apollo (Error): {response['error']}")
+                    print(f"🤖 Apollo (Error): {response['error']}")
                 else:
-                    print(f"\n>>> Apollo (Unexpected Response Format): {response}")
+                    print(f"🤖 Apollo (Unexpected Response Format): {response}")
 
             except EOFError:
                 print("\nExiting chat.")
