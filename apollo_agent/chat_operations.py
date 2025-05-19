@@ -1,15 +1,18 @@
 """
-Chat operations for the ApolloAgent.
+Chat interaction logic and tool function definitions for ApolloAgent.
 
-This module contains functions for chat operations like chat, execute_tool_call,
-fallback_response, and get_available_tools.
+This module defines the core `chat()` coroutine, which handles LLM interactions,
+including tool calls using Ollama's function calling API. It also provides the
+`get_available_tools()` function, which returns the tool definitions available
+to the model, enabling functionality such as file editing, searching, and listing
+workspace directories.
 
 Author: Alberto Barrago
 License: MIT - 2025
 """
+
 import ollama
 from typing import List, Dict, Any
-import inspect
 
 
 async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None]:
@@ -23,9 +26,10 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
     Returns:
         Response from the chat model or error information.
     """
+
     agent.chat_history.append({"role": "user", "content": text})
 
-    print("\n>>> Give me a second: ", end="🤔 Thinking... ", flush=True)
+    print("🤖 Give me a second... ", flush=True)
 
     try:
         while True:
@@ -74,7 +78,7 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
 
                 tool_outputs = []
                 for tool_call in tool_calls:
-                    tool_result = await _execute_tool_call(agent, tool_call)
+                    tool_result = await agent.execute_tool(tool_call)
 
                     tool_outputs.append(
                         {
@@ -109,100 +113,6 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
         print(error_message)
         return {"error": error_message}
 
-async def _execute_tool_call(self, tool_call):
-    """
-    Execute a tool function call (from LLM) with validated arguments and secure redirection.
-    """
-
-    def filter_valid_args(valid_func, args_dict):
-        valid_params = valid_func.__code__.co_varnames[:valid_func.__code__.co_argcount]
-        return {k: v for k, v in args_dict.items() if k in valid_params}
-
-    try:
-        if hasattr(tool_call, "function"):
-            func_name = getattr(tool_call.function, "name", None)
-            raw_args = getattr(tool_call.function, "arguments", {})
-        elif isinstance(tool_call, dict) and "function" in tool_call:
-            func_name = tool_call["function"].get("name")
-            raw_args = tool_call["function"].get("arguments", {})
-        else:
-            return "[ERROR] Invalid tool_call format or missing 'function'."
-
-        if not func_name:
-            return "[ERROR] Function name not provided in tool call."
-
-        if isinstance(raw_args, str):
-            arguments_dict = __import__('json').loads(raw_args)
-        elif isinstance(raw_args, dict):
-            arguments_dict = raw_args
-        else:
-            return f"[ERROR] Unsupported arguments type: {type(raw_args)}"
-    except RuntimeError as e:
-        return f"[ERROR] Failed to parse tool call: {e}"
-
-    redirect_mapping = {
-        "open": "edit_file",
-        "touch": "edit_file",
-        "edit": "edit_file",
-        "create_file": "edit_file",
-        "generate_html_file": "edit_file",
-        "create_html_file": "edit_file"
-    }
-    redirected_name = redirect_mapping.get(func_name, func_name)
-    print(f"Redirecting '{func_name}' to '{redirected_name}'")
-
-    if redirected_name == "edit_file":
-        file_key = (
-                arguments_dict.get("path") or
-                arguments_dict.get("filename") or
-                arguments_dict.get("target_file")
-        )
-        if not file_key:
-            return "[ERROR] Missing file path for 'edit_file' operation."
-
-        abs_workspace = __import__('os').path.abspath(self.workspace_path)
-        abs_target_path = (__import__('os')
-                           .path.abspath(__import__('os').path.join(self.workspace_path, file_key)))
-
-        if not abs_target_path.startswith(abs_workspace):
-            return f"[ERROR] Unsafe path: '{file_key}' is outside workspace."
-
-        arguments_dict = {
-            "target_file": __import__('os').path.relpath(abs_target_path,
-                                                         abs_workspace),
-            "code_edit": arguments_dict.get("content") or
-                         arguments_dict.get("text") or
-                         arguments_dict.get("code_edit"),
-            "instructions": arguments_dict.get("instructions")
-        }
-
-    if redirected_name not in self.available_functions:
-        return f"[ERROR] Tool '{redirected_name}' is not available."
-
-    func = self.available_functions[redirected_name]
-
-    filtered_args = filter_valid_args(func, arguments_dict)
-
-    print(f"Executing... {filtered_args}")
-
-    try:
-        if getattr(func, "__call__") and getattr(func, "__code__", None):
-            if inspect.iscoroutinefunction(func):
-                result = await func(**filtered_args)
-            else:
-                result = func(**filtered_args)
-        else:
-            return "[ERROR] Function is not callable."
-
-        if isinstance(result, (dict, list)):
-            return __import__('json').dumps(result)
-        return str(result)
-    except TypeError as e:
-        return f"[ERROR] Argument mismatch in '{redirected_name}': {e}"
-    except Exception as e:
-        return f"[ERROR] Exception during execution of '{redirected_name}': {e}"
-
-
 def get_available_tools() -> List[Dict[str, Any]]:
     """
     Get all available tools in the Ollama tools format.
@@ -224,22 +134,19 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "type": "object",
                     "required": ["query", "explanation"],
                     "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query."
-                        },
+                        "query": {"type": "string", "description": "The search query."},
                         "target_directories": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Glob patterns for directories to search over."
+                            "description": "Glob patterns for directories to search over.",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -257,15 +164,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                             "type": "string",
                             "description": (
                                 "Path to list contents of, relative to the workspace root."
-                            )
+                            ),
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -282,27 +189,27 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The regex pattern to search for."
+                            "description": "The regex pattern to search for.",
                         },
                         "case_sensitive": {
                             "type": "boolean",
-                            "description": "Whether the search should be case sensitive."
+                            "description": "Whether the search should be case sensitive.",
                         },
                         "include_pattern": {
                             "type": "string",
-                            "description": "Glob pattern for files to include (e.g. '*.ts')."
+                            "description": "Glob pattern for files to include (e.g. '*.ts').",
                         },
                         "exclude_pattern": {
                             "type": "string",
-                            "description": "Glob pattern for files to exclude."
+                            "description": "Glob pattern for files to exclude.",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -318,15 +225,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Fuzzy filename to search for."
+                            "description": "Fuzzy filename to search for.",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -343,15 +250,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                             "type": "string",
                             "description": (
                                 "The path of the file to delete, relative to the workspace root."
-                            )
+                            ),
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -374,29 +281,29 @@ def get_available_tools() -> List[Dict[str, Any]]:
                             "description": (
                                 "The path to the file to create or modify, relative to the "
                                 "workspace root (e.g., 'src/index.html')."
-                            )
+                            ),
                         },
                         "instructions": {
                             "type": "string",
                             "description": (
                                 "A single sentence instruction describing the edit/creation "
                                 "(e.g., 'Creating a new HTML file for the showroom')."
-                            )
+                            ),
                         },
                         "code_edit": {
                             "type": "string",
                             "description": (
                                 "The FULL code content for the file (for new files like HTML) or "
                                 "the edited sections with placeholders (for existing files)."
-                            )
+                            ),
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -409,15 +316,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "The relative path to the file."
+                            "description": "The relative path to the file.",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation."
-                        }
-                    }
-                }
-            }
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -431,14 +338,11 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "type": "object",
                     "required": ["text"],
                     "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "The user's message."
-                        }
-                    }
-                }
-            }
-        }
+                        "text": {"type": "string", "description": "The user's message."}
+                    },
+                },
+            },
+        },
     ]
 
     return tools

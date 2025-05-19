@@ -12,21 +12,22 @@ import os
 from typing import Dict, Any
 from bs4 import BeautifulSoup
 
-async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[str, Any]:
+
+async def list_dir(agent, relative_workspace_path: str) -> Dict[str, Any]:
     """
     List the contents of a directory relative to the workspace root.
 
     Args:
-        workspace_path: The root path of the workspace.
+        agent: Apollo instance class.
         relative_workspace_path: Path relative to the workspace root.
 
     Returns:
         Dictionary with directory contents information.
     """
-    target_path = os.path.join(workspace_path, relative_workspace_path)
+    target_path = os.path.join(agent.workspace_path, relative_workspace_path)
     absolute_target_path = os.path.abspath(target_path)
 
-    if not absolute_target_path.startswith(os.path.abspath(workspace_path)):
+    if not absolute_target_path.startswith(os.path.abspath(agent.workspace_path)):
         error_msg = (
             f"Attempted to list directory outside workspace: {relative_workspace_path}"
         )
@@ -61,21 +62,21 @@ async def list_dir(workspace_path: str, relative_workspace_path: str) -> Dict[st
         "files": files,
     }
 
-async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
+async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
     Deletes a file at the specified path relative to the workspace root.
 
     Args:
-        workspace_path: The root path of the workspace.
+        agent: The ApolloAgent instance.
         target_file: The path to the file to delete, relative to the workspace root.
 
     Returns:
         Dictionary with success status and message or error.
     """
-    file_path = os.path.join(workspace_path, target_file)
+    file_path = os.path.join(agent.workspace_path, target_file)
     absolute_file_path = os.path.abspath(file_path)
 
-    if not absolute_file_path.startswith(os.path.abspath(workspace_path)):
+    if not absolute_file_path.startswith(os.path.abspath(agent.workspace_path)):
         error_msg = f"Attempted to delete file outside workspace: {target_file}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
@@ -98,17 +99,22 @@ async def delete_file(workspace_path: str, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Dict[str, Any]:
+async def edit_file(
+    agent, target_file: str, code_edit: str
+) -> Dict[str, Any]:
     """
     Edits an HTML file intelligently by merging new content into the <body>.
-    Falls back to append or overwrite if file is not HTML.
+    Falls back to append or overwrite if a file is not HTML.
     """
-    file_path = os.path.join(workspace_path, target_file)
+    file_path = os.path.join(agent.workspace_path, target_file)
     absolute_file_path = os.path.abspath(file_path)
-    absolute_workspace_path = os.path.abspath(workspace_path)
+    absolute_workspace_path = os.path.abspath(agent.workspace_path)
 
     if not absolute_file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
+
+    print(f"The actual workspace is ${agent.workspace_path}")
+    print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
 
     try:
         os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
@@ -145,8 +151,9 @@ async def edit_file(workspace_path: str, target_file: str, code_edit: str) -> Di
 
         return {"success": True, "message": f"File updated: {target_file}"}
 
-    except Exception as e:
+    except RuntimeError as e:
         return {"success": False, "error": str(e)}
+
 
 async def reapply(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -154,7 +161,7 @@ async def reapply(agent, target_file: str) -> Dict[str, Any]:
 
     Args:
         agent: The ApolloAgent instance.
-        target_file: The path to the file to reapply edits to, relative to the workspace root.
+        target_file: The path to the file to reapply edit to, relative to the workspace root.
 
     Returns:
         Dictionary with success status and message or error.
@@ -167,4 +174,4 @@ async def reapply(agent, target_file: str) -> Dict[str, Any]:
             "error": error_msg,
         }
 
-    return await agent.edit_file(target_file, agent.last_edit_content)
+    return await edit_file(agent, target_file, agent.last_edit_content)
