@@ -113,8 +113,8 @@ async def edit_file(
     if not absolute_file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-    print(f"The actual workspace is ${agent.workspace_path}")
-    print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
+    #print(f"The actual workspace is ${agent.workspace_path}")
+    #print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
 
     try:
         os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
