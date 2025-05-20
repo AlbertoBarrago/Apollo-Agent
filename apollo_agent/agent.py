@@ -18,15 +18,16 @@ from apollo_agent.file_operations import (
     reapply,
 )
 
-APPOLO_WELCOME = """                          
-              # #   #####   ####  #      #       ####                # #    ####  ###### #    # ##### 
-             #   #  #    # #    # #      #      #    #              #   #  #    # #      ##   #   #   
-            #     # #    # #    # #      #      #    #    #####    #     # #      #####  # #  #   #   
-            ####### #####  #    # #      #      #    #             ####### #  ### #      #  # #   #   
-            #     # #      #    # #      #      #    #             #     # #    # #      #   ##   #   
-            #     # #       ####  ###### ######  ####              #     #  ####  ###### #    #   #
-            
-            By Alberto Barrago, MIT License - 2025.
+APPOLO_WELCOME = """
+                     
+        # #   #####   ####  #      #       ####        
+       #   #  #    # #    # #      #      #    #       
+🤖     #     # #    # #    # #      #      #    #     🤖
+      ####### #####  #    # #      #      #    #       
+      #     # #      #    # #      #      #    #       
+      #     # #       ####  ###### ######  ####        
+    
+      By Alberto Barrago, MIT License - 2025.
             
             """
 
@@ -137,6 +138,7 @@ class ApolloAgent:
                     break
 
                 text_improved = """
+                You are a powerful agentic AI coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
                 You are pair programming with a USER to solve their coding task.
                 The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
                 Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have opened, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more.
