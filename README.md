@@ -53,5 +53,5 @@ ApolloAgent is licensed under the BSD 3-Clause License. See the `LICENSE` file f
 ## Contributing
 
 We welcome contributions to ApolloAgent! If you'd like to help:
-- Report bugs or suggest new features via [GitHub Issues](https://github.com/albertobarrago/ApolloAgent/issues).
+- Report bugs or suggest new features via [GitHub Issues](https://github.com/AlbertoBarrago/Apollo-Agent/issues).
 - Submit pull requests for enhancements or changes.
