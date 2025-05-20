@@ -1,6 +1,6 @@
 # ApolloAgent
 
-![img_1.png](screen.png)
+![img.png](screen.png)
 
 ApolloAgent is a custom AI agent that implements various functions for code assistance.
 
