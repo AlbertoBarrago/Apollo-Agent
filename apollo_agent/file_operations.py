@@ -62,6 +62,7 @@ async def list_dir(agent, relative_workspace_path: str) -> Dict[str, Any]:
         "files": files,
     }
 
+
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
     Deletes a file at the specified path relative to the workspace root.
@@ -99,9 +100,8 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def edit_file(
-    agent, target_file: str, code_edit: str
-) -> Dict[str, Any]:
+
+async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
     """
     Edits an HTML file intelligently by merging new content into the <body>.
     Falls back to append or overwrite if a file is not HTML.
@@ -113,8 +113,8 @@ async def edit_file(
     if not absolute_file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-    #print(f"The actual workspace is ${agent.workspace_path}")
-    #print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
+    # print(f"The actual workspace is ${agent.workspace_path}")
+    # print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
 
     try:
         os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)

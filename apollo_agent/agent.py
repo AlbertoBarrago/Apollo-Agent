@@ -63,17 +63,18 @@ class ApolloAgent:
             "open": "edit_file",
             "touch": "edit_file",
             "edit": "edit_file",
-            "create_file": "edit_file"
+            "create_file": "edit_file",
         }
 
     async def execute_tool(self, tool_call):
         """
         Execute a tool function call (from LLM) with validated arguments and secure redirection.
         """
+
         def filter_valid_args(valid_func, args_dict):
             valid_params = valid_func.__code__.co_varnames[
-                           : valid_func.__code__.co_argcount
-                           ]
+                : valid_func.__code__.co_argcount
+            ]
             return {k: v for k, v in args_dict.items() if k in valid_params}
 
         try:
@@ -119,7 +120,9 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(APPOLO_WELCOME)
-        workspace_path = input("Enter the workspace path (or press Enter for current directory): ")
+        workspace_path = input(
+            "Enter the workspace path (or press Enter for current directory): "
+        )
         if not workspace_path:
             workspace_path = os.getcwd()
 
@@ -159,5 +162,3 @@ class ApolloAgent:
             except KeyboardInterrupt:
                 print("\nExiting chat.")
                 break
-
-

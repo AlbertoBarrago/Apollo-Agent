@@ -164,7 +164,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "Relative path to the file to create or modify (e.g., 'src/index.html')."
+                            "description": "Relative path to the file to create or modify (e.g., 'src/index.html').",
                         },
                         "instructions": {
                             "type": "string",
@@ -172,7 +172,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                                 "Brief explanation of the intent "
                                 "(e.g., 'Add missing import for React'). "
                                 "Should be a single sentence."
-                            )
+                            ),
                         },
                         "code_edit": {
                             "type": "string",
@@ -181,7 +181,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                                 "If modifying an existing file, include the "
                                 "entire revised content. Do not generate diffs or partial patches. "
                                 "Ensure the resulting code is immediately runnable or buildable."
-                            )
+                            ),
                         },
                         "read_first": {
                             "type": "boolean",
@@ -190,15 +190,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                                 "validated with grep or list_dir "
                                 "before editing. Recommended for non-trivial edits."
                             ),
-                            "default": "false"
+                            "default": "false",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "A concise justification for the action being taken."
-                        }
-                    }
-                }
-            }
+                            "description": "A concise justification for the action being taken.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",

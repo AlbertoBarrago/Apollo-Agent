@@ -39,7 +39,7 @@ async def chat(agent, text: str) -> None | dict[str, str] | dict[str, Any | None
                 model="llama3.1",
                 messages=agent.chat_history,
                 tools=get_available_tools(),
-                stream=False
+                stream=False,
             )
 
             message = llm_response.get("message")
