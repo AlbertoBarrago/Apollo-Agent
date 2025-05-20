@@ -27,7 +27,11 @@ APPOLO_WELCOME = """
       #     # #      #    # #      #      #    #       
       #     # #       ####  ###### ######  ####        
     
-      By Alberto Barrago, MIT License - 2025.
+      BSD 3-Clause License
+
+      Copyright (c) 2025, Alberto Barrago
+      All rights reserved.
+
             
             """
 
