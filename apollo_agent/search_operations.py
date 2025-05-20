@@ -5,7 +5,7 @@ This module contains functions for search operations like codebase search,
 grep search, and file search.
 
 Author: Alberto Barrago
-License: MIT - 2025
+License: BSD 3-Clause License - 2025
 """
 
 import os
