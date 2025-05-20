@@ -14,7 +14,8 @@ import fnmatch
 from typing import List, Dict, Any
 
 
-async def codebase_search(agent, query: str, target_directories: List[str] = None
+async def codebase_search(
+    agent, query: str, target_directories: List[str] = None
 ) -> Dict[str, Any]:
     """
     Find snippets of code from the codebase most relevant to the search query.
@@ -64,7 +65,8 @@ async def codebase_search(agent, query: str, target_directories: List[str] = Non
                                 results.append(
                                     {
                                         "file_path": os.path.relpath(
-                                            file_path, agent.workspace_path),
+                                            file_path, agent.workspace_path
+                                        ),
                                         "content_snippet": (
                                             content[:500] + "..."
                                             if len(content) > 500

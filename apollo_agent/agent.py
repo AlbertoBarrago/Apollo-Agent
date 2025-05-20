@@ -18,15 +18,16 @@ from apollo_agent.file_operations import (
     reapply,
 )
 
-APPOLO_WELCOME = """                          
-              # #   #####   ####  #      #       ####                # #    ####  ###### #    # ##### 
-             #   #  #    # #    # #      #      #    #              #   #  #    # #      ##   #   #   
-            #     # #    # #    # #      #      #    #    #####    #     # #      #####  # #  #   #   
-            ####### #####  #    # #      #      #    #             ####### #  ### #      #  # #   #   
-            #     # #      #    # #      #      #    #             #     # #    # #      #   ##   #   
-            #     # #       ####  ###### ######  ####              #     #  ####  ###### #    #   #
-            
-            By Alberto Barrago, MIT License - 2025.
+APPOLO_WELCOME = """
+                     
+        # #   #####   ####  #      #       ####        
+       #   #  #    # #    # #      #      #    #       
+🤖     #     # #    # #    # #      #      #    #     🤖
+      ####### #####  #    # #      #      #    #       
+      #     # #      #    # #      #      #    #       
+      #     # #       ####  ###### ######  ####        
+    
+      By Alberto Barrago, MIT License - 2025.
             
             """
 
@@ -62,17 +63,18 @@ class ApolloAgent:
             "open": "edit_file",
             "touch": "edit_file",
             "edit": "edit_file",
-            "create_file": "edit_file"
+            "create_file": "edit_file",
         }
 
     async def execute_tool(self, tool_call):
         """
         Execute a tool function call (from LLM) with validated arguments and secure redirection.
         """
+
         def filter_valid_args(valid_func, args_dict):
             valid_params = valid_func.__code__.co_varnames[
-                           : valid_func.__code__.co_argcount
-                           ]
+                : valid_func.__code__.co_argcount
+            ]
             return {k: v for k, v in args_dict.items() if k in valid_params}
 
         try:
@@ -98,7 +100,6 @@ class ApolloAgent:
             return f"[ERROR] Failed to parse tool call: {e}"
 
         redirected_name = self.redirect_mapping.get(func_name, func_name)
-        print(f"Redirecting from '{func_name}' to '{redirected_name}'")
 
         func = self.available_functions.get(redirected_name)
         if not func:
@@ -119,7 +120,9 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(APPOLO_WELCOME)
-        workspace_path = input("Enter the workspace path (or press Enter for current directory): ")
+        workspace_path = input(
+            "Enter the workspace path (or press Enter for current directory): "
+        )
         if not workspace_path:
             workspace_path = os.getcwd()
 
@@ -127,7 +130,7 @@ class ApolloAgent:
             os.makedirs(workspace_path)
 
         agent = ApolloAgent(workspace_path=workspace_path)
-        print("Welcome to ApolloAgent Chat Mode!")
+        print("🌟 Welcome to ApolloAgent Chat Mode!")
         print("Type 'exit' to end the conversation.")
         print("Workspace set to:", os.path.abspath(workspace_path))
 
@@ -138,6 +141,7 @@ class ApolloAgent:
                     break
 
                 text_improved = """
+                You are a powerful agentic AI coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
                 You are pair programming with a USER to solve their coding task.
                 The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
                 Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have opened, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more.
@@ -146,11 +150,11 @@ class ApolloAgent:
                 response = await chat(agent, text_improved + user_input)
 
                 if response and isinstance(response, dict) and "response" in response:
-                    print(f"\n>>> Apollo: {response['response']}")
+                    print(f"🤖 Apollo: {response['response']}")
                 elif response and isinstance(response, dict) and "error" in response:
-                    print(f"\n>>> Apollo (Error): {response['error']}")
+                    print(f"🤖 Apollo (Error): {response['error']}")
                 else:
-                    print(f"\n>>> Apollo (Unexpected Response Format): {response}")
+                    print(f"🤖 Apollo (Unexpected Response Format): {response}")
 
             except EOFError:
                 print("\nExiting chat.")
@@ -158,5 +162,3 @@ class ApolloAgent:
             except KeyboardInterrupt:
                 print("\nExiting chat.")
                 break
-
-
