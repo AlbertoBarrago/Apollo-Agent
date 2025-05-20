@@ -1,5 +1,6 @@
 """
-ApolloAgent is a custom AI agent that implements various functions for code assistance.
+In this file is present the entire list of tools that we are processing in the chat.
+
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
