@@ -1,7 +1,7 @@
 """
 ApolloAgent is a custom AI agent that implements various functions for code assistance.
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2025
+License: BSD 3-Clause License - 2024
 
 This file provides backward compatibility for existing code that imports ApolloAgent from here.
 The actual implementation has been moved to the apollo_agent package.

@@ -8,7 +8,7 @@ to the model, enabling functionality such as file editing, searching, and listin
 workspace directories.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2025
+License: BSD 3-Clause License - 2024
 """
 
 import ollama
