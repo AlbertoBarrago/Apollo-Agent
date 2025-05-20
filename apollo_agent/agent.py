@@ -1,7 +1,12 @@
 """
 ApolloAgent is a custom AI agent that implements various functions for code assistance.
+
+This is the main module for the ApolloAgent agent.
+The functions chat_terminal and execute_tool are responsible
+for the chat mode and tool execution, respectively.
+
 Author: Alberto Barrago
-License: MIT - 2025
+License: BSD 3-Clause License - 2025
 """
 
 import inspect
@@ -27,7 +32,11 @@ APPOLO_WELCOME = """
       #     # #      #    # #      #      #    #       
       #     # #       ####  ###### ######  ####        
     
-      By Alberto Barrago, MIT License - 2025.
+      BSD 3-Clause License
+
+      Copyright (c) 2025, Alberto Barrago
+      All rights reserved.
+
             
             """
 

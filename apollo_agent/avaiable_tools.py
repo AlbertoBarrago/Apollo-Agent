@@ -1,3 +1,10 @@
+"""
+In this file is present the entire list of tools that we are processing in the chat.
+
+Author: Alberto Barrago
+License: BSD 3-Clause License - 2025
+"""
+
 from typing import List, Dict, Any
 
 
