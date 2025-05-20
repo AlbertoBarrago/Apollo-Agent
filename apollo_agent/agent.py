@@ -6,7 +6,7 @@ The functions chat_terminal and execute_tool are responsible
 for the chat mode and tool execution, respectively.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2025
+License: BSD 3-Clause License - 2024
 """
 
 import inspect
@@ -34,7 +34,7 @@ APPOLO_WELCOME = """
     
       BSD 3-Clause License
 
-      Copyright (c) 2025, Alberto Barrago
+      Copyright (c) 2024, Alberto Barrago
       All rights reserved.
 
             

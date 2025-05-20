@@ -5,7 +5,7 @@ This module contains functions for file operations like listing directories,
 deleting files, editing files, and reapplying edits.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2025
+License: BSD 3-Clause License - 2024
 """
 
 import os
