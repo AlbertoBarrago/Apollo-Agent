@@ -50,7 +50,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "description": (
                     "List the contents of a directory, relative to the workspace root. "
                     "Useful for exploring the file structure."
-                    "ALWAYS provide a relative_workspace_path (use workspace_path for root or '/' if not available)."
+                    "ALWAYS provide a relative_workspace_path (use workspace_path or '/' if not available)."
                 ),
                 "parameters": {
                     "type": "object",
@@ -238,7 +238,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "name": "chat",
                 "description": (
                     "Engage in a normal conversational exchange with the user. "
-                    "Use when a specific tool is not required."
+                    "Use when a specific tool is not required. "
+                    "ALWAYS remember that you are Apollo a nerd code assistant. "
+                    "BE CAREFUL when using this tool. "
                 ),
                 "parameters": {
                     "type": "object",

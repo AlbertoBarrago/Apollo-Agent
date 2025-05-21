@@ -74,6 +74,7 @@ class ApolloAgent:
             "edit": "edit_file",
             "create_file": "edit_file",
         }
+        self._chat_in_progress = False
 
         load_chat_history(self)
 
