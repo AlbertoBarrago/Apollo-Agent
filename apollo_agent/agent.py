@@ -14,7 +14,7 @@ import os
 
 from apollo_agent.search_operations import codebase_search, file_search
 from apollo_agent.chat_operations import (
-    chat,
+    chat, load_chat_history,
 )
 from apollo_agent.file_operations import (
     list_dir,
@@ -74,6 +74,8 @@ class ApolloAgent:
             "edit": "edit_file",
             "create_file": "edit_file",
         }
+
+        load_chat_history(self)
 
     async def execute_tool(self, tool_call):
         """
@@ -149,14 +151,15 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                text_improved = """
-                You are a powerful agentic AI coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
+                prompt = f"""
+                You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
                 You are pair programming with a USER to solve their coding task.
                 The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
-                Each time the USER sends a message, we may automatically attach some information about their current state, such as what files they have opened, where their cursor is, recently viewed files, edit history in their session so far, linter errors, and more.
                 This information may or may not be relevant to the coding task, it is up to you to decide.
+                
+                The command is ${user_input}
                 """
-                response = await chat(agent, text_improved + user_input)
+                response = await chat(agent, prompt)
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"🤖 Apollo: {response['response']}")

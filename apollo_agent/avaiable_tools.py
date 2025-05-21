@@ -50,6 +50,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "description": (
                     "List the contents of a directory, relative to the workspace root. "
                     "Useful for exploring the file structure."
+                    "ALWAYS provide a relative_workspace_path (use workspace_path for root or '/' if not available)."
                 ),
                 "parameters": {
                     "type": "object",
@@ -163,6 +164,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "Create or edit a file at the specified path, relative to the workspace root. "
                     "Used for code, text, config, or markup files. To modify a file, it is highly "
                     "recommended to first read it using other tools like grep_search or list_dir. "
+                    "You must supply the full desired contents of the file in `code_edit`."
+                    "IMPORTANT: You MUST always provide both 'target_file' and 'code_edit' parameters. "
+                    "To modify a file, it is highly recommended to first read it using other tools like grep_search or list_dir. "
                     "You must supply the full desired contents of the file in `code_edit`."
                 ),
                 "parameters": {
