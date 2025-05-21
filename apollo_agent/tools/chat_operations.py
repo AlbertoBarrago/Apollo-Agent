@@ -16,7 +16,7 @@ import ollama
 import json
 
 from typing import Any
-from apollo_agent.avaiable_tools import get_available_tools
+from apollo_agent.tools.avaiable_tools import get_available_tools
 from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
 
 

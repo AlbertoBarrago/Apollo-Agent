@@ -12,11 +12,11 @@ License: BSD 3-Clause License - 2024
 import inspect
 import os
 
-from apollo_agent.search_operations import codebase_search, file_search
-from apollo_agent.chat_operations import (
+from apollo_agent.tools.search_operations import codebase_search, file_search
+from apollo_agent.tools.chat_operations import (
     chat, load_chat_history,
 )
-from apollo_agent.file_operations import (
+from apollo_agent.tools.file_operations import (
     list_dir,
     delete_file,
     edit_file,
