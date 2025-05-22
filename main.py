@@ -7,8 +7,8 @@ This file provides backward compatibility for existing code that imports ApolloA
 The actual implementation has been moved to the apollo_agent package.
 """
 
-from apollo_agent import ApolloAgent
 import asyncio
+from apollo_agent import ApolloAgent
 
 if __name__ == "__main__":
     asyncio.run(ApolloAgent.chat_terminal())

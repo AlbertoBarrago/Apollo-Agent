@@ -9,14 +9,11 @@ License: BSD 3-Clause License - 2024
 """
 
 import unittest
-import asyncio
-import json
-import os
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
+from unittest.mock import AsyncMock, patch, mock_open
 
 from apollo_agent.tools.chat_operations import ApolloAgentChat
 from apollo_agent.tools.tool_executor import ToolExecutor
-from apollo_agent.config import Config
+from apollo_agent.config.setup import Config
 
 
 class TestApolloAgentChat(unittest.TestCase):

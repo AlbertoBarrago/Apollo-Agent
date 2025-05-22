@@ -107,14 +107,7 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                prompt = f"""
-                You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
-                You are pair programming with a USER to solve their coding task.
-                The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
-                This information may or may not be relevant to the coding task, it is up to you to decide.
-
-                The command is ${user_input}
-                """
+                prompt = f"${Config.PROMPT_FINE_TUNE_V1} The command is ${user_input}"
                 response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:

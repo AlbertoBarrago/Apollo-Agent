@@ -41,6 +41,13 @@ class Config:
     MAX_HISTORY_MESSAGES = 10
     MAX_SESSION_MESSAGES = 5
 
+    PROMPT_FINE_TUNE_V1 = """
+    You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
+    You are pair programming with a USER to solve their coding task.
+    The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
+    This information may or may not be relevant to the coding task, it is up to you to decide.
+    """
+
     # Error messages
     ERROR_CHAT_IN_PROGRESS = (
         "Chat already in progress, please wait for current request to complete"
