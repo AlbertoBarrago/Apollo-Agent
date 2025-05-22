@@ -5,6 +5,7 @@ interactions and tool function definitions for ApolloAgent.
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2024
 """
+
 import re
 import ollama
 import json
@@ -76,7 +77,8 @@ class ApolloAgentChat:
             recent_tool_calls: The recent tool calls for loop detection.
 
         Returns:
-            A tuple of (result, current_tool_calls) where result is a response dict if a loop is detected,
+            A tuple of (results, current_tool_calls) where
+            results is a response dict if a loop is detected,
             or None if processing should continue, and current_tool_calls is a list of function names.
         """
         if not isinstance(tool_calls, list):
@@ -211,9 +213,13 @@ class ApolloAgentChat:
             try:
                 llm_response = await self._get_llm_response_from_ollama(iterations)
             except RuntimeError as e:
-                return {"error": f"Failed to get response from language model: {str(e)}"}
+                return {
+                    "error": f"Failed to get response from language model: {str(e)}"
+                }
 
-            message, tool_calls, content = await self._process_llm_response(llm_response)
+            message, tool_calls, content = await self._process_llm_response(
+                llm_response
+            )
             if message is None:
                 return {"response": Config.ERROR_EMPTY_LLM_MESSAGE}
 
@@ -229,7 +235,9 @@ class ApolloAgentChat:
                 return {"response": content}
             else:
                 print("[WARNING] LLM response had neither tool_calls nor content.")
-                return {"response": "Completed processing, but received no final message content."}
+                return {
+                    "response": "Completed processing, but received no final message content."
+                }
         # Handle reaching maximum iterations
         timeout_message = Config.ERROR_MAX_ITERATIONS.format(
             max_iterations=Config.MAX_CHAT_ITERATIONS
@@ -261,8 +269,7 @@ class ApolloAgentChat:
             for msg in self.chat_history
             if not (
                 msg.get("role") == "system"
-                and "try to reach a conclusion soon"
-                in msg.get("content", "").lower()
+                and "try to reach a conclusion soon" in msg.get("content", "").lower()
             )
         ]
 

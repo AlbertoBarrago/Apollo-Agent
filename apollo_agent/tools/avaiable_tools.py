@@ -179,8 +179,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "Relative path to the file to "
-                                           "create or modify (e.g., 'index.html,"
-                                           " main.py, style.css').",
+                            "create or modify (e.g., 'index.html,"
+                            " main.py, style.css').",
                         },
                         "instructions": {
                             "type": "string",
