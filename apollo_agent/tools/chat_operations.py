@@ -15,7 +15,7 @@ from typing import Any
 
 from apollo_agent.config.avaiable_tools import get_available_tools
 from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
-from apollo_agent.config.setup import Config
+from apollo_agent.config.constant import Constant
 
 
 class ApolloAgentChat:
@@ -102,7 +102,7 @@ class ApolloAgentChat:
 
         if iterations > 1 and current_tool_calls == recent_tool_calls:
             print("[WARNING] Detected repeated tool call pattern, breaking loop")
-            loop_detected_msg = Config.ERROR_LOOP_DETECTED
+            loop_detected_msg = Constant.ERROR_LOOP_DETECTED
             self.permanent_history.append(
                 {"role": "assistant", "content": loop_detected_msg}
             )
@@ -140,11 +140,11 @@ class ApolloAgentChat:
             # Add a system message to encourage concluding after a few iterations
             if iterations > 2:
                 self.chat_history.append(
-                    {"role": "system", "content": Config.SYSTEM_CONCLUDE_SOON}
+                    {"role": "system", "content": Constant.SYSTEM_CONCLUDE_SOON}
                 )
 
             llm_response = ollama.chat(
-                model=Config.LLM_MODEL,
+                model=Constant.LLM_MODEL,
                 messages=self.chat_history,
                 tools=get_available_tools(),
                 stream=False,
@@ -192,7 +192,7 @@ class ApolloAgentChat:
         """
         if self._chat_in_progress:
             print("[WARNING] Chat already in progress, ignoring concurrent request")
-            return {"error": Config.ERROR_CHAT_IN_PROGRESS}
+            return {"error": Constant.ERROR_CHAT_IN_PROGRESS}
 
         self._chat_in_progress = True
 
@@ -222,9 +222,9 @@ class ApolloAgentChat:
         Executes several iterations of interaction with a language model (LLM) and processes
         the result, showing the reasoning process at each step.
         """
-        while iterations < Config.MAX_CHAT_ITERATIONS:
+        while iterations < Constant.MAX_CHAT_ITERATIONS:
             iterations += 1
-            print(f"\n[STARTING ITERATION {iterations}/{Config.MAX_CHAT_ITERATIONS}]")
+            print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
 
             try:
                 llm_response = await self._get_llm_response_from_ollama(iterations)
@@ -237,7 +237,7 @@ class ApolloAgentChat:
                 llm_response
             )
             if message is None:
-                return {"response": Config.ERROR_EMPTY_LLM_MESSAGE}
+                return {"response": Constant.ERROR_EMPTY_LLM_MESSAGE}
 
             if tool_calls:
                 result, current_tool_calls = await self._handle_tool_calls(
@@ -259,8 +259,8 @@ class ApolloAgentChat:
                     "response": "Completed processing, but received no final message content."
                 }
         # Handle reaching maximum iterations
-        timeout_message = Config.ERROR_MAX_ITERATIONS.format(
-            max_iterations=Config.MAX_CHAT_ITERATIONS
+        timeout_message = Constant.ERROR_MAX_ITERATIONS.format(
+            max_iterations=Constant.MAX_CHAT_ITERATIONS
         )
         self.permanent_history.append({"role": "assistant", "content": timeout_message})
         return {"response": timeout_message}
@@ -299,12 +299,12 @@ class ApolloAgentChat:
 
         Args:
             file_path: Path to save the JSON file.
-            Default to Config.CHAT_HISTORY_FILE.
+            Default to Constant.CHAT_HISTORY_FILE.
             max_messages: Maximum number of user messages to keep in history.
-            Default to Config.MAX_HISTORY_MESSAGES.
+            Default to Constant.MAX_HISTORY_MESSAGES.
         """
-        file_path = file_path or Config.CHAT_HISTORY_FILE
-        max_messages = max_messages or Config.MAX_HISTORY_MESSAGES
+        file_path = file_path or Constant.CHAT_HISTORY_FILE
+        max_messages = max_messages or Constant.MAX_HISTORY_MESSAGES
         try:
             user_messages = []
 
@@ -328,7 +328,7 @@ class ApolloAgentChat:
                     if not existing_data or not cleaned_history:
                         session_marker = {
                             "role": "system",
-                            "content": Config.SYSTEM_NEW_SESSION.format(
+                            "content": Constant.SYSTEM_NEW_SESSION.format(
                                 timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
                             ),
                         }
@@ -336,7 +336,7 @@ class ApolloAgentChat:
             except (FileNotFoundError, json.JSONDecodeError):
                 session_marker = {
                     "role": "system",
-                    "content": Config.SYSTEM_NEW_SESSION.format(
+                    "content": Constant.SYSTEM_NEW_SESSION.format(
                         timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
                     ),
                 }
@@ -366,12 +366,12 @@ class ApolloAgentChat:
 
         Args:
             file_path: Path to the JSON file containing chat history.
-            Default to Config.CHAT_HISTORY_FILE.
+            Default to Constant.CHAT_HISTORY_FILE.
             max_session_messages: Maximum number of messages to load from the last session.
-            Default to Config.MAX_SESSION_MESSAGES.
+            Default to Constant.MAX_SESSION_MESSAGES.
         """
-        file_path = file_path or Config.CHAT_HISTORY_FILE
-        max_session_messages = max_session_messages or Config.MAX_SESSION_MESSAGES
+        file_path = file_path or Constant.CHAT_HISTORY_FILE
+        max_session_messages = max_session_messages or Constant.MAX_SESSION_MESSAGES
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 all_history = json.load(file)
@@ -423,7 +423,7 @@ class ApolloAgentChat:
     async def _execute_tool(self, tool_call: dict) -> Any:
         """Execute a tool call using the associated tool executor's execute_tool method."""
         if not self.tool_executor:
-            return Config.ERROR_NO_AGENT
+            return Constant.ERROR_NO_AGENT
 
         try:
             return await self.tool_executor.execute_tool(tool_call)

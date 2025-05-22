@@ -11,7 +11,10 @@ License: BSD 3-Clause License - 2024
 
 import os
 
-from apollo_agent.tools.search_operations import codebase_search, file_search
+from apollo_agent.tools.search_operations import (
+    codebase_search,
+    file_search,
+    grep_search)
 from apollo_agent.tools.chat_operations import ApolloAgentChat
 from apollo_agent.tools.file_operations import (
     list_dir,
@@ -20,7 +23,7 @@ from apollo_agent.tools.file_operations import (
     reapply,
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
-from apollo_agent.config.setup import Config
+from apollo_agent.config.constant import Constant
 
 
 class ApolloAgent:
@@ -56,6 +59,7 @@ class ApolloAgent:
                 "edit_file": edit_file,
                 "reapply": reapply,
                 "chat": self.chat_agent.chat,
+                "grep_search": grep_search
             }
         )
 
@@ -71,8 +75,8 @@ class ApolloAgent:
 
         # Load chat history
         self.chat_agent.load_chat_history(
-            file_path=Config.CHAT_HISTORY_FILE,
-            max_session_messages=Config.MAX_SESSION_MESSAGES,
+            file_path=Constant.CHAT_HISTORY_FILE,
+            max_session_messages=Constant.MAX_SESSION_MESSAGES,
         )
 
     async def execute_tool(self, tool_call):
@@ -88,7 +92,7 @@ class ApolloAgent:
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
-        print(Config.APPOLO_WELCOME)
+        print(Constant.APPOLO_WELCOME)
         workspace_path = input(
             "Enter the workspace path (or press Enter for current directory): "
         )
@@ -109,7 +113,7 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                prompt = f"${Config.PROMPT_FINE_TUNE_V1} The command is ${user_input}"
+                prompt = f"${Constant.PROMPT_FINE_TUNE_V1} The command is ${user_input}"
                 response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:

@@ -1,71 +1,54 @@
 """
-Configuration settings for the ApolloAgent.
+Setup script for ApolloAgent.
 
-This module contains configuration settings for the ApolloAgent,
-including file paths, model names, and other constants.
+This module uses setuptools to create a distributable package for ApolloAgent.
+It reads version information from apollo_agent/version.py.
 
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2024
 """
 
+from setuptools import setup, find_packages
+import os
+import re
 
-class Config:
-    """Configuration settings for the ApolloAgent."""
+with open(os.path.join('apollo_agent', 'version.py'), 'r') as f:
+    version_file = f.read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    if version_match:
+        version = version_match.group(1)
+    else:
+        raise RuntimeError("Unable to find version string in version.py")
 
-    # Welcome, Logo in ASCII
-    APPOLO_WELCOME = """
+with open('README.md', 'r', encoding='utf-8') as f:
+    long_description = f.read()
 
-            # #   #####   ####  #      #       ####        
-           #   #  #    # #    # #      #      #    #       
-    🤖     #     # #    # #    # #      #      #    #     🤖
-          ####### #####  #    # #      #      #    #       
-          #     # #      #    # #      #      #    #       
-          #     # #       ####  ###### ######  ####        
+# Read requirements from requirements.txt
+with open('requirements.txt', 'r', encoding="utf-8") as f:
+    requirements = f.read().splitlines()
 
-          BSD 3-Clause License
-
-          Copyright (c) 2024, Alberto Barrago
-          All rights reserved.
-
-
-                """
-
-    # File paths
-    CHAT_HISTORY_FILE = "chat_history.json"
-
-    # LLM settings
-    LLM_MODEL = "llama3.1"
-
-    # Chat settings
-    MAX_CHAT_ITERATIONS = 5
-    MAX_HISTORY_MESSAGES = 10
-    MAX_SESSION_MESSAGES = 5
-
-    PROMPT_FINE_TUNE_V1 = """
-    You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
-    You are pair programming with a USER to solve their coding task.
-    The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
-    This information may or may not be relevant to the coding task, it is up to you to decide.
-    """
-
-    # Error messages
-    ERROR_CHAT_IN_PROGRESS = (
-        "Chat already in progress, please wait for current request to complete"
-    )
-    ERROR_EMPTY_LLM_MESSAGE = "Received an empty message from the model."
-    ERROR_LOOP_DETECTED = (
-        "I noticed a potential loop in my processing. "
-        "Let me summarize what I've found so far."
-    )
-    ERROR_MAX_ITERATIONS = (
-        "Reached maximum number of tool call iterations ({max_iterations}). "
-        "Let me summarize what I've found so far."
-    )
-    ERROR_NO_AGENT = "No agent associated with this chat instance"
-
-    # System messages
-    SYSTEM_NEW_SESSION = "New session started at {timestamp}"
-    SYSTEM_CONCLUDE_SOON = (
-        "Please try to reach a conclusion soon. "
-        "Avoid using more tools unless absolutely necessary."
-    )
+setup(
+    name="apollo-agent",
+    version=version,
+    author="Alberto Barrago",
+    author_email="albertobarrago@gmail.com",
+    description="A custom AI agent that implements various functions for code assistance",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/AlbertoBarrago/Apollo-Agent",
+    packages=find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+        "Development Status :: 3 - Alpha",
+    ],
+    python_requires=">=3.8",
+    install_requires=requirements,
+    entry_points={
+        "console_scripts": [
+            "apollo=apollo_agent.cli.main:main",
+            "apollo-version=apollo_agent.cli.version_info:print_version_info",
+        ],
+    },
+)
