@@ -77,9 +77,11 @@ class ApolloAgent:
 
     async def execute_tool(self, tool_call):
         """
-        Execute a tool function call (from LLM) with validated arguments and secure redirection.
+        Execute a tool function call (from LLM) with
+        validated arguments and secure redirection.
 
-        This method is now a wrapper around the ToolExecutor's execute_tool method for backward compatibility.
+        This method is now a wrapper around the ToolExecutor's
+        execute_tool method for backward compatibility.
         """
         return await self.tool_executor.execute_tool(tool_call)
 

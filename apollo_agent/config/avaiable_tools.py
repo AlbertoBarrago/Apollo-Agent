@@ -47,30 +47,26 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "list_dir",
-                "description": (
-                    "List the contents of a directory, relative to the workspace root. "
-                    "Useful for exploring the file structure."
-                    "ALWAYS provide a relative_workspace_path "
-                    "(use workspace_path or '/' if not available)."
-                ),
+                "description": "List files and directories in a specified path relative to workspace. "
+                               "Use \"\" or \".\" for workspace root, not \"/\".",
                 "parameters": {
                     "type": "object",
-                    "required": ["relative_workspace_path", "explanation"],
                     "properties": {
                         "relative_workspace_path": {
                             "type": "string",
-                            "description": (
-                                "Path to list contents of, relative to the workspace root."
-                            ),
+                            "description": "Path relative to workspace root. "
+                                           "Use empty string or \".\" to list workspace root."
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "One sentence explanation.",
-                        },
+                            "description": "Optional explanation of why you're listing this directory."
+                        }
                     },
-                },
-            },
+                    "required": ["relative_workspace_path"]
+                }
+            }
         },
+
         {
             "type": "function",
             "function": {

@@ -13,7 +13,7 @@ import uuid
 import time
 from typing import Any
 
-from apollo_agent.tools.avaiable_tools import get_available_tools
+from apollo_agent.config.avaiable_tools import get_available_tools
 from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
 from apollo_agent.config.setup import Config
 
@@ -149,6 +149,32 @@ class ApolloAgentChat:
                 tools=get_available_tools(),
                 stream=False,
             )
+            # Extract and print the reasoning
+            message = llm_response.get("message", {})
+            content = message.get("content", "") if isinstance(message, dict) else getattr(message, "content", "")
+            tool_calls = message.get("tool_calls", []) if isinstance(message, dict) else getattr(message, "tool_calls",
+                                                                                                 [])
+
+            # Print the reasoning (both content and tool calls)
+            print(f"\n{'=' * 50}")
+            print(f"[ITERATION {iterations} - REASONING]")
+            if content:
+                print(f"\nThinking: {content}\n")
+
+            if tool_calls:
+                print("Planning to use tools:")
+                for i, tool in enumerate(tool_calls):
+                    if isinstance(tool, dict) and "function" in tool:
+                        func_name = tool["function"].get("name", "unknown")
+                        func_args = tool["function"].get("arguments", {})
+                    else:
+                        func_name = getattr(tool.function, "name", "unknown") if hasattr(tool,
+                                                                                         "function") else "unknown"
+                        func_args = getattr(tool.function, "arguments", {}) if hasattr(tool, "function") else {}
+
+                    print(f"  {i + 1}. {func_name}({json.dumps(func_args, indent=2)})")
+            print(f"{'=' * 50}\n")
+
             return llm_response
         except RuntimeError as e:
             print(f"[ERROR] Exception during ollama.chat call: {str(e)}")
@@ -194,21 +220,11 @@ class ApolloAgentChat:
     async def start_iterations(self, iterations, recent_tool_calls):
         """
         Executes several iterations of interaction with a language model (LLM) and processes
-        the result. The process involves handling responses, performing tool calls if required,
-        and appending final content to the permanent history. It stops after reaching the defined
-        maximum number of iterations or upon receiving specific responses.
-
-        :param iterations:
-            The current iteration count.
-        :param recent_tool_calls:
-            A dictionary or list capturing the recent tool invocations made during the process.
-        :return:
-            A dictionary containing either the processed response, or an error message if any
-            issues occurred.
+        the result, showing the reasoning process at each step.
         """
         while iterations < Config.MAX_CHAT_ITERATIONS:
             iterations += 1
-            print(f"Starting iteration {iterations}/{Config.MAX_CHAT_ITERATIONS}")
+            print(f"\n[STARTING ITERATION {iterations}/{Config.MAX_CHAT_ITERATIONS}]")
 
             try:
                 llm_response = await self._get_llm_response_from_ollama(iterations)
@@ -227,10 +243,14 @@ class ApolloAgentChat:
                 result, current_tool_calls = await self._handle_tool_calls(
                     tool_calls, iterations, recent_tool_calls
                 )
+                print(f"[EXECUTING TOOLS], ${current_tool_calls}")
                 if result:
+                    print("[LOOP DETECTED - FINISHING]")
                     return result
                 recent_tool_calls = current_tool_calls
+                print("[TOOLS EXECUTED - CONTINUING REASONING]")
             elif content is not None:
+                print("[FINAL RESPONSE READY]")
                 self.permanent_history.append({"role": "assistant", "content": content})
                 return {"response": content}
             else:
@@ -324,7 +344,7 @@ class ApolloAgentChat:
 
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump(cleaned_history, file, indent=4, cls=ApolloJSONEncoder)
-            print(f"Chat history successfully saved to {file_path}")
+            #print(f"Chat history successfully saved to {file_path}")
         except FileNotFoundError:
             print(
                 f"[WARNING] {file_path} not found. Starting with an empty chat history."

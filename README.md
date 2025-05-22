@@ -16,6 +16,7 @@ ApolloAgent provides the following functionality:
 - **Reapply Edits**: Reapply the last edit to a chosen file with ease.
 - **Chat Interface**: Engage conversationally with ApolloAgent, powered by Google's Gemini Flash AI.
 - **Continuous Mode**: Chat and execute Python code seamlessly during interactive sessions.
+- **Reasoning Visualization**: See the AI's step-by-step reasoning process and tool execution planning in real-time.
 
 ## Installation
 
