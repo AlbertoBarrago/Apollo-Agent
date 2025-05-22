@@ -24,6 +24,7 @@ async def list_dir(agent, relative_workspace_path: str) -> Dict[str, Any]:
     Returns:
         Dictionary with directory contents information.
     """
+
     target_path = os.path.join(agent.workspace_path, relative_workspace_path)
     absolute_target_path = os.path.abspath(target_path)
 
