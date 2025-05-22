@@ -63,5 +63,5 @@ class ApolloJSONEncoder(json.JSONEncoder):
         # As a last resort, convert to string
         try:
             return str(obj)
-        except Exception:
-            return f"<Unserializable object of type {type(obj).__name__}>"
+        except SystemError as e:
+            return f"<Unserializable object of type {type(obj).__name__}, error: {e}>"

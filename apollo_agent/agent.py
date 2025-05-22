@@ -14,7 +14,7 @@ import os
 
 from apollo_agent.tools.search_operations import codebase_search, file_search
 from apollo_agent.tools.chat_operations import (
-    chat, load_chat_history,
+   ApolloAgentChat
 )
 from apollo_agent.tools.file_operations import (
     list_dir,
@@ -58,6 +58,8 @@ class ApolloAgent:
         self.workspace_path = workspace_path or os.getcwd()
         self.last_edit_file = None
         self.last_edit_content = None
+        self.chat_agent = ApolloAgentChat()
+        self.chat_agent.set_agent(self)
         self.available_functions = {
             "codebase_search": codebase_search,
             "list_dir": list_dir,
@@ -65,18 +67,16 @@ class ApolloAgent:
             "delete_file": delete_file,
             "edit_file": edit_file,
             "reapply": reapply,
-            "chat": chat,
+            "chat": self.chat_agent.chat,
         }
-        self.chat_history = []
         self.redirect_mapping = {
             "open": "edit_file",
             "touch": "edit_file",
             "edit": "edit_file",
             "create_file": "edit_file",
         }
-        self._chat_in_progress = False
 
-        load_chat_history(self)
+        self.chat_agent.load_chat_history()
 
     async def execute_tool(self, tool_call):
         """
@@ -160,7 +160,7 @@ class ApolloAgent:
                 
                 The command is ${user_input}
                 """
-                response = await chat(agent, prompt)
+                response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"🤖 Apollo: {response['response']}")
