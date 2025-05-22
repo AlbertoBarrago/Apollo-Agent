@@ -7,5 +7,13 @@ License: BSD 3-Clause License - 2024
 """
 
 from apollo_agent.agent import ApolloAgent
+from apollo_agent.version import (
+    __version__,
+    __title__,
+    __description__,
+    __author__,
+    __license__,
+)
+
 
 __all__ = ["ApolloAgent"]
