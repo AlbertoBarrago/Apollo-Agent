@@ -9,36 +9,18 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2024
 """
 
-import inspect
 import os
 
 from apollo_agent.tools.search_operations import codebase_search, file_search
-from apollo_agent.tools.chat_operations import (
-   ApolloAgentChat
-)
+from apollo_agent.tools.chat_operations import ApolloAgentChat
 from apollo_agent.tools.file_operations import (
     list_dir,
     delete_file,
     edit_file,
     reapply,
 )
-
-APPOLO_WELCOME = """
-                     
-        # #   #####   ####  #      #       ####        
-       #   #  #    # #    # #      #      #    #       
-🤖     #     # #    # #    # #      #      #    #     🤖
-      ####### #####  #    # #      #      #    #       
-      #     # #      #    # #      #      #    #       
-      #     # #       ####  ###### ######  ####        
-    
-      BSD 3-Clause License
-
-      Copyright (c) 2024, Alberto Barrago
-      All rights reserved.
-
-            
-            """
+from apollo_agent.tools.tool_executor import ToolExecutor
+from apollo_agent.config.setup import Config
 
 
 class ApolloAgent:
@@ -56,82 +38,55 @@ class ApolloAgent:
                             Defaults to the current working directory if None.
         """
         self.workspace_path = workspace_path or os.getcwd()
-        self.last_edit_file = None
-        self.last_edit_content = None
-        self.chat_agent = ApolloAgentChat()
-        self.chat_agent.set_agent(self)
-        self.available_functions = {
-            "codebase_search": codebase_search,
-            "list_dir": list_dir,
-            "file_search": file_search,
-            "delete_file": delete_file,
-            "edit_file": edit_file,
-            "reapply": reapply,
-            "chat": self.chat_agent.chat,
-        }
-        self.redirect_mapping = {
-            "open": "edit_file",
-            "touch": "edit_file",
-            "edit": "edit_file",
-            "create_file": "edit_file",
-        }
 
-        self.chat_agent.load_chat_history()
+        # Initialize the tool executor
+        self.tool_executor = ToolExecutor(self.workspace_path)
+
+        # Initialize the chat agent
+        self.chat_agent = ApolloAgentChat()
+        self.chat_agent.set_tool_executor(self.tool_executor)
+
+        # Register functions with the tool executor
+        self.tool_executor.register_functions(
+            {
+                "codebase_search": codebase_search,
+                "list_dir": list_dir,
+                "file_search": file_search,
+                "delete_file": delete_file,
+                "edit_file": edit_file,
+                "reapply": reapply,
+                "chat": self.chat_agent.chat,
+            }
+        )
+
+        # Register redirects with the tool executor
+        self.tool_executor.register_redirects(
+            {
+                "open": "edit_file",
+                "touch": "edit_file",
+                "edit": "edit_file",
+                "create_file": "edit_file",
+            }
+        )
+
+        # Load chat history
+        self.chat_agent.load_chat_history(
+            file_path=Config.CHAT_HISTORY_FILE,
+            max_session_messages=Config.MAX_SESSION_MESSAGES,
+        )
 
     async def execute_tool(self, tool_call):
         """
         Execute a tool function call (from LLM) with validated arguments and secure redirection.
+
+        This method is now a wrapper around the ToolExecutor's execute_tool method for backward compatibility.
         """
-
-        def filter_valid_args(valid_func, args_dict):
-            valid_params = valid_func.__code__.co_varnames[
-                : valid_func.__code__.co_argcount
-            ]
-            return {k: v for k, v in args_dict.items() if k in valid_params}
-
-        try:
-            if hasattr(tool_call, "function"):
-                func_name = getattr(tool_call.function, "name", None)
-                raw_args = getattr(tool_call.function, "arguments", {})
-            elif isinstance(tool_call, dict) and "function" in tool_call:
-                func_name = tool_call["function"].get("name")
-                raw_args = tool_call["function"].get("arguments", {})
-            else:
-                return "[ERROR] Invalid tool_call format or missing 'function'."
-
-            if not func_name:
-                return "[ERROR] Function name not provided in tool call."
-
-            if isinstance(raw_args, str):
-                arguments_dict = __import__("json").loads(raw_args)
-            elif isinstance(raw_args, dict):
-                arguments_dict = raw_args
-            else:
-                return f"[ERROR] Unsupported arguments type: {type(raw_args)}"
-        except RuntimeError as e:
-            return f"[ERROR] Failed to parse tool call: {e}"
-
-        redirected_name = self.redirect_mapping.get(func_name, func_name)
-
-        func = self.available_functions.get(redirected_name)
-        if not func:
-            return f"[ERROR] Function '{redirected_name}' not found."
-
-        filtered_args = filter_valid_args(func, arguments_dict)
-
-        try:
-            if inspect.iscoroutinefunction(func):
-                result = await func(self, **filtered_args)
-            else:
-                result = func(self, **filtered_args)
-            return result
-        except RuntimeError as e:
-            return f"[ERROR] Exception while executing '{redirected_name}': {e}"
+        return await self.tool_executor.execute_tool(tool_call)
 
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
-        print(APPOLO_WELCOME)
+        print(Config.APPOLO_WELCOME)
         workspace_path = input(
             "Enter the workspace path (or press Enter for current directory): "
         )
@@ -157,7 +112,7 @@ class ApolloAgent:
                 You are pair programming with a USER to solve their coding task.
                 The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
                 This information may or may not be relevant to the coding task, it is up to you to decide.
-                
+
                 The command is ${user_input}
                 """
                 response = await agent.chat_agent.chat(prompt)

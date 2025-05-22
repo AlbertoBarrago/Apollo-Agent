@@ -36,10 +36,7 @@ class ApolloJSONEncoder(json.JSONEncoder):
 
         # Handle objects with role and content attributes
         if hasattr(obj, "role") and hasattr(obj, "content"):
-            result = {
-                "role": obj.role,
-                "content": obj.content
-            }
+            result = {"role": obj.role, "content": obj.content}
 
             # Handle additional attributes that might be present
             if hasattr(obj, "tool_calls"):
