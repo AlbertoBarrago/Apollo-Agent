@@ -11,7 +11,9 @@ License: BSD 3-Clause License - 2024
 __version__ = "0.1.0"
 
 __title__ = "ApolloAgent"
-__description__ = "A custom AI agent that implements various functions for code assistance"
+__description__ = (
+    "A custom AI agent that implements various functions for code assistance"
+)
 __author__ = "Alberto Barrago"
 __author_email__ = "albertobarrago@gmail.com"
 __license__ = "BSD 3-Clause License"
