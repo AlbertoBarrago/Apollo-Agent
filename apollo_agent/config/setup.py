@@ -12,6 +12,7 @@ License: BSD 3-Clause License - 2024
 class Config:
     """Configuration settings for the ApolloAgent."""
 
+    # Welcome, Logo in ASCII
     APPOLO_WELCOME = """
 
             # #   #####   ####  #      #       ####        

@@ -1,3 +1,10 @@
+"""
+In this file, we define the class for handling chat
+interactions and tool function definitions for ApolloAgent.
+
+Author: Alberto Barrago
+License: BSD 3-Clause License - 2024
+"""
 import re
 import ollama
 import json
@@ -123,6 +130,28 @@ class ApolloAgentChat:
         self.chat_history.extend(tool_outputs)
         return None, current_tool_calls
 
+    async def _get_llm_response_from_ollama(self, iterations: int):
+        """
+        Fetches the LLM response from Ollama, adding a system message if needed.
+        """
+        try:
+            # Add a system message to encourage concluding after a few iterations
+            if iterations > 2:
+                self.chat_history.append(
+                    {"role": "system", "content": Config.SYSTEM_CONCLUDE_SOON}
+                )
+
+            llm_response = ollama.chat(
+                model=Config.LLM_MODEL,
+                messages=self.chat_history,
+                tools=get_available_tools(),
+                stream=False,
+            )
+            return llm_response
+        except RuntimeError as e:
+            print(f"[ERROR] Exception during ollama.chat call: {str(e)}")
+            raise
+
     async def chat(self, text: str) -> None | dict[str, str] | dict[str, Any | None]:
         """
         Responds to the user's message, handling potential tool calls and multi-turn interactions.
@@ -140,100 +169,14 @@ class ApolloAgentChat:
         self._chat_in_progress = True
 
         try:
-            if not self.session_id:
-                self.session_id = str(uuid.uuid4())
-                print(f"[INFO] New chat session initialized: {self.session_id}")
-
-            # Update chat history
-            last_message = (
-                self.permanent_history[-1] if self.permanent_history else None
-            )
-            if (
-                not last_message
-                or last_message.get("role") != "user"
-                or last_message.get("content") != text
-            ):
-                self.permanent_history.append({"role": "user", "content": text})
-                self.chat_history = self.permanent_history.copy()
-                self._save_user_history_to_json()
-            else:
-                self.chat_history = self.permanent_history.copy()
-
-            # Remove any "conclude soon" messages from previous iterations
-            self.chat_history = [
-                msg
-                for msg in self.chat_history
-                if not (
-                    msg.get("role") == "system"
-                    and "try to reach a conclusion soon"
-                    in msg.get("content", "").lower()
-                )
-            ]
+            self._initialize_chat_session(text)
 
             print("🤖 Give me a second, be patience and kind ", flush=True)
 
             iterations = 0
             recent_tool_calls = []
 
-            while iterations < Config.MAX_CHAT_ITERATIONS:
-                iterations += 1
-                print(f"Starting iteration {iterations}/{Config.MAX_CHAT_ITERATIONS}")
-
-                try:
-                    llm_response = ollama.chat(
-                        model=Config.LLM_MODEL,
-                        messages=self.chat_history,
-                        tools=get_available_tools(),
-                        stream=False,
-                    )
-                except RuntimeError as e:
-                    print(f"[ERROR] Exception during ollama.chat call: {str(e)}")
-                    return {
-                        "error": f"Failed to get response from language model: {str(e)}"
-                    }
-
-                # Add a system message to encourage concluding after a few iterations
-                if iterations > 2:
-                    self.chat_history.append(
-                        {"role": "system", "content": Config.SYSTEM_CONCLUDE_SOON}
-                    )
-
-                # Process the LLM response
-                message, tool_calls, content = await self._process_llm_response(
-                    llm_response
-                )
-                if message is None:
-                    return {"response": Config.ERROR_EMPTY_LLM_MESSAGE}
-
-                # Handle tool calls if present
-                if tool_calls:
-                    result, current_tool_calls = await self._handle_tool_calls(
-                        tool_calls, iterations, recent_tool_calls
-                    )
-                    if result:
-                        return result
-                    recent_tool_calls = current_tool_calls
-                # Handle content if present
-                elif content is not None:
-                    self.permanent_history.append(
-                        {"role": "assistant", "content": content}
-                    )
-                    return {"response": content}
-                # Handle case where neither tool_calls nor content is present
-                else:
-                    print("[WARNING] LLM response had neither tool_calls nor content.")
-                    return {
-                        "response": "Completed processing, but received no final message content."
-                    }
-
-            # Handle reaching maximum iterations
-            timeout_message = Config.ERROR_MAX_ITERATIONS.format(
-                max_iterations=Config.MAX_CHAT_ITERATIONS
-            )
-            self.permanent_history.append(
-                {"role": "assistant", "content": timeout_message}
-            )
-            return {"response": timeout_message}
+            return await self.start_iterations(iterations, recent_tool_calls)
 
         except RuntimeError as e:
             error_message = f"[ERROR] RuntimeError during chat processing: {e}"
@@ -246,13 +189,92 @@ class ApolloAgentChat:
         finally:
             self._chat_in_progress = False
 
+    async def start_iterations(self, iterations, recent_tool_calls):
+        """
+        Executes several iterations of interaction with a language model (LLM) and processes
+        the result. The process involves handling responses, performing tool calls if required,
+        and appending final content to the permanent history. It stops after reaching the defined
+        maximum number of iterations or upon receiving specific responses.
+
+        :param iterations:
+            The current iteration count.
+        :param recent_tool_calls:
+            A dictionary or list capturing the recent tool invocations made during the process.
+        :return:
+            A dictionary containing either the processed response, or an error message if any
+            issues occurred.
+        """
+        while iterations < Config.MAX_CHAT_ITERATIONS:
+            iterations += 1
+            print(f"Starting iteration {iterations}/{Config.MAX_CHAT_ITERATIONS}")
+
+            try:
+                llm_response = await self._get_llm_response_from_ollama(iterations)
+            except RuntimeError as e:
+                return {"error": f"Failed to get response from language model: {str(e)}"}
+
+            message, tool_calls, content = await self._process_llm_response(llm_response)
+            if message is None:
+                return {"response": Config.ERROR_EMPTY_LLM_MESSAGE}
+
+            if tool_calls:
+                result, current_tool_calls = await self._handle_tool_calls(
+                    tool_calls, iterations, recent_tool_calls
+                )
+                if result:
+                    return result
+                recent_tool_calls = current_tool_calls
+            elif content is not None:
+                self.permanent_history.append({"role": "assistant", "content": content})
+                return {"response": content}
+            else:
+                print("[WARNING] LLM response had neither tool_calls nor content.")
+                return {"response": "Completed processing, but received no final message content."}
+        # Handle reaching maximum iterations
+        timeout_message = Config.ERROR_MAX_ITERATIONS.format(
+            max_iterations=Config.MAX_CHAT_ITERATIONS
+        )
+        self.permanent_history.append({"role": "assistant", "content": timeout_message})
+        return {"response": timeout_message}
+
+    def _initialize_chat_session(self, text: str):
+        """Initializes the session and updates chat history."""
+        if not self.session_id:
+            self.session_id = str(uuid.uuid4())
+            print(f"[INFO] New chat session initialized: {self.session_id}")
+
+        last_message = self.permanent_history[-1] if self.permanent_history else None
+        if (
+            not last_message
+            or last_message.get("role") != "user"
+            or last_message.get("content") != text
+        ):
+            self.permanent_history.append({"role": "user", "content": text})
+            self.chat_history = self.permanent_history.copy()
+            self._save_user_history_to_json()
+        else:
+            self.chat_history = self.permanent_history.copy()
+
+        # Remove any "conclude soon" messages from previous iterations
+        self.chat_history = [
+            msg
+            for msg in self.chat_history
+            if not (
+                msg.get("role") == "system"
+                and "try to reach a conclusion soon"
+                in msg.get("content", "").lower()
+            )
+        ]
+
     def _save_user_history_to_json(self, file_path=None, max_messages=None):
         """
         Save only the recent user messages to a JSON file, maintaining a session-based history.
 
         Args:
-            file_path: Path to save the JSON file. Defaults to Config.CHAT_HISTORY_FILE.
-            max_messages: Maximum number of user messages to keep in history. Defaults to Config.MAX_HISTORY_MESSAGES.
+            file_path: Path to save the JSON file.
+            Default to Config.CHAT_HISTORY_FILE.
+            max_messages: Maximum number of user messages to keep in history.
+            Default to Config.MAX_HISTORY_MESSAGES.
         """
         file_path = file_path or Config.CHAT_HISTORY_FILE
         max_messages = max_messages or Config.MAX_HISTORY_MESSAGES
@@ -316,8 +338,10 @@ class ApolloAgentChat:
         Load only the most recent session messages from a JSON file into permanent_history.
 
         Args:
-            file_path: Path to the JSON file containing chat history. Defaults to Config.CHAT_HISTORY_FILE.
-            max_session_messages: Maximum number of messages to load from the last session. Defaults to Config.MAX_SESSION_MESSAGES.
+            file_path: Path to the JSON file containing chat history.
+            Default to Config.CHAT_HISTORY_FILE.
+            max_session_messages: Maximum number of messages to load from the last session.
+            Default to Config.MAX_SESSION_MESSAGES.
         """
         file_path = file_path or Config.CHAT_HISTORY_FILE
         max_session_messages = max_session_messages or Config.MAX_SESSION_MESSAGES

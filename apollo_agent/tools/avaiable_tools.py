@@ -50,7 +50,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "description": (
                     "List the contents of a directory, relative to the workspace root. "
                     "Useful for exploring the file structure."
-                    "ALWAYS provide a relative_workspace_path (use workspace_path or '/' if not available)."
+                    "ALWAYS provide a relative_workspace_path "
+                    "(use workspace_path or '/' if not available)."
                 ),
                 "parameters": {
                     "type": "object",
@@ -165,8 +166,10 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "Used for code, text, config, or markup files. To modify a file, it is highly "
                     "recommended to first read it using other tools like grep_search or list_dir. "
                     "You must supply the full desired contents of the file in `code_edit`."
-                    "IMPORTANT: You MUST always provide both 'target_file' and 'code_edit' parameters. "
-                    "To modify a file, it is highly recommended to first read it using other tools like grep_search or list_dir. "
+                    "IMPORTANT: You MUST always provide both 'target_file' "
+                    "and 'code_edit' parameters. "
+                    "To modify a file, it is highly recommended to first read it using other "
+                    "tools like grep_search or list_dir. "
                     "You must supply the full desired contents of the file in `code_edit`."
                 ),
                 "parameters": {
@@ -175,7 +178,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "Relative path to the file to create or modify (e.g., 'src/index.html').",
+                            "description": "Relative path to the file to "
+                                           "create or modify (e.g., 'index.html,"
+                                           " main.py, style.css').",
                         },
                         "instructions": {
                             "type": "string",
@@ -240,7 +245,6 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "Engage in a normal conversational exchange with the user. "
                     "Use when a specific tool is not required. "
                     "ALWAYS remember that you are Apollo a nerd code assistant. "
-                    "BE CAREFUL when using this tool. "
                 ),
                 "parameters": {
                     "type": "object",
