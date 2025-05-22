@@ -36,10 +36,7 @@ class ApolloJSONEncoder(json.JSONEncoder):
 
         # Handle objects with role and content attributes
         if hasattr(obj, "role") and hasattr(obj, "content"):
-            result = {
-                "role": obj.role,
-                "content": obj.content
-            }
+            result = {"role": obj.role, "content": obj.content}
 
             # Handle additional attributes that might be present
             if hasattr(obj, "tool_calls"):
@@ -63,5 +60,5 @@ class ApolloJSONEncoder(json.JSONEncoder):
         # As a last resort, convert to string
         try:
             return str(obj)
-        except Exception:
-            return f"<Unserializable object of type {type(obj).__name__}>"
+        except SystemError as e:
+            return f"<Unserializable object of type {type(obj).__name__}, error: {e}>"
