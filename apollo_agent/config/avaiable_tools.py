@@ -48,7 +48,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "list_dir",
                 "description": "List files and directories in a "
-                               "specified path relative to workspace. "
+                "specified path relative to workspace. "
                 'Use "" or "." for workspace root, not "/".',
                 "parameters": {
                     "type": "object",
@@ -62,7 +62,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "explanation": {
                             "type": "string",
                             "description": "Optional explanation of why"
-                                           " you're listing this directory.",
+                            " you're listing this directory.",
                         },
                     },
                 },
@@ -75,17 +75,13 @@ def get_available_tools() -> List[Dict[str, Any]]:
                 "description": "Search the web for information about a topic. ",
                 "parameters": {
                     "type": "object",
-                    "required": ["search_query", "explanation"],
+                    "required": ["search_query"],
                     "properties": {
                         "search_query": {
                             "type": "string",
-                            "description": "The search query.",
-                        },
-                        "explanation": {
-                            "type": "string",
-                            "description": "One sentence explanation.",
+                            "description": "The search query from user without filter",
                         }
-                    }
+                    },
                 },
             },
         },

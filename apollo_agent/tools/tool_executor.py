@@ -118,10 +118,23 @@ class ToolExecutor:
         filtered_args = filter_valid_args(func, arguments_dict)
 
         try:
-            if inspect.iscoroutinefunction(func):
-                result = await func(self, **filtered_args)
+            if redirected_name == "web_search":
+                if inspect.iscoroutinefunction(func):
+                    if "search_query" in filtered_args:
+                        result = await func(filtered_args["search_query"])
+                    else:
+                        return "[ERROR] Missing required 'search_query' parameter for web_search function."
+                else:
+                    if "search_query" in filtered_args:
+                        result = func(filtered_args["search_query"])
+                    else:
+                        return "[ERROR] Missing required 'search_query' parameter for web_search function."
             else:
-                result = func(self, **filtered_args)
+                if inspect.iscoroutinefunction(func):
+                    result = await func(self, **filtered_args)
+                else:
+                    result = func(self, **filtered_args)
             return result
+
         except RuntimeError as e:
             return f"[ERROR] Exception while executing '{redirected_name}': {e}"

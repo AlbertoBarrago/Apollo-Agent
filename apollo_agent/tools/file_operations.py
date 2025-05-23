@@ -29,9 +29,7 @@ async def list_dir(agent, target_file: str) -> Dict[str, Any]:
     absolute_target_path = os.path.abspath(target_path)
 
     if not absolute_target_path.startswith(os.path.abspath(agent.workspace_path)):
-        error_msg = (
-            f"Attempted to list directory outside workspace: {target_file}"
-        )
+        error_msg = f"Attempted to list directory outside workspace: {target_file}"
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
@@ -62,6 +60,7 @@ async def list_dir(agent, target_file: str) -> Dict[str, Any]:
         "directories": directories,
         "files": files,
     }
+
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -99,6 +98,7 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to delete file {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
     """
@@ -152,6 +152,7 @@ async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
 
     except RuntimeError as e:
         return {"success": False, "error": str(e)}
+
 
 async def reapply(agent, target_file: str) -> Dict[str, Any]:
     """

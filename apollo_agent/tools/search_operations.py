@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 
 
 async def codebase_search(
-        agent, query: str, target_directories: List[str] = None
+    agent, query: str, target_directories: List[str] = None
 ) -> Dict[str, Any]:
     """
     Find snippets of code from the codebase most relevant to the search query.
@@ -45,17 +45,17 @@ async def codebase_search(
         for root, _, files in os.walk(absolute_dir):
             for file in files:
                 if file.endswith(
-                        (
-                                ".py",
-                                ".js",
-                                ".ts",
-                                ".html",
-                                ".css",
-                                ".java",
-                                ".c",
-                                ".cpp",
-                                ".txt",
-                        )
+                    (
+                        ".py",
+                        ".js",
+                        ".ts",
+                        ".html",
+                        ".css",
+                        ".java",
+                        ".c",
+                        ".cpp",
+                        ".txt",
+                    )
                 ):
                     file_path: str = os.path.join(root, file)
                     try:
@@ -65,8 +65,7 @@ async def codebase_search(
                                 results.append(
                                     {
                                         "file_path": os.path.relpath(
-                                            file_path,
-                                            agent.workspace_path
+                                            file_path, agent.workspace_path
                                         ),
                                         "content_snippet": (
                                             content[:500] + "..."
@@ -97,11 +96,11 @@ def _match_pattern_sync(filename: str, pattern: str) -> bool:
 
 
 async def grep_search(
-        agent,
-        query: str,
-        case_sensitive: bool = False,
-        include_pattern: str = None,
-        exclude_pattern: str = None,
+    agent,
+    query: str,
+    case_sensitive: bool = False,
+    include_pattern: str = None,
+    exclude_pattern: str = None,
 ) -> Dict[str, Any]:
     """
     Fast text-based regex search that finds exact pattern matches within files or directories.
