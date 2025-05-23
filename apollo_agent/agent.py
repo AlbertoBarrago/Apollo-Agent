@@ -31,7 +31,6 @@ from apollo_agent.tools.web_search import web_search
 class ApolloAgent:
     """
     ApolloAgent is a custom AI agent that implements various functions for code assistance.
-    This agent is inspired by the Claude 3.7 Sonnet agent for Cursor IDE.
     """
 
     def __init__(self, workspace_path: str = None):
