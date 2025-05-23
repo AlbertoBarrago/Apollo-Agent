@@ -16,7 +16,7 @@ class Constant:
 
             # #   #####   ####  #      #       ####        
            #   #  #    # #    # #      #      #    #       
-    🤖     #     # #    # #    # #      #      #    #     🤖
+          #     # #    # #    # #      #      #    # 
           ####### #####  #    # #      #      #    #       
           #     # #      #    # #      #      #    #       
           #     # #       ####  ###### ######  ####        
@@ -27,7 +27,7 @@ class Constant:
           All rights reserved.
 
 
-                """
+          """
 
     # File paths
     CHAT_HISTORY_FILE = "chat_history.json"
@@ -41,10 +41,9 @@ class Constant:
     MAX_SESSION_MESSAGES = 5
 
     PROMPT_FINE_TUNE_V1 = """
-    You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent. You operate exclusively in Apollo.
+    You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent.
     You are pair programming with a USER to solve their coding task.
-    The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.
-    This information may or may not be relevant to the coding task, it is up to you to decide.
+    The task may require creating a new codebase, produce test, modifying or debugging an existing codebase, or simply answering a question.
     """
 
     # Error messages

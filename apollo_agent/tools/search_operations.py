@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 
 
 async def codebase_search(
-    agent, query: str, target_directories: List[str] = None
+        agent, query: str, target_directories: List[str] = None
 ) -> Dict[str, Any]:
     """
     Find snippets of code from the codebase most relevant to the search query.
@@ -45,19 +45,19 @@ async def codebase_search(
         for root, _, files in os.walk(absolute_dir):
             for file in files:
                 if file.endswith(
-                    (
-                        ".py",
-                        ".js",
-                        ".ts",
-                        ".html",
-                        ".css",
-                        ".java",
-                        ".c",
-                        ".cpp",
-                        ".txt",
-                    )
+                        (
+                                ".py",
+                                ".js",
+                                ".ts",
+                                ".html",
+                                ".css",
+                                ".java",
+                                ".c",
+                                ".cpp",
+                                ".txt",
+                        )
                 ):
-                    file_path = os.path.join(root, file)
+                    file_path: str = os.path.join(root, file)
                     try:
                         with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read()
@@ -65,7 +65,8 @@ async def codebase_search(
                                 results.append(
                                     {
                                         "file_path": os.path.relpath(
-                                            file_path, agent.workspace_path
+                                            file_path,
+                                            agent.workspace_path
                                         ),
                                         "content_snippet": (
                                             content[:500] + "..."
@@ -96,11 +97,11 @@ def _match_pattern_sync(filename: str, pattern: str) -> bool:
 
 
 async def grep_search(
-    agent,
-    query: str,
-    case_sensitive: bool = False,
-    include_pattern: str = None,
-    exclude_pattern: str = None,
+        agent,
+        query: str,
+        case_sensitive: bool = False,
+        include_pattern: str = None,
+        exclude_pattern: str = None,
 ) -> Dict[str, Any]:
     """
     Fast text-based regex search that finds exact pattern matches within files or directories.
@@ -124,7 +125,7 @@ async def grep_search(
 
     for root, _, files in os.walk(agent.workspace_path):
         for file in files:
-            file_path = os.path.join(root, file)
+            file_path: str | bytes = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, agent.workspace_path)
 
             if include_pattern and not _match_pattern_sync(file, include_pattern):
@@ -179,7 +180,7 @@ async def file_search(agent, query: str) -> Dict[str, Any]:
     for root, _, files in os.walk(agent.workspace_path):
         for file in files:
             if query.lower() in file.lower():
-                file_path = os.path.join(root, file)
+                file_path: str | bytes = os.path.join(root, file)
                 results.append(
                     {
                         "file_path": os.path.relpath(file_path, agent.workspace_path),

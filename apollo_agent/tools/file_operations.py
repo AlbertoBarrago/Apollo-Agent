@@ -13,35 +13,35 @@ from typing import Dict, Any
 from bs4 import BeautifulSoup
 
 
-async def list_dir(agent, relative_workspace_path: str) -> Dict[str, Any]:
+async def list_dir(agent, target_file: str) -> Dict[str, Any]:
     """
     List the contents of a directory relative to the workspace root.
 
     Args:
         agent: Apollo instance class.
-        relative_workspace_path: Path relative to the workspace root.
+        target_file: Path relative to the workspace root.
 
     Returns:
         Dictionary with directory contents information.
     """
 
-    target_path = os.path.join(agent.workspace_path, relative_workspace_path)
+    target_path = os.path.join(agent.workspace_path, target_file)
     absolute_target_path = os.path.abspath(target_path)
 
     if not absolute_target_path.startswith(os.path.abspath(agent.workspace_path)):
         error_msg = (
-            f"Attempted to list directory outside workspace: {relative_workspace_path}"
+            f"Attempted to list directory outside workspace: {target_file}"
         )
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
     if not os.path.exists(absolute_target_path):
-        error_msg = f"Path does not exist: {relative_workspace_path}"
+        error_msg = f"Path does not exist: {target_file}"
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
     if not os.path.isdir(absolute_target_path):
-        error_msg = f"Path is not a directory: {relative_workspace_path}"
+        error_msg = f"Path is not a directory: {target_file}"
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
@@ -58,7 +58,7 @@ async def list_dir(agent, relative_workspace_path: str) -> Dict[str, Any]:
             files.append(item)
 
     return {
-        "path": relative_workspace_path,
+        "path": target_file,
         "directories": directories,
         "files": files,
     }
