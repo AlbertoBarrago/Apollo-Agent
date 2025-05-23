@@ -77,10 +77,10 @@ class ApolloAgent:
         )
 
         # Load chat history
-        self.chat_agent.load_chat_history(
-            file_path=Constant.CHAT_HISTORY_FILE,
-            max_session_messages=Constant.MAX_SESSION_MESSAGES,
-        )
+        # self.chat_agent.load_chat_history(
+        #     file_path=Constant.CHAT_HISTORY_FILE,
+        #     max_session_messages=Constant.MAX_SESSION_MESSAGES,
+        # )
 
     async def execute_tool(self, tool_call):
         """

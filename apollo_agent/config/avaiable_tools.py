@@ -79,7 +79,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "search_query": {
                             "type": "string",
-                            "description": "The search query from user without filter",
+                            "description": "The content send by the user",
                         }
                     },
                 },
