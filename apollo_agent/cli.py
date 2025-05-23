@@ -46,17 +46,16 @@ def get_version_info():
     }
 
 
-def print_version_info(as_json=False, show_logo=True):
+def print_version_info(print_json=False):
     """
     Print version information to the console.
 
     Args:
-        as_json: If True, print information in JSON format.
-        show_logo: If True, display the ASCII logo.
+        print_json: If True, print information in JSON format.
     """
     info = get_version_info()
 
-    if as_json:
+    if print_json:
         print(json.dumps(info, indent=2))
     else:
         print(f"{info['name']} v{info['version']}")
@@ -73,9 +72,5 @@ def print_version_info(as_json=False, show_logo=True):
 
 
 if __name__ == "__main__":
-    # If run directly, print version info
-    # Parse command line arguments
     as_json = "--json" in sys.argv
-    hide_logo = "--no-logo" in sys.argv
-
-    print_version_info(as_json=as_json, show_logo=not hide_logo)
+    print_version_info(print_json=as_json)
