@@ -57,7 +57,7 @@ async def codebase_search(
                         ".txt",
                     )
                 ):
-                    file_path = os.path.join(root, file)
+                    file_path: str = os.path.join(root, file)
                     try:
                         with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read()
@@ -124,7 +124,7 @@ async def grep_search(
 
     for root, _, files in os.walk(agent.workspace_path):
         for file in files:
-            file_path = os.path.join(root, file)
+            file_path: str | bytes = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, agent.workspace_path)
 
             if include_pattern and not _match_pattern_sync(file, include_pattern):
@@ -179,7 +179,7 @@ async def file_search(agent, query: str) -> Dict[str, Any]:
     for root, _, files in os.walk(agent.workspace_path):
         for file in files:
             if query.lower() in file.lower():
-                file_path = os.path.join(root, file)
+                file_path: str | bytes = os.path.join(root, file)
                 results.append(
                     {
                         "file_path": os.path.relpath(file_path, agent.workspace_path),

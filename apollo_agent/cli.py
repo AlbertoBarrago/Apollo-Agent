@@ -67,7 +67,7 @@ def print_version_info(as_json=False, show_logo=True):
         print(f"Status: {info['status']}")
         print(f"Repository: {info['repository']}")
         print("\nDependencies:")
-        for dep in info['dependencies']:
+        for dep in info["dependencies"]:
             print(f"  - {dep}")
         print(f"\nRequires Python {info['python_requires']}")
 

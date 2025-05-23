@@ -7,10 +7,10 @@ License: BSD 3-Clause License - 2024
 """
 
 import re
-import ollama
 import json
 import uuid
 import time
+import ollama
 from typing import Any
 
 from apollo_agent.config.avaiable_tools import get_available_tools
@@ -151,9 +151,16 @@ class ApolloAgentChat:
             )
             # Extract and print the reasoning
             message = llm_response.get("message", {})
-            content = message.get("content", "") if isinstance(message, dict) else getattr(message, "content", "")
-            tool_calls = message.get("tool_calls", []) if isinstance(message, dict) else getattr(message, "tool_calls",
-                                                                                                 [])
+            content = (
+                message.get("content", "")
+                if isinstance(message, dict)
+                else getattr(message, "content", "")
+            )
+            tool_calls = (
+                message.get("tool_calls", [])
+                if isinstance(message, dict)
+                else getattr(message, "tool_calls", [])
+            )
 
             # Print the reasoning (both content and tool calls)
             print(f"\n{'=' * 50}")
@@ -168,9 +175,16 @@ class ApolloAgentChat:
                         func_name = tool["function"].get("name", "unknown")
                         func_args = tool["function"].get("arguments", {})
                     else:
-                        func_name = getattr(tool.function, "name", "unknown") if hasattr(tool,
-                                                                                         "function") else "unknown"
-                        func_args = getattr(tool.function, "arguments", {}) if hasattr(tool, "function") else {}
+                        func_name = (
+                            getattr(tool.function, "name", "unknown")
+                            if hasattr(tool, "function")
+                            else "unknown"
+                        )
+                        func_args = (
+                            getattr(tool.function, "arguments", {})
+                            if hasattr(tool, "function")
+                            else {}
+                        )
 
                     print(f"  {i + 1}. {func_name}({json.dumps(func_args, indent=2)})")
             print(f"{'=' * 50}\n")
@@ -344,7 +358,7 @@ class ApolloAgentChat:
 
             with open(file_path, "w", encoding="utf-8") as file:
                 json.dump(cleaned_history, file, indent=4, cls=ApolloJSONEncoder)
-            #print(f"Chat history successfully saved to {file_path}")
+            # print(f"Chat history successfully saved to {file_path}")
         except FileNotFoundError:
             print(
                 f"[WARNING] {file_path} not found. Starting with an empty chat history."

@@ -47,26 +47,44 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "list_dir",
-                "description": "List files and directories in a specified path relative to workspace. "
-                               "Use \"\" or \".\" for workspace root, not \"/\".",
+                "description": "List files and directories in a "
+                "specified path relative to workspace. "
+                'Use "" or "." for workspace root, not "/".',
                 "parameters": {
                     "type": "object",
+                    "required": ["target_file", "explanation"],
                     "properties": {
-                        "relative_workspace_path": {
+                        "target_file": {
                             "type": "string",
                             "description": "Path relative to workspace root. "
-                                           "Use empty string or \".\" to list workspace root."
+                            'Use empty string or "." to list workspace root.',
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "Optional explanation of why you're listing this directory."
+                            "description": "Optional explanation of why"
+                            " you're listing this directory.",
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web for information about a topic. ",
+                "parameters": {
+                    "type": "object",
+                    "required": ["search_query"],
+                    "properties": {
+                        "search_query": {
+                            "type": "string",
+                            "description": "The search query from user without filter",
                         }
                     },
-                    "required": ["relative_workspace_path"]
-                }
-            }
+                },
+            },
         },
-
         {
             "type": "function",
             "function": {

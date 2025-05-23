@@ -14,7 +14,8 @@ import os
 from apollo_agent.tools.search_operations import (
     codebase_search,
     file_search,
-    grep_search)
+    grep_search,
+)
 from apollo_agent.tools.chat_operations import ApolloAgentChat
 from apollo_agent.tools.file_operations import (
     list_dir,
@@ -24,6 +25,7 @@ from apollo_agent.tools.file_operations import (
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
 from apollo_agent.config.constant import Constant
+from apollo_agent.tools.web_search import web_search
 
 
 class ApolloAgent:
@@ -59,7 +61,8 @@ class ApolloAgent:
                 "edit_file": edit_file,
                 "reapply": reapply,
                 "chat": self.chat_agent.chat,
-                "grep_search": grep_search
+                "grep_search": grep_search,
+                "web_search": web_search,
             }
         )
 

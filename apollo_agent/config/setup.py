@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 import os
 import re
 
-with open(os.path.join('apollo_agent', 'version.py'), 'r') as f:
+with open(os.path.join("apollo_agent", "version.py"), "r") as f:
     version_file = f.read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
@@ -20,11 +20,11 @@ with open(os.path.join('apollo_agent', 'version.py'), 'r') as f:
     else:
         raise RuntimeError("Unable to find version string in version.py")
 
-with open('README.md', 'r', encoding='utf-8') as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 # Read requirements from requirements.txt
-with open('requirements.txt', 'r', encoding="utf-8") as f:
+with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = f.read().splitlines()
 
 setup(
