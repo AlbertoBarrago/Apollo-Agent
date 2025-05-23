@@ -3,33 +3,9 @@ import time
 import random
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Firefox/109.0.0.0",
-]
-
-SEARCH_BLOCK_SELECTORS = [
-    "div.g",
-    "div.tF2Cxc",
-    "div.Gx5Zad",
-    "div.sV3gjd",
-    "div.Z26q7c",
-]
-
-TITLE_SELECTOR = "h3"
-LINK_SELECTOR = "a"
-SNIPPET_SELECTORS = [
-    "div.VwiC3b",
-    "div.IsZvec",
-    "div.s3v9rd",
-    "div.kCrYT",
-]
+from apollo_agent.config.const import Constant
 
 
 async def web_search(search_query: str) -> Dict[str, Any]:
@@ -46,13 +22,12 @@ async def web_search(search_query: str) -> Dict[str, Any]:
     print(f"Starting search for: '{search_query}'")
 
     encoded_search_term = quote_plus(search_query)
-    # Adding &hl=en to encourage English results. Change to &hl=it for Italian, etc.
     search_url = f"https://www.google.com/search?q={encoded_search_term}&num=10&hl=en"
 
     headers = {
-        "User-Agent": random.choice(USER_AGENTS),
+        "User-Agent": random.choice(Constant.USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application"
-                  "/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,it;q=0.8",
         "Referer": "https://www.google.com/",
         "DNT": "1",
@@ -71,7 +46,7 @@ async def web_search(search_query: str) -> Dict[str, Any]:
         found_blocks = []
 
         # Try each block selector until it finds results.
-        for selector in SEARCH_BLOCK_SELECTORS:
+        for selector in Constant.SEARCH_BLOCK_SELECTORS:
             found_blocks = soup.select(selector)
             if found_blocks:
                 print(
@@ -88,12 +63,12 @@ async def web_search(search_query: str) -> Dict[str, Any]:
             return {"query": search_query, "results": [], "message": message}
 
         for block in found_blocks:
-            title_tag = block.select_one(TITLE_SELECTOR)
-            link_tag = block.select_one(LINK_SELECTOR)
+            title_tag = block.select_one(Constant.TITLE_SELECTOR)
+            link_tag = block.select_one(Constant.LINK_SELECTOR)
 
             # Try to extract the snippet with different selectors
             snippet_text = ""
-            for snip_selector in SNIPPET_SELECTORS:
+            for snip_selector in Constant.SNIPPET_SELECTORS:
                 snippet_tag = block.select_one(snip_selector)
                 if snippet_tag and snippet_tag.text:
                     # Sometimes the snippet also contains the title; we clean it if necessary.
@@ -134,7 +109,6 @@ async def web_search(search_query: str) -> Dict[str, Any]:
         return {"query": search_query, "results": results_list}
 
     except requests.exceptions.HTTPError as e:
-        # Specific error for failed HTTP responses (e.g., 403 Forbidden, 429 Too Many Requests)
         error_msg = (
             f"HTTP Error: {e}. You might have been temporarily blocked by Google."
         )

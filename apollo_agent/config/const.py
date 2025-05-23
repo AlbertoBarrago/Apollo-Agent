@@ -67,3 +67,29 @@ class Constant:
         "Please try to reach a conclusion soon. "
         "Avoid using more tools unless absolutely necessary."
     )
+
+    USER_AGENTS = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Firefox/109.0.0.0",
+    ]
+
+    SEARCH_BLOCK_SELECTORS = [
+        "div.g",
+        "div.tF2Cxc",
+        "div.Gx5Zad",
+        "div.sV3gjd",
+        "div.Z26q7c",
+    ]
+
+    TITLE_SELECTOR = "h3"
+    LINK_SELECTOR = "a"
+    SNIPPET_SELECTORS = [
+        "div.VwiC3b",
+        "div.IsZvec",
+        "div.s3v9rd",
+        "div.kCrYT",
+    ]

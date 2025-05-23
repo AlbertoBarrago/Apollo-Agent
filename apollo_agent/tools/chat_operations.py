@@ -15,7 +15,7 @@ from typing import Any
 
 from apollo_agent.config.avaiable_tools import get_available_tools
 from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
-from apollo_agent.config.constant import Constant
+from apollo_agent.config.const import Constant
 
 
 class ApolloAgentChat:
@@ -293,7 +293,7 @@ class ApolloAgentChat:
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
-            #self._save_user_history_to_json()
+            # self._save_user_history_to_json()
         else:
             self.chat_history = self.permanent_history.copy()
 
