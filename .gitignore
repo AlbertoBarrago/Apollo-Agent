@@ -5,4 +5,5 @@ __pycache__
 workspace
 instructions.txt
 chat_history.json
+.cadence
 
