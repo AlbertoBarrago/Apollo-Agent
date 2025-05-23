@@ -25,6 +25,7 @@ from apollo_agent.tools.file_operations import (
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
 from apollo_agent.config.constant import Constant
+from apollo_agent.tools.web_search import web_search
 
 
 class ApolloAgent:
@@ -61,6 +62,7 @@ class ApolloAgent:
                 "reapply": reapply,
                 "chat": self.chat_agent.chat,
                 "grep_search": grep_search,
+                "web_search": web_search,
             }
         )
 

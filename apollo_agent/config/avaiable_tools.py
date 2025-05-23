@@ -71,6 +71,27 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "type": "function",
             "function": {
+                "name": "web_search",
+                "description": "Search the web for information about a topic. ",
+                "parameters": {
+                    "type": "object",
+                    "required": ["search_query", "explanation"],
+                    "properties": {
+                        "search_query": {
+                            "type": "string",
+                            "description": "The search query.",
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation.",
+                        }
+                    }
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "grep_search",
                 "description": (
                     "Fast text-based regex search that finds exact pattern matches within files "

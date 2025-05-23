@@ -7,10 +7,10 @@ License: BSD 3-Clause License - 2024
 """
 
 import re
-import ollama
 import json
 import uuid
 import time
+import ollama
 from typing import Any
 
 from apollo_agent.config.avaiable_tools import get_available_tools
