@@ -49,10 +49,10 @@ async def web_search(search_query: str) -> Dict[str, Any]:
     # Adding &hl=en to encourage English results. Change to &hl=it for Italian, etc.
     search_url = f"https://www.google.com/search?q={encoded_search_term}&num=10&hl=en"
 
-    # --- IMPROVEMENT 3: User-Agent Rotation ---
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept": "text/html,application/xhtml+xml,application"
+                  "/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,it;q=0.8",
         "Referer": "https://www.google.com/",
         "DNT": "1",
@@ -65,7 +65,7 @@ async def web_search(search_query: str) -> Dict[str, Any]:
         time.sleep(random.uniform(1.0, 2.5))
         response = requests.get(search_url, headers=headers, timeout=15.0)
         response.raise_for_status()
-
+        print(f"response -> {response}")
         soup = BeautifulSoup(response.text, "html.parser")
         results_list = []
         found_blocks = []

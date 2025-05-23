@@ -293,7 +293,7 @@ class ApolloAgentChat:
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
-            self._save_user_history_to_json()
+            #self._save_user_history_to_json()
         else:
             self.chat_history = self.permanent_history.copy()
 

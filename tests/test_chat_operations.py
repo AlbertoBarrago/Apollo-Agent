@@ -138,7 +138,6 @@ class TestApolloAgentChat(unittest.TestCase):
             {"role": "user", "content": "How are you?"}
         ]
 
-        # Call the method
         self.chat._save_user_history_to_json()
 
         # Verify that open was called with the correct arguments
