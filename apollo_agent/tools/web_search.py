@@ -118,7 +118,7 @@ async def web_search(search_query: str) -> Dict[str, Any]:
         error_msg = f"Network error during search: {e}."
         print(error_msg)
         return {"query": search_query, "error": error_msg}
-    except Exception as e:
+    except SystemError as e:
         error_msg = f"An unexpected error occurred during page parsing: {e}."
         print(error_msg)
         return {"query": search_query, "error": error_msg}

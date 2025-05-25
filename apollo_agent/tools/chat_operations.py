@@ -44,7 +44,7 @@ class ApolloAgentChat:
             llm_response: The response from the LLM.
 
         Returns:
-            A tuple of (message, tool_calls, content).
+            A tuple of (a message, tool_calls, content).
         """
         message = llm_response.get("message")
         if not message:
@@ -79,7 +79,8 @@ class ApolloAgentChat:
         Returns:
             A tuple of (results, current_tool_calls) where
             results is a response dict if a loop is detected,
-            or None if processing should continue, and current_tool_calls is a list of function names.
+            or None if processing should continue,
+            and current_tool_calls is a list of function names.
         """
         if not isinstance(tool_calls, list):
             print(
@@ -162,7 +163,6 @@ class ApolloAgentChat:
                 else getattr(message, "tool_calls", [])
             )
 
-            # Print the reasoning (both content and tool calls)
             print(f"\n{'=' * 50}")
             print(f"[ITERATION {iterations} - REASONING]")
             if content:
