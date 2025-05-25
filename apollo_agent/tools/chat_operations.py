@@ -15,7 +15,7 @@ from typing import Any
 
 from apollo_agent.config.avaiable_tools import get_available_tools
 from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
-from apollo_agent.config.constant import Constant
+from apollo_agent.config.const import Constant
 
 
 class ApolloAgentChat:
@@ -44,7 +44,7 @@ class ApolloAgentChat:
             llm_response: The response from the LLM.
 
         Returns:
-            A tuple of (message, tool_calls, content).
+            A tuple of (a message, tool_calls, content).
         """
         message = llm_response.get("message")
         if not message:
@@ -79,7 +79,8 @@ class ApolloAgentChat:
         Returns:
             A tuple of (results, current_tool_calls) where
             results is a response dict if a loop is detected,
-            or None if processing should continue, and current_tool_calls is a list of function names.
+            or None if processing should continue,
+            and current_tool_calls is a list of function names.
         """
         if not isinstance(tool_calls, list):
             print(
@@ -162,7 +163,6 @@ class ApolloAgentChat:
                 else getattr(message, "tool_calls", [])
             )
 
-            # Print the reasoning (both content and tool calls)
             print(f"\n{'=' * 50}")
             print(f"[ITERATION {iterations} - REASONING]")
             if content:
@@ -293,7 +293,7 @@ class ApolloAgentChat:
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
-            #self._save_user_history_to_json()
+            # self._save_user_history_to_json()
         else:
             self.chat_history = self.permanent_history.copy()
 

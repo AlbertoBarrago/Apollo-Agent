@@ -24,7 +24,7 @@ from apollo_agent.tools.file_operations import (
     reapply,
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
-from apollo_agent.config.constant import Constant
+from apollo_agent.config.const import Constant
 from apollo_agent.tools.web_search import web_search
 
 

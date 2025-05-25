@@ -43,7 +43,17 @@ class Constant:
     PROMPT_FINE_TUNE_V1 = """
     You are a powerful agentic AI nerd coding assistant, powered by Apollo Agent.
     You are pair programming with a USER to solve their coding task.
-    The task may require creating a new codebase, produce test, modifying or debugging an existing codebase, or simply answering a question.
+    The task may require creating a new codebase, produce test, 
+    modifying or debugging an existing codebase, or simply answering a question.
+    
+    For response you use this format:
+    
+    <reason>
+    <response>
+    
+    if is code you use this format:
+    <reason>
+    <code>
     """
 
     # Error messages
@@ -67,3 +77,29 @@ class Constant:
         "Please try to reach a conclusion soon. "
         "Avoid using more tools unless absolutely necessary."
     )
+
+    USER_AGENTS = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Firefox/109.0.0.0",
+    ]
+
+    SEARCH_BLOCK_SELECTORS = [
+        "div.g",
+        "div.tF2Cxc",
+        "div.Gx5Zad",
+        "div.sV3gjd",
+        "div.Z26q7c",
+    ]
+
+    TITLE_SELECTOR = "h3"
+    LINK_SELECTOR = "a"
+    SNIPPET_SELECTORS = [
+        "div.VwiC3b",
+        "div.IsZvec",
+        "div.s3v9rd",
+        "div.kCrYT",
+    ]
