@@ -11,20 +11,20 @@ License: BSD 3-Clause License - 2024
 
 import os
 
-from apollo_agent.tools.search_operations import (
+from apollo_agent.tools.search import (
     codebase_search,
     file_search,
     grep_search,
 )
-from apollo_agent.tools.chat_operations import ApolloAgentChat
-from apollo_agent.tools.file_operations import (
+from apollo_agent.tools.chat import ApolloAgentChat
+from apollo_agent.tools.files import (
     list_dir,
     delete_file,
     edit_file,
     reapply,
     remove_dir,
 )
-from apollo_agent.tools.tool_executor import ToolExecutor
+from apollo_agent.tools._executor import ToolExecutor
 from apollo_agent.config.const import Constant
 from apollo_agent.tools.web_search import web_search
 

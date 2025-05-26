@@ -11,8 +11,8 @@ License: BSD 3-Clause License - 2024
 import unittest
 from unittest.mock import AsyncMock, patch, mock_open
 
-from apollo_agent.tools.chat_operations import ApolloAgentChat
-from apollo_agent.tools.tool_executor import ToolExecutor
+from apollo_agent.tools.chat import ApolloAgentChat
+from apollo_agent.tools._executor import ToolExecutor
 from apollo_agent.config.const import Constant
 
 
