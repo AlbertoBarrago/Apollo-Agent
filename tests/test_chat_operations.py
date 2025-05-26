@@ -13,7 +13,8 @@ from unittest.mock import AsyncMock, patch, mock_open
 
 from apollo_agent.tools.chat_operations import ApolloAgentChat
 from apollo_agent.tools.tool_executor import ToolExecutor
-from apollo_agent.config.setup import Config
+from apollo_agent.config.const import Constant
+
 
 
 class TestApolloAgentChat(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestApolloAgentChat(unittest.TestCase):
         # Verify that ollama.chat was called with the correct arguments
         mock_ollama_chat.assert_called_once()
         args, kwargs = mock_ollama_chat.call_args
-        self.assertEqual(kwargs["model"], Config.LLM_MODEL)
+        self.assertEqual(kwargs["model"], Constant.LLM_MODEL)
         self.assertIn({"role": "user", "content": "Hello, how are you?"}, kwargs["messages"])
 
     @patch("apollo_agent.tools.chat_operations.ollama.chat")
@@ -91,7 +92,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
         # Verify the result
         self.assertIn("response", result)
-        self.assertEqual(result["response"], Config.ERROR_EMPTY_LLM_MESSAGE)
+        self.assertEqual(result["response"], Constant.ERROR_EMPTY_LLM_MESSAGE)
 
     @patch("apollo_agent.tools.chat_operations.ollama.chat")
     async def test_chat_with_loop_detection(self, mock_ollama_chat):
@@ -115,7 +116,7 @@ class TestApolloAgentChat(unittest.TestCase):
         # Mock the _handle_tool_calls method to simulate a loop
         async def mock_handle_tool_calls(tool_calls, iterations, recent_tool_calls):
             if iterations > 1 and recent_tool_calls == ["test_func"]:
-                return {"response": Config.ERROR_LOOP_DETECTED}, ["test_func"]
+                return {"response": Constant.ERROR_LOOP_DETECTED}, ["test_func"]
             return None, ["test_func"]
 
         self.chat._handle_tool_calls = mock_handle_tool_calls
@@ -125,7 +126,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
         # Verify the result
         self.assertIn("response", result)
-        self.assertEqual(result["response"], Config.ERROR_LOOP_DETECTED)
+        self.assertEqual(result["response"], Constant.ERROR_LOOP_DETECTED)
 
     @patch("builtins.open", new_callable=mock_open, read_data='[]')
     @patch("apollo_agent.tools.chat_operations.json.dump")
@@ -141,7 +142,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.chat._save_user_history_to_json()
 
         # Verify that open was called with the correct arguments
-        mock_file.assert_called_with(Config.CHAT_HISTORY_FILE, "w", encoding="utf-8")
+        mock_file.assert_called_with(Constant.CHAT_HISTORY_FILE, "w", encoding="utf-8")
 
         # Verify that json.dump was called
         mock_json_dump.assert_called_once()
@@ -157,7 +158,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.chat.load_chat_history()
 
         # Verify that open was called with the correct arguments
-        mock_file.assert_called_with(Config.CHAT_HISTORY_FILE, "r", encoding="utf-8")
+        mock_file.assert_called_with(Constant.CHAT_HISTORY_FILE, "r", encoding="utf-8")
 
         # Verify that the chat history was loaded
         self.assertEqual(len(self.chat.permanent_history), 1)

@@ -72,6 +72,7 @@ class ApolloAgent:
                 "touch": "edit_file",
                 "edit": "edit_file",
                 "create_file": "edit_file",
+                "read_file": "edit_file",
             }
         )
 
@@ -95,18 +96,15 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(Constant.APPOLO_WELCOME)
-        workspace_path = input(
-            "Enter the workspace path (or press Enter for current directory): "
-        )
-        if not workspace_path:
-            workspace_path = os.getcwd()
-
-        if not os.path.exists(workspace_path):
-            os.makedirs(workspace_path)
+        if not os.path.exists('./workspace'):
+            workspace_path = input(
+                "Enter the workspace path (or press Enter for current directory): "
+            )
+        else:
+            workspace_path = './workspace'
 
         agent = ApolloAgent(workspace_path=workspace_path)
-        print("🌟 Welcome to ApolloAgent Chat Mode!")
-        print("Type 'exit' to end the conversation.")
+        print("⏼ Type 'exit' to end the conversation.")
         print("Workspace set to:", os.path.abspath(workspace_path))
 
         while True:

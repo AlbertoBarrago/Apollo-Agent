@@ -101,7 +101,7 @@ class ApolloAgentChat:
                 func_name = "unknown"
             current_tool_calls.append(func_name)
 
-        if iterations > 1 and current_tool_calls == recent_tool_calls:
+        if iterations > Constant.MAX_CHAT_ITERATIONS and current_tool_calls == recent_tool_calls:
             print("[WARNING] Detected repeated tool call pattern, breaking loop")
             loop_detected_msg = Constant.ERROR_LOOP_DETECTED
             self.permanent_history.append(
@@ -139,7 +139,7 @@ class ApolloAgentChat:
         """
         try:
             # Add a system message to encourage concluding after a few iterations
-            if iterations > 2:
+            if iterations > Constant.MAX_CHAT_ITERATIONS:
                 self.chat_history.append(
                     {"role": "system", "content": Constant.SYSTEM_CONCLUDE_SOON}
                 )
@@ -213,7 +213,7 @@ class ApolloAgentChat:
         try:
             self._initialize_chat_session(text)
 
-            print("🤖 Give me a second, be patience and kind ", flush=True)
+            print("🤖 Give me a second... ", flush=True)
 
             iterations = 0
             recent_tool_calls = []
