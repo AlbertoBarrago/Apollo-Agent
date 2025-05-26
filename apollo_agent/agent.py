@@ -21,7 +21,8 @@ from apollo_agent.tools.file_operations import (
     list_dir,
     delete_file,
     edit_file,
-    reapply, remove_dir,
+    reapply,
+    remove_dir,
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
 from apollo_agent.config.const import Constant
@@ -62,7 +63,7 @@ class ApolloAgent:
                 "chat": self.chat_agent.chat,
                 "grep_search": grep_search,
                 "web_search": web_search,
-                "remove_dir": remove_dir
+                "remove_dir": remove_dir,
             }
         )
 
@@ -72,7 +73,7 @@ class ApolloAgent:
                 "create_file": "edit_file",
                 "read_file": "list_dir",
                 "delete_folder": "remove_dir",
-                "delete_file": "remove_dir"
+                "delete_file": "remove_dir",
             }
         )
 
@@ -96,17 +97,16 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(Constant.APPOLO_WELCOME)
-        workspace_cabled = Constant.WORKSPACE_CABLED # ./workspace
+        workspace_cabled = Constant.WORKSPACE_CABLED  # ./workspace
         if not os.path.exists(workspace_cabled):
             workspace_path = input(
-                "Enter the workspace path."
-                f"The workspace path is ${workspace_cabled}"
+                "Enter the workspace path." f"The workspace path is ${workspace_cabled}"
             )
         else:
             workspace_path = workspace_cabled
-        if not os.path.exists(workspace_path) and workspace_path != 'exit':
+        if not os.path.exists(workspace_path) and workspace_path != "exit":
             os.makedirs(workspace_path)
-        if workspace_path == 'exit':
+        if workspace_path == "exit":
             return
 
         agent = ApolloAgent(workspace_path=workspace_path)

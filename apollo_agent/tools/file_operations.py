@@ -64,6 +64,7 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         "files": files,
     }
 
+
 async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
     """
     Remove dir from the workspace when a user asks for it
@@ -92,6 +93,7 @@ async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to remove directory {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -129,6 +131,7 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to delete file {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
     """
@@ -182,6 +185,7 @@ async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
 
     except RuntimeError as e:
         return {"success": False, "error": str(e)}
+
 
 async def reapply(agent, target_file: str) -> Dict[str, Any]:
     """

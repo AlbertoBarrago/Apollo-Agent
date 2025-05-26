@@ -54,36 +54,36 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "Path to the directory you want to list, relative to the workspace root. Use empty string or \".\" to list the workspace root directory."
+                            "description": 'Path to the directory you want to list, relative to the workspace root. Use empty string or "." to list the workspace root directory.',
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "Optional explanation of why you're listing this directory. Not required for function execution."
-                        }
-                    }
+                            "description": "Optional explanation of why you're listing this directory. Not required for function execution.",
+                        },
+                    },
                 },
                 "returns": {
                     "type": "object",
                     "properties": {
                         "path": {
                             "type": "string",
-                            "description": "The path that was listed"
+                            "description": "The path that was listed",
                         },
                         "directories": {
                             "type": "array",
-                            "description": "List of subdirectories in the specified path"
+                            "description": "List of subdirectories in the specified path",
                         },
                         "files": {
                             "type": "array",
-                            "description": "List of files in the specified path"
+                            "description": "List of files in the specified path",
                         },
                         "error": {
                             "type": "string",
-                            "description": "Error message if the operation failed"
-                        }
-                    }
-                }
-            }
+                            "description": "Error message if the operation failed",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",
@@ -248,28 +248,28 @@ def get_available_tools() -> List[Dict[str, Any]]:
             },
         },
         {
-            "type":"function",
+            "type": "function",
             "function": {
                 "name": "remove_dir",
                 "description": "Removes a directory at the specified path, "
-                               "relative to the workspace root.",
+                "relative to the workspace root.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file", "explanation"],
-                   "properties": {
-                       "target_file": {
-                           "type": "string",
-                           "description": (
-                               "The path of the file to delete, relative to the workspace root."
-                           ),
-                       },
-                       "explanation": {
-                           "type": "string",
-                           "description": "One sentence explanation.",
-                       }
-                   }
-                }
-            }
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": (
+                                "The path of the file to delete, relative to the workspace root."
+                            ),
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation.",
+                        },
+                    },
+                },
+            },
         },
         {
             "type": "function",

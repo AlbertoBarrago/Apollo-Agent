@@ -48,7 +48,7 @@ class ApolloAgentChat:
             A tuple of (a message, tool_calls, content).
         """
         message = llm_response.get("message")
-        total_duration = llm_response.get('total_duration', 0)
+        total_duration = llm_response.get("total_duration", 0)
         if not message:
             print("[WARNING] LLM response missing 'message' field.")
             self.chat_history.append(
@@ -103,7 +103,10 @@ class ApolloAgentChat:
                 func_name = "unknown"
             current_tool_calls.append(func_name)
 
-        if iterations > Constant.MAX_CHAT_ITERATIONS and current_tool_calls == recent_tool_calls:
+        if (
+            iterations > Constant.MAX_CHAT_ITERATIONS
+            and current_tool_calls == recent_tool_calls
+        ):
             print("[WARNING] Detected repeated tool call pattern, breaking loop")
             loop_detected_msg = Constant.ERROR_LOOP_DETECTED
             self.permanent_history.append(
@@ -165,8 +168,7 @@ class ApolloAgentChat:
                 else getattr(message, "tool_calls", [])
             )
             # Extract total_duration
-            total_duration = llm_response.get('total_duration', 0)
-
+            total_duration = llm_response.get("total_duration", 0)
 
             print(f"\n{'=' * 50}")
             print(f"[ITERATION {iterations} - REASONING]")
@@ -243,18 +245,18 @@ class ApolloAgentChat:
         """
         while iterations < Constant.MAX_CHAT_ITERATIONS:
             iterations += 1
-            #print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
+            # print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
 
             try:
                 llm_response = await self._get_llm_response_from_ollama(iterations)
-                #print(f"[LLM RESPONSE] {llm_response}")
+                # print(f"[LLM RESPONSE] {llm_response}")
             except RuntimeError as e:
                 return {
                     "error": f"Failed to get response from language model: {str(e)}"
                 }
 
-            message, tool_calls, content, total_duration = await self._process_llm_response(
-                llm_response
+            message, tool_calls, content, total_duration = (
+                await self._process_llm_response(llm_response)
             )
             if message is None:
                 return {"response": Constant.ERROR_EMPTY_LLM_MESSAGE}
@@ -265,10 +267,10 @@ class ApolloAgentChat:
                 )
                 print(f"[EXECUTING TOOLS], ${current_tool_calls}")
                 if result:
-                    #print("[LOOP DETECTED - FINISHING]")
+                    # print("[LOOP DETECTED - FINISHING]")
                     return result
                 recent_tool_calls = current_tool_calls
-                #print("[TOOLS EXECUTED - CONTINUING REASONING]")
+                # print("[TOOLS EXECUTED - CONTINUING REASONING]")
             elif content is not None:
                 print("[FINAL RESPONSE READY]")
                 self.permanent_history.append({"role": "assistant", "content": content})
@@ -293,9 +295,9 @@ class ApolloAgentChat:
 
         last_message = self.permanent_history[-1] if self.permanent_history else None
         if (
-                not last_message
-                or last_message.get("role") != "user"
-                or last_message.get("content") != text
+            not last_message
+            or last_message.get("role") != "user"
+            or last_message.get("content") != text
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
@@ -308,8 +310,8 @@ class ApolloAgentChat:
             msg
             for msg in self.chat_history
             if not (
-                    msg.get("role") == "system"
-                    and "try to reach a conclusion soon" in msg.get("content", "").lower()
+                msg.get("role") == "system"
+                and "try to reach a conclusion soon" in msg.get("content", "").lower()
             )
         ]
 
@@ -405,7 +407,7 @@ class ApolloAgentChat:
                     i
                     for i, msg in enumerate(all_history)
                     if msg.get("role") == "system"
-                       and "New session started at" in msg.get("content", "")
+                    and "New session started at" in msg.get("content", "")
                 ]
 
                 if not session_indices:
