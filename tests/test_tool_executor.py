@@ -12,7 +12,7 @@ import unittest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from apollo_agent.tools._executor import ToolExecutor
+from apollo.tools._executor import ToolExecutor
 
 
 class TestToolExecutor(unittest.TestCase):

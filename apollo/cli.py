@@ -10,7 +10,7 @@ License: BSD 3-Clause License - 2024
 
 import sys
 import json
-from apollo_agent.version import (
+from apollo.version import (
     __version__,
     __title__,
     __description__,

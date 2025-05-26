@@ -11,9 +11,9 @@ License: BSD 3-Clause License - 2024
 import unittest
 from unittest.mock import AsyncMock, patch, mock_open
 
-from apollo_agent.tools.chat import ApolloAgentChat
-from apollo_agent.tools._executor import ToolExecutor
-from apollo_agent.config.const import Constant
+from apollo.tools.chat import ApolloAgentChat
+from apollo.tools._executor import ToolExecutor
+from apollo.config.const import Constant
 
 
 class TestApolloAgentChat(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.tool_executor = ToolExecutor(workspace_path="/test/workspace")
         self.chat.set_tool_executor(self.tool_executor)
 
-    @patch("apollo_agent.tools.chat_operations.ollama.chat")
+    @patch("apollo.tools.chat_operations.ollama.chat")
     async def test_chat_with_content_response(self, mock_ollama_chat):
         """Test a chat method with a content response."""
         # Mock the ollama.chat response
@@ -48,7 +48,7 @@ class TestApolloAgentChat(unittest.TestCase):
             {"role": "user", "content": "Hello, how are you?"}, kwargs["messages"]
         )
 
-    @patch("apollo_agent.tools.chat_operations.ollama.chat")
+    @patch("apollo.tools.chat_operations.ollama.chat")
     async def test_chat_with_tool_calls(self, mock_ollama_chat):
         """Test chat method with tool calls."""
         # Mock the ollama.chat response
@@ -76,7 +76,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.assertEqual(args[0]["id"], "call_123")
         self.assertEqual(args[0]["function"]["name"], "test_func")
 
-    @patch("apollo_agent.tools.chat_operations.ollama.chat")
+    @patch("apollo.tools.chat_operations.ollama.chat")
     async def test_chat_with_empty_message(self, mock_ollama_chat):
         """Test a chat method with an empty message."""
         # Mock the ollama.chat response
@@ -89,7 +89,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.assertIn("response", result)
         self.assertEqual(result["response"], Constant.ERROR_EMPTY_LLM_MESSAGE)
 
-    @patch("apollo_agent.tools.chat_operations.ollama.chat")
+    @patch("apollo.tools.chat_operations.ollama.chat")
     async def test_chat_with_loop_detection(self, mock_ollama_chat):
         """Test a chat method with loop detection."""
         # Mock the ollama.chat response to return the same tool calls twice
@@ -124,7 +124,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.assertEqual(result["response"], Constant.ERROR_LOOP_DETECTED)
 
     @patch("builtins.open", new_callable=mock_open, read_data="[]")
-    @patch("apollo_agent.tools.chat_operations.json.dump")
+    @patch("apollo.tools.chat_operations.json.dump")
     def test_save_user_history_to_json(self, mock_json_dump, mock_file):
         """Test _save_user_history_to_json method."""
         # Set up test data
@@ -147,7 +147,7 @@ class TestApolloAgentChat(unittest.TestCase):
         new_callable=mock_open,
         read_data='[{"role": "user", "content": "Hello"}]',
     )
-    @patch("apollo_agent.tools.chat_operations.json.load")
+    @patch("apollo.tools.chat_operations.json.load")
     def test_load_chat_history(self, mock_json_load, mock_file):
         """Test load_chat_history method."""
         # Set up test data

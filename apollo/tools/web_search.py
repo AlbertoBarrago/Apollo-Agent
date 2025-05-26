@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 from typing import Dict, Any
 
-from apollo_agent.config.const import Constant
+from apollo.config.const import Constant
 
 
 async def web_search(search_query: str) -> Dict[str, Any]:
