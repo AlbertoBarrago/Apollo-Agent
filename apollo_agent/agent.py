@@ -21,7 +21,7 @@ from apollo_agent.tools.file_operations import (
     list_dir,
     delete_file,
     edit_file,
-    reapply,
+    reapply, remove_dir,
 )
 from apollo_agent.tools.tool_executor import ToolExecutor
 from apollo_agent.config.const import Constant
@@ -62,17 +62,17 @@ class ApolloAgent:
                 "chat": self.chat_agent.chat,
                 "grep_search": grep_search,
                 "web_search": web_search,
+                "remove_dir": remove_dir
             }
         )
 
         # Register redirects with the tool executor
         self.tool_executor.register_redirects(
             {
-                "open": "edit_file",
-                "touch": "edit_file",
-                "edit": "edit_file",
                 "create_file": "edit_file",
-                "read_file": "edit_file",
+                "read_file": "list_dir",
+                "delete_folder": "remove_dir",
+                "delete_file": "remove_dir"
             }
         )
 
@@ -96,15 +96,22 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(Constant.APPOLO_WELCOME)
-        if not os.path.exists('./workspace'):
+        workspace_cabled = Constant.WORKSPACE_CABLED # ./workspace
+        if not os.path.exists(workspace_cabled):
             workspace_path = input(
-                "Enter the workspace path (or press Enter for current directory): "
+                "Enter the workspace path."
+                f"The workspace path is ${workspace_cabled}"
             )
         else:
-            workspace_path = './workspace'
+            workspace_path = workspace_cabled
+        if not os.path.exists(workspace_path) and workspace_path != 'exit':
+            os.makedirs(workspace_path)
+        if workspace_path == 'exit':
+            return
 
         agent = ApolloAgent(workspace_path=workspace_path)
-        print("⏼ Type 'exit' to end the conversation.")
+        print("🌟 Welcome to ApolloAgent Chat Mode!")
+        print("Type 'exit' to end the conversation.")
         print("Workspace set to:", os.path.abspath(workspace_path))
 
         while True:

@@ -34,9 +34,9 @@ class Constant:
     LLM_MODEL = "llama3.1"
 
     # Chat settings
-    MAX_CHAT_ITERATIONS = 3
-    MAX_HISTORY_MESSAGES = 5
-    MAX_SESSION_MESSAGES = 3
+    MAX_CHAT_ITERATIONS = 10
+    MAX_HISTORY_MESSAGES = 10
+    MAX_SESSION_MESSAGES = 10
 
     PROMPT_FINE_TUNE_V1 = """
     General instructions:
@@ -108,3 +108,5 @@ class Constant:
         "div.s3v9rd",
         "div.kCrYT",
     ]
+
+    WORKSPACE_CABLED = "./workspace"
