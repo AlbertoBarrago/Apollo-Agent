@@ -17,7 +17,7 @@ __description__ = (
 __author__ = "Alberto Barrago"
 __author_email__ = "albertobarrago@gmail.com"
 __license__ = "BSD 3-Clause License"
-__copyright__ = "Copyright 2024 Alberto Barrago"
+__copyright__ = "Copyright 2025 Alberto Barrago"
 
 __repository__ = "https://github.com/AlbertoBarrago/Apollo-Agent"
 __keywords__ = ["ai", "agent", "code-assistant", "llm", "ollama"]
