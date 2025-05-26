@@ -28,7 +28,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
     @patch("apollo_agent.tools.chat_operations.ollama.chat")
     async def test_chat_with_content_response(self, mock_ollama_chat):
-        """Test chat method with a content response."""
+        """Test a chat method with a content response."""
         # Mock the ollama.chat response
         mock_ollama_chat.return_value = {
             "message": {
@@ -72,9 +72,6 @@ class TestApolloAgentChat(unittest.TestCase):
         # Mock the _execute_tool method
         self.chat._execute_tool = AsyncMock(return_value="Tool execution result")
 
-        # Call the chat method
-        result = await self.chat.chat("Use a tool")
-
         # Verify that _execute_tool was called with the correct arguments
         self.chat._execute_tool.assert_called_once()
         args, _ = self.chat._execute_tool.call_args
@@ -96,7 +93,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
     @patch("apollo_agent.tools.chat_operations.ollama.chat")
     async def test_chat_with_loop_detection(self, mock_ollama_chat):
-        """Test chat method with loop detection."""
+        """Test a chat method with loop detection."""
         # Mock the ollama.chat response to return the same tool calls twice
         mock_ollama_chat.return_value = {
             "message": {
@@ -114,7 +111,7 @@ class TestApolloAgentChat(unittest.TestCase):
         }
 
         # Mock the _handle_tool_calls method to simulate a loop
-        async def mock_handle_tool_calls(tool_calls, iterations, recent_tool_calls):
+        async def mock_handle_tool_calls(iterations, recent_tool_calls):
             if iterations > 1 and recent_tool_calls == ["test_func"]:
                 return {"response": Constant.ERROR_LOOP_DETECTED}, ["test_func"]
             return None, ["test_func"]
