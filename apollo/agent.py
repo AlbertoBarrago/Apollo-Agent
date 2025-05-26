@@ -33,7 +33,6 @@ class ApolloAgent:
     """
     ApolloAgent is a custom AI agent that implements various functions for code assistance.
     """
-
     def __init__(self, workspace_path: str = None):
         """
         Initialize the ApolloAgent with a workspace path.
