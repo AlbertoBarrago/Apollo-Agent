@@ -24,7 +24,7 @@ from apollo.tools.files import (
     reapply,
     remove_dir,
 )
-from apollo.tools._executor import ToolExecutor
+from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
 from apollo.tools.web_search import web_search
 

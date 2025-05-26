@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import AsyncMock, patch, mock_open
 
 from apollo.tools.chat import ApolloAgentChat
-from apollo.tools._executor import ToolExecutor
+from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
 
 
