@@ -23,7 +23,7 @@ class Constant:
 
   BSD 3-Clause License v0.1.0
 
-  Copyright (c) 2024, Alberto Barrago
+  Copyright (c) 2025, Alberto Barrago
   All rights reserved.
 """
 
