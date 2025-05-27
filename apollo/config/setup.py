@@ -5,7 +5,7 @@ This module uses setuptools to create a distributable package for ApolloAgent.
 It reads version information from apollo/version.py.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 from setuptools import setup, find_packages
