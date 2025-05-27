@@ -1,3 +1,13 @@
+"""
+Web Search operations for the ApolloAgent.
+
+This module contains functions for web search operations like web scraping,
+search by keyword, and advanced search.
+
+Author: Alberto Barrago
+License: BSD 3-Clause License - 2025
+"""
+
 import requests
 import time
 import random

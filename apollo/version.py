@@ -5,7 +5,7 @@ This module contains version information and metadata for the ApolloAgent packag
 similar to what package.json provides in JavaScript projects.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 __version__ = "0.1.0"

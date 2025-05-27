@@ -6,7 +6,7 @@ The functions chat_terminal and execute_tool are responsible
 for the chat mode and tool execution, respectively.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import os

@@ -3,7 +3,7 @@ In this file, we define the class for handling chat
 interactions and tool function definitions for ApolloAgent.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import re
