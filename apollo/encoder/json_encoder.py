@@ -5,7 +5,7 @@ This module provides a custom JSONEncoder implementation that properly handles
 objects from Ollama API responses that aren't natively JSON serializable.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import json

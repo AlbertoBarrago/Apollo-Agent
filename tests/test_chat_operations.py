@@ -5,7 +5,7 @@ This module contains unit tests for the ApolloAgentChat class,
 which is responsible for handling chat interactions and tool function definitions.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import unittest

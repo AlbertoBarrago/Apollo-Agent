@@ -4,7 +4,7 @@ Configuration settings for the ApolloAgent.
 This module contains Constant settings for the ApolloAgent.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 
