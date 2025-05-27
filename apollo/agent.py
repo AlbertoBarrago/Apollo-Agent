@@ -21,7 +21,6 @@ from apollo.tools.files import (
     list_dir,
     delete_file,
     edit_file,
-    reapply,
     remove_dir,
 )
 from apollo.tools.executor import ToolExecutor
@@ -58,7 +57,6 @@ class ApolloAgent:
                 "file_search": file_search,
                 "delete_file": delete_file,
                 "edit_file": edit_file,
-                "reapply": reapply,
                 "chat": self.chat_agent.chat,
                 "grep_search": grep_search,
                 "web_search": web_search,

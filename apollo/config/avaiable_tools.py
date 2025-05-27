@@ -275,27 +275,6 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "type": "function",
             "function": {
-                "name": "reapply",
-                "description": "Reapplies the last edit attempt to the specified file.",
-                "parameters": {
-                    "type": "object",
-                    "required": ["target_file", "explanation"],
-                    "properties": {
-                        "target_file": {
-                            "type": "string",
-                            "description": "The relative path to the file.",
-                        },
-                        "explanation": {
-                            "type": "string",
-                            "description": "One sentence explanation.",
-                        },
-                    },
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "chat",
                 "description": (
                     "Engage in a normal conversational exchange with the user. "
