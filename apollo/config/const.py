@@ -87,26 +87,14 @@ class Constant:
 
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2_1) AppleWebKit/605.1.15 "
+        "(KHTML, like Gecko) Version/16.3 Safari/605.1.15",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
+        "(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Firefox/109.0.0.0",
-    ]
-
-    SEARCH_BLOCK_SELECTORS = [
-        "div.g",
-        "div.tF2Cxc",
-        "div.Gx5Zad",
-        "div.sV3gjd",
-        "div.Z26q7c",
-    ]
-
-    TITLE_SELECTOR = "h3"
-    LINK_SELECTOR = "a"
-    SNIPPET_SELECTORS = [
-        "div.VwiC3b",
-        "div.IsZvec",
-        "div.s3v9rd",
-        "div.kCrYT",
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
     ]
 
     WORKSPACE_CABLED = "./workspace"
