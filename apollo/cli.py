@@ -5,12 +5,12 @@ This script allows users to check the current version and metadata
 of their ApolloAgent installation.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import sys
 import json
-from apollo_agent.version import (
+from apollo.version import (
     __version__,
     __title__,
     __description__,

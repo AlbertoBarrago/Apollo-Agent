@@ -5,7 +5,7 @@ This module contains version information and metadata for the ApolloAgent packag
 similar to what package.json provides in JavaScript projects.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 __version__ = "0.1.0"
@@ -17,7 +17,7 @@ __description__ = (
 __author__ = "Alberto Barrago"
 __author_email__ = "albertobarrago@gmail.com"
 __license__ = "BSD 3-Clause License"
-__copyright__ = "Copyright 2024 Alberto Barrago"
+__copyright__ = "Copyright 2025 Alberto Barrago"
 
 __repository__ = "https://github.com/AlbertoBarrago/Apollo-Agent"
 __keywords__ = ["ai", "agent", "code-assistant", "llm", "ollama"]

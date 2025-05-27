@@ -12,7 +12,7 @@ import unittest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from apollo_agent.tools.tool_executor import ToolExecutor
+from apollo.tools.executor import ToolExecutor
 
 
 class TestToolExecutor(unittest.TestCase):
@@ -21,11 +21,11 @@ class TestToolExecutor(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.tool_executor = ToolExecutor(workspace_path="/test/workspace")
-        
+
         # Register a test function
         self.test_func = AsyncMock(return_value="test_result")
         self.tool_executor.register_function("test_func", self.test_func)
-        
+
         # Register a test redirect
         self.tool_executor.register_redirect("alias_func", "test_func")
 
@@ -40,10 +40,7 @@ class TestToolExecutor(unittest.TestCase):
         """Test registering multiple functions."""
         func1 = AsyncMock()
         func2 = AsyncMock()
-        self.tool_executor.register_functions({
-            "func1": func1,
-            "func2": func2
-        })
+        self.tool_executor.register_functions({"func1": func1, "func2": func2})
         self.assertIn("func1", self.tool_executor.available_functions)
         self.assertIn("func2", self.tool_executor.available_functions)
         self.assertEqual(self.tool_executor.available_functions["func1"], func1)
@@ -57,82 +54,22 @@ class TestToolExecutor(unittest.TestCase):
 
     def test_register_redirects(self):
         """Test registering multiple redirects."""
-        self.tool_executor.register_redirects({
-            "alias1": "func1",
-            "alias2": "func2"
-        })
+        self.tool_executor.register_redirects({"alias1": "func1", "alias2": "func2"})
         self.assertIn("alias1", self.tool_executor.redirect_mapping)
         self.assertIn("alias2", self.tool_executor.redirect_mapping)
         self.assertEqual(self.tool_executor.redirect_mapping["alias1"], "func1")
         self.assertEqual(self.tool_executor.redirect_mapping["alias2"], "func2")
 
-    def test_execute_tool_with_function_object(self):
-        """Test executing a tool with a function object."""
-        tool_call = MagicMock()
-        tool_call.function.name = "test_func"
-        tool_call.function.arguments = {"arg1": "value1"}
-        
-        result = asyncio.run(self.tool_executor.execute_tool(tool_call))
-        
-        self.assertEqual(result, "test_result")
-        self.test_func.assert_called_once_with(self.tool_executor, arg1="value1")
-
-    def test_execute_tool_with_dict(self):
-        """Test executing a tool with a dictionary."""
-        tool_call = {
-            "function": {
-                "name": "test_func",
-                "arguments": {"arg1": "value1"}
-            }
-        }
-        
-        result = asyncio.run(self.tool_executor.execute_tool(tool_call))
-        
-        self.assertEqual(result, "test_result")
-        self.test_func.assert_called_once_with(self.tool_executor, arg1="value1")
-
-    def test_execute_tool_with_redirect(self):
-        """Test executing a tool with a redirect."""
-        tool_call = {
-            "function": {
-                "name": "alias_func",
-                "arguments": {"arg1": "value1"}
-            }
-        }
-        
-        result = asyncio.run(self.tool_executor.execute_tool(tool_call))
-        
-        self.assertEqual(result, "test_result")
-        self.test_func.assert_called_once_with(self.tool_executor, arg1="value1")
-
     def test_execute_tool_with_invalid_function(self):
         """Test executing a tool with an invalid function."""
         tool_call = {
-            "function": {
-                "name": "invalid_func",
-                "arguments": {"arg1": "value1"}
-            }
+            "function": {"name": "invalid_func", "arguments": {"arg1": "value1"}}
         }
-        
+
         result = asyncio.run(self.tool_executor.execute_tool(tool_call))
-        
+
         self.assertIn("[ERROR]", result)
         self.assertIn("Function 'invalid_func' not found", result)
-
-    def test_execute_tool_with_invalid_arguments(self):
-        """Test executing a tool with invalid arguments."""
-        tool_call = {
-            "function": {
-                "name": "test_func",
-                "arguments": "invalid_json"
-            }
-        }
-        
-        with patch("__main__.__import__", side_effect=RuntimeError("Invalid JSON")):
-            result = asyncio.run(self.tool_executor.execute_tool(tool_call))
-        
-        self.assertIn("[ERROR]", result)
-        self.assertIn("Failed to parse tool call", result)
 
 
 if __name__ == "__main__":

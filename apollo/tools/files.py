@@ -5,7 +5,7 @@ This module contains functions for file operations like listing directories,
 deleting files, editing files, and reapplying edits.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import os
@@ -13,13 +13,15 @@ from typing import Dict, Any
 from bs4 import BeautifulSoup
 
 
-async def list_dir(agent, target_file: str) -> Dict[str, Any]:
+async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str, Any]:
     """
     List the contents of a directory relative to the workspace root.
 
     Args:
         agent: Apollo instance class.
         target_file: Path relative to the workspace root.
+        explanation: Optional explanation of why you're listing this directory.
+
 
     Returns:
         Dictionary with directory contents information.
@@ -57,9 +59,40 @@ async def list_dir(agent, target_file: str) -> Dict[str, Any]:
 
     return {
         "path": target_file,
+        "explanation": explanation,
         "directories": directories,
         "files": files,
     }
+
+
+async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
+    """
+    Remove dir from the workspace when a user asks for it
+    :param agent:
+    :param target_file:
+    :return:
+    """
+    target_path = os.path.join(agent.workspace_path, target_file)
+    absolute_target_path = os.path.abspath(target_path)
+    if not absolute_target_path.startswith(os.path.abspath(agent.workspace_path)):
+        error_msg = f"Attempted to remove directory outside workspace: {target_file}"
+        print(f"[ERROR] {error_msg}")
+        return {"error": error_msg}
+    if not os.path.exists(absolute_target_path):
+        error_msg = f"Path does not exist: {target_file}"
+        print(f"[ERROR] {error_msg}")
+        return {"error": error_msg}
+    if not os.path.isdir(absolute_target_path):
+        error_msg = f"Path is not a directory: {target_file}"
+        print(f"[ERROR] {error_msg}")
+        return {"error": error_msg}
+    try:
+        os.rmdir(absolute_target_path)
+        return {"success": True, "message": f"Directory removed: {target_file}"}
+    except OSError as e:
+        error_msg = f"Failed to remove directory {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
 
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:

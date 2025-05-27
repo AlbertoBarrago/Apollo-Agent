@@ -1,3 +1,13 @@
+"""
+Web Search operations for the ApolloAgent.
+
+This module contains functions for web search operations like web scraping,
+search by keyword, and advanced search.
+
+Author: Alberto Barrago
+License: BSD 3-Clause License - 2025
+"""
+
 import requests
 import time
 import random
@@ -5,7 +15,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 from typing import Dict, Any
 
-from apollo_agent.config.const import Constant
+from apollo.config.const import Constant
 
 
 async def web_search(search_query: str) -> Dict[str, Any]:

@@ -6,33 +6,33 @@ The functions chat_terminal and execute_tool are responsible
 for the chat mode and tool execution, respectively.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import os
 
-from apollo_agent.tools.search_operations import (
+from apollo.tools.search import (
     codebase_search,
     file_search,
     grep_search,
 )
-from apollo_agent.tools.chat_operations import ApolloAgentChat
-from apollo_agent.tools.file_operations import (
+from apollo.tools.chat import ApolloAgentChat
+from apollo.tools.files import (
     list_dir,
     delete_file,
     edit_file,
     reapply,
+    remove_dir,
 )
-from apollo_agent.tools.tool_executor import ToolExecutor
-from apollo_agent.config.const import Constant
-from apollo_agent.tools.web_search import web_search
+from apollo.tools.executor import ToolExecutor
+from apollo.config.const import Constant
+from apollo.tools.web_search import web_search
 
 
 class ApolloAgent:
     """
     ApolloAgent is a custom AI agent that implements various functions for code assistance.
     """
-
     def __init__(self, workspace_path: str = None):
         """
         Initialize the ApolloAgent with a workspace path.
@@ -62,24 +62,24 @@ class ApolloAgent:
                 "chat": self.chat_agent.chat,
                 "grep_search": grep_search,
                 "web_search": web_search,
+                "remove_dir": remove_dir,
             }
         )
 
         # Register redirects with the tool executor
         self.tool_executor.register_redirects(
             {
-                "open": "edit_file",
-                "touch": "edit_file",
-                "edit": "edit_file",
                 "create_file": "edit_file",
+                "read_file": "list_dir",
+                "delete_folder": "remove_dir",
+                "delete_file": "remove_dir",
             }
         )
 
         # Load chat history
         # self.chat_agent.load_chat_history(
         #     file_path=Constant.CHAT_HISTORY_FILE,
-        #     max_session_messages=Constant.MAX_SESSION_MESSAGES,
-        # )
+        #     max_session_messages=Constant.MAX_SESSION_MESSAGES)
 
     async def execute_tool(self, tool_call):
         """
@@ -95,14 +95,17 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(Constant.APPOLO_WELCOME)
-        workspace_path = input(
-            "Enter the workspace path (or press Enter for current directory): "
-        )
-        if not workspace_path:
-            workspace_path = os.getcwd()
-
-        if not os.path.exists(workspace_path):
+        workspace_cabled = Constant.WORKSPACE_CABLED  # ./workspace
+        if not os.path.exists(workspace_cabled):
+            workspace_path = input(
+                "Enter the workspace path." f"The workspace path is ${workspace_cabled}"
+            )
+        else:
+            workspace_path = workspace_cabled
+        if not os.path.exists(workspace_path) and workspace_path != "exit":
             os.makedirs(workspace_path)
+        if workspace_path == "exit":
+            return
 
         agent = ApolloAgent(workspace_path=workspace_path)
         print("🌟 Welcome to ApolloAgent Chat Mode!")

@@ -6,8 +6,8 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2024
 """
 
-from apollo_agent.agent import ApolloAgent
-from apollo_agent.version import (
+from apollo.agent import ApolloAgent
+from apollo.version import (
     __version__,
     __title__,
     __description__,

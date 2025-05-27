@@ -47,22 +47,39 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "list_dir",
-                "description": "List files and directories in a "
-                "specified path relative to workspace. "
-                'Use "" or "." for workspace root, not "/".',
+                "description": "Lists all files and directories in a specified path relative to the workspace root. Returns structured information about the directory contents including separate lists for files and subdirectories.",
                 "parameters": {
                     "type": "object",
-                    "required": ["target_file", "explanation"],
+                    "required": ["target_file"],
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "Path relative to workspace root. "
-                            'Use empty string or "." to list workspace root.',
+                            "description": 'Path to the directory you want to list, relative to the workspace root. Use empty string or "." to list the workspace root directory.',
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "Optional explanation of why"
-                            " you're listing this directory.",
+                            "description": "Optional explanation of why you're listing this directory. Not required for function execution.",
+                        },
+                    },
+                },
+                "returns": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "The path that was listed",
+                        },
+                        "directories": {
+                            "type": "array",
+                            "description": "List of subdirectories in the specified path",
+                        },
+                        "files": {
+                            "type": "array",
+                            "description": "List of files in the specified path",
+                        },
+                        "error": {
+                            "type": "string",
+                            "description": "Error message if the operation failed",
                         },
                     },
                 },
@@ -225,6 +242,30 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "explanation": {
                             "type": "string",
                             "description": "A concise justification for the action being taken.",
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "remove_dir",
+                "description": "Removes a directory at the specified path, "
+                "relative to the workspace root.",
+                "parameters": {
+                    "type": "object",
+                    "required": ["target_file", "explanation"],
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": (
+                                "The path of the file to delete, relative to the workspace root."
+                            ),
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "One sentence explanation.",
                         },
                     },
                 },

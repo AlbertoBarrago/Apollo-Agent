@@ -3,7 +3,7 @@ In this file, we define the class for handling chat
 interactions and tool function definitions for ApolloAgent.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import re
@@ -13,9 +13,10 @@ import time
 import ollama
 from typing import Any
 
-from apollo_agent.config.avaiable_tools import get_available_tools
-from apollo_agent.encoder.json_encoder import ApolloJSONEncoder
-from apollo_agent.config.const import Constant
+from apollo.config.avaiable_tools import get_available_tools
+from apollo.encoder.json_encoder import ApolloJSONEncoder
+from apollo.config.const import Constant
+from apollo.service.format_duration import format_duration_ms
 
 
 class ApolloAgentChat:
@@ -47,6 +48,7 @@ class ApolloAgentChat:
             A tuple of (a message, tool_calls, content).
         """
         message = llm_response.get("message")
+        total_duration = llm_response.get("total_duration", 0)
         if not message:
             print("[WARNING] LLM response missing 'message' field.")
             self.chat_history.append(
@@ -65,7 +67,7 @@ class ApolloAgentChat:
             content = getattr(message, "content", None)
 
         self.chat_history.append(message)
-        return message, tool_calls, content
+        return message, tool_calls, content, total_duration
 
     async def _handle_tool_calls(self, tool_calls, iterations, recent_tool_calls):
         """
@@ -101,7 +103,10 @@ class ApolloAgentChat:
                 func_name = "unknown"
             current_tool_calls.append(func_name)
 
-        if iterations > 1 and current_tool_calls == recent_tool_calls:
+        if (
+            iterations > Constant.MAX_CHAT_ITERATIONS
+            and current_tool_calls == recent_tool_calls
+        ):
             print("[WARNING] Detected repeated tool call pattern, breaking loop")
             loop_detected_msg = Constant.ERROR_LOOP_DETECTED
             self.permanent_history.append(
@@ -139,7 +144,7 @@ class ApolloAgentChat:
         """
         try:
             # Add a system message to encourage concluding after a few iterations
-            if iterations > 2:
+            if iterations > Constant.MAX_CHAT_ITERATIONS:
                 self.chat_history.append(
                     {"role": "system", "content": Constant.SYSTEM_CONCLUDE_SOON}
                 )
@@ -162,6 +167,8 @@ class ApolloAgentChat:
                 if isinstance(message, dict)
                 else getattr(message, "tool_calls", [])
             )
+            # Extract total_duration
+            total_duration = llm_response.get("total_duration", 0)
 
             print(f"\n{'=' * 50}")
             print(f"[ITERATION {iterations} - REASONING]")
@@ -213,7 +220,7 @@ class ApolloAgentChat:
         try:
             self._initialize_chat_session(text)
 
-            print("🤖 Give me a second, be patience and kind ", flush=True)
+            print("🤖 Give me a second... ", flush=True)
 
             iterations = 0
             recent_tool_calls = []
@@ -238,17 +245,18 @@ class ApolloAgentChat:
         """
         while iterations < Constant.MAX_CHAT_ITERATIONS:
             iterations += 1
-            print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
+            # print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
 
             try:
                 llm_response = await self._get_llm_response_from_ollama(iterations)
+                # print(f"[LLM RESPONSE] {llm_response}")
             except RuntimeError as e:
                 return {
                     "error": f"Failed to get response from language model: {str(e)}"
                 }
 
-            message, tool_calls, content = await self._process_llm_response(
-                llm_response
+            message, tool_calls, content, total_duration = (
+                await self._process_llm_response(llm_response)
             )
             if message is None:
                 return {"response": Constant.ERROR_EMPTY_LLM_MESSAGE}
@@ -259,10 +267,10 @@ class ApolloAgentChat:
                 )
                 print(f"[EXECUTING TOOLS], ${current_tool_calls}")
                 if result:
-                    print("[LOOP DETECTED - FINISHING]")
+                    # print("[LOOP DETECTED - FINISHING]")
                     return result
                 recent_tool_calls = current_tool_calls
-                print("[TOOLS EXECUTED - CONTINUING REASONING]")
+                # print("[TOOLS EXECUTED - CONTINUING REASONING]")
             elif content is not None:
                 print("[FINAL RESPONSE READY]")
                 self.permanent_history.append({"role": "assistant", "content": content})
@@ -435,7 +443,7 @@ class ApolloAgentChat:
         self.tool_executor = tool_executor
 
     async def _execute_tool(self, tool_call: dict) -> Any:
-        """Execute a tool call using the associated tool executor's execute_tool method."""
+        """Execute a tool call using the associated tool executors execute_tool method."""
         if not self.tool_executor:
             return Constant.ERROR_NO_AGENT
 

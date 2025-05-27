@@ -5,7 +5,7 @@ This module contains the ToolExecutor class, which is responsible for
 executing tool and handling tool calls from the LLM.
 
 Author: Alberto Barrago
-License: BSD 3-Clause License - 2024
+License: BSD 3-Clause License - 2025
 """
 
 import inspect

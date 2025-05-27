@@ -2,7 +2,7 @@
 Setup script for ApolloAgent.
 
 This module uses setuptools to create a distributable package for ApolloAgent.
-It reads version information from apollo_agent/version.py.
+It reads version information from apollo/version.py.
 
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2024
@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 import os
 import re
 
-with open(os.path.join("apollo_agent", "version.py"), "r") as f:
+with open(os.path.join("apollo", "version.py"), "r") as f:
     version_file = f.read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
@@ -47,8 +47,8 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "apollo=apollo_agent.cli.main:main",
-            "apollo-version=apollo_agent.cli.version_info:print_version_info",
+            "apollo=apollo.cli.main:main",
+            "apollo-version=apollo.cli.version_info:print_version_info",
         ],
     },
 )
