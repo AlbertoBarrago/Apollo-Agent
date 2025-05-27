@@ -89,7 +89,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "web_search",
-                "description": "Search the web for information about a topic. ",
+                "description": "Search the web for information about a topic. "
+                               "IMPORTANT use this tool if user ask info about something",
                 "parameters": {
                     "type": "object",
                     "required": ["search_query"],

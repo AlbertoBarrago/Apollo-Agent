@@ -73,6 +73,7 @@ class ApolloAgent:
                 "read_file": "list_dir",
                 "delete_folder": "remove_dir",
                 "delete_file": "remove_dir",
+                "search": "web_search",
             }
         )
 
