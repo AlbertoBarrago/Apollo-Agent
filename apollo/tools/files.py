@@ -8,7 +8,10 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
+import json
+import mimetypes
 import os
+import re
 from typing import Dict, Any
 from bs4 import BeautifulSoup
 
@@ -64,6 +67,7 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         "files": files,
     }
 
+
 async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
     """
     Remove dir from the workspace when a user asks for it
@@ -92,6 +96,7 @@ async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to remove directory {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -130,55 +135,240 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def edit_file(agent, target_file: str, code_edit: str) -> Dict[str, Any]:
+
+async def edit_file_or_create(
+        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+) -> Dict[str, Any]:
     """
-    Edits an HTML file intelligently by merging new content into the <body>.
-    Falls back to append or overwrite if a file is not HTML.
+    Edits a file at the specified path based on detailed instructions.
+    This function supports various operations like inserting content, replacing lines,
+    or modifying structured data (HTML, JSON). It's designed to be robust and
+    handle different file types intelligently.
+
+    Args:
+        agent: The agent object (must have a `workspace_path` attribute).
+        target_file: The relative path to the file to create or modify
+                     (e.g., 'index.html', 'main.py', 'style.css').
+        instructions: A dictionary defining the editing operations. This
+                      allows for granular control over file modifications.
+                      Examples:
+                      - To append content: {"operation": "append", "content": "New line\n"}
+                      - To insert at a specific line: {"operation": "insert_line", "line_number": 5, "content": "import sys\n"}
+                      - To replace content matching a regex: {"operation": "replace_regex", "regex": "old_pattern", "new_content": "new_pattern"}
+                      - To insert HTML into body: {"operation": "insert_html_body", "html_content": "<div>New HTML</div>"}
+                      - To update a JSON field: {"operation": "update_json_field", "path": "$.settings.debug", "value": true}
+                      - To replace an entire file: {"operation": "replace_file_content", "content": "Full new file content"}
+                      See tool description for full instruction types.
+        explanation: A concise justification for the action being taken.
+
+    Returns:
+        A dictionary indicating success or failure, with a message or error.
     """
+    import json  # Import json module for JSON operations
+
+    if not target_file:
+        return {"success": False, "error": "Missing target file"}
+
     file_path = os.path.join(agent.workspace_path, target_file)
     absolute_file_path = os.path.abspath(file_path)
     absolute_workspace_path = os.path.abspath(agent.workspace_path)
 
+    # Security check: Ensure the path is within the workspace
     if not absolute_file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-    # print(f"The actual workspace is ${agent.workspace_path}")
-    # print(f"Have right ACCESS to the folder ${os.access(absolute_workspace_path, os.W_OK)}")
+    # Create parent directories if they don't exist
+    directory = os.path.dirname(absolute_file_path)
+    if directory and not os.path.exists(directory):
+        try:
+            os.makedirs(directory, exist_ok=True)
+            print(
+                f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}"
+            )
+        except OSError as e:
+            return {"success": False, "error": f"Failed to create directory: {e}"}
 
     try:
-        os.makedirs(os.path.dirname(absolute_file_path), exist_ok=True)
-
-        original = ""
-        if os.path.exists(absolute_file_path):
+        original_content = ""
+        file_exists = os.path.exists(absolute_file_path)
+        if file_exists:
             with open(absolute_file_path, "r", encoding="utf-8") as f:
-                original = f.read()
+                original_content = f.read()
 
-        # Simple check: is this an HTML file?
-        is_html = target_file.lower().endswith(".html")
+        edited_content = original_content
+        operation = instructions.get("operation")
 
-        if is_html and original.strip():
-            soup_original = BeautifulSoup(original, "html.parser")
-            soup_new = BeautifulSoup(code_edit, "html.parser")
+        if operation is None:
+            return {"success": False, "error": "Missing 'operation' in instructions."}
 
-            # Insert all body content from new into old <body>
-            body_orig = soup_original.body
-            body_new = soup_new.body
+        # --- File Type Detection (more robust) ---
+        mime_type, _ = mimetypes.guess_type(absolute_file_path)
+        is_html = target_file.lower().endswith(".html") or (
+                mime_type and "html" in mime_type
+        )
+        is_json = target_file.lower().endswith(".json") or (
+                mime_type and "json" in mime_type
+        )
+        # --- Dispatch based on Operation and File Type ---
+        if operation == "replace_file_content":
+            # This operation effectively overwrites the entire file.
+            edited_content = instructions.get("content", "")
+            if edited_content is None:  # Allow empty content to clear file
+                edited_content = ""
 
-            if body_orig and body_new:
-                for el in body_new.contents:
-                    body_orig.append(el)
-                merged = str(soup_original)
+        elif operation == "append":
+            content_to_add = instructions.get("content", "")
+            edited_content = original_content + content_to_add
+
+        elif operation == "prepend":
+            content_to_add = instructions.get("content", "")
+            edited_content = content_to_add + original_content
+
+        elif operation == "insert_line":
+            line_number = instructions.get("line_number")
+            content_to_insert = instructions.get("content", "")
+            if line_number is None:
+                return {
+                    "success": False,
+                    "error": "Missing 'line_number' for 'insert_line' operation.",
+                }
+            lines = original_content.splitlines(keepends=True)
+            # Adjust for 1-based indexing and handle out-of-bounds
+            insert_idx = max(0, min(line_number - 1, len(lines)))
+            lines.insert(
+                insert_idx,
+                (
+                    content_to_insert + "\n"
+                    if not content_to_insert.endswith("\n")
+                    else content_to_insert
+                ),
+            )
+            edited_content = "".join(lines)
+
+        elif operation == "replace_line":
+            line_number = instructions.get("line_number")
+            new_content = instructions.get("content", "")
+            if line_number is None:
+                return {
+                    "success": False,
+                    "error": "Missing 'line_number' for 'replace_line' operation.",
+                }
+            lines = original_content.splitlines(keepends=True)
+            # Adjust for 1-based indexing and handle out-of-bounds
+            if 0 <= line_number - 1 < len(lines):
+                lines[line_number - 1] = (
+                    new_content + "\n"
+                    if not new_content.endswith("\n")
+                    else new_content
+                )
+                edited_content = "".join(lines)
             else:
-                # If <body> not found, just append raw content
-                merged = original + "\n\n" + code_edit
+                return {
+                    "success": False,
+                    "error": f"Line number {line_number} out of bounds for 'replace_line'.",
+                }
+
+        elif operation == "delete_line":
+            line_number = instructions.get("line_number")
+            if line_number is None:
+                return {
+                    "success": False,
+                    "error": "Missing 'line_number' for 'delete_line' operation.",
+                }
+            lines = original_content.splitlines(keepends=True)
+            if 0 <= line_number - 1 < len(lines):
+                del lines[line_number - 1]
+                edited_content = "".join(lines)
+            else:
+                return {
+                    "success": False,
+                    "error": f"Line number {line_number} out of bounds for 'delete_line'.",
+                }
+
+        elif operation == "replace_regex":
+            regex_pattern = instructions.get("regex")
+            new_content = instructions.get("new_content", "")
+            count = instructions.get("count", 0)  # 0 for all occurrences
+            if regex_pattern is None:
+                return {
+                    "success": False,
+                    "error": "Missing 'regex' for 'replace_regex' operation.",
+                }
+            try:
+                edited_content = re.sub(
+                    regex_pattern, new_content, original_content, count=count
+                )
+            except re.error as e:
+                return {
+                    "success": False,
+                    "error": f"Invalid regex pattern: {e}, {edited_content}",
+                }
+
+        elif operation == "insert_html_body" and is_html:
+            html_to_insert = instructions.get("html_content", "")
+            if not original_content.strip():
+                edited_content = f"<html><body>{html_to_insert}</body></html>"
+            else:
+                soup_original = BeautifulSoup(original_content, "html.parser")
+                soup_new = BeautifulSoup(html_to_insert, "html.parser")
+                body_orig = soup_original.find("body")
+                if not body_orig:
+                    # If no body in original, try to create one
+                    new_body = soup_original.new_tag("body")
+                    if soup_original.html:
+                        soup_original.html.append(new_body)
+                    else:  # Fallback if even html tag is missing
+                        soup_original.append(new_body)
+                    body_orig = new_body
+
+                for el in soup_new.contents:
+                    body_orig.append(el)
+                edited_content = str(soup_original)
+
+        elif operation == "update_json_field" and is_json:
+            path_str = instructions.get(
+                "path"
+            )  # e.g., "settings.api_key" or "data[0].name"
+            value = instructions.get("value")
+            if path_str is None:
+                return {
+                    "success": False,
+                    "error": "Missing 'path' for 'update_json_field' operation.",
+                }
+
+            try:
+                data = json.loads(original_content) if original_content.strip() else {}
+                # Simple path parser (can be expanded for more complex JSONPath)
+                parts = path_str.split(".")
+                current = data
+                for i, part in enumerate(parts):
+                    if i == len(parts) - 1:
+                        current[part] = value
+                    else:
+                        if part not in current or not isinstance(current[part], dict):
+                            current[part] = {}
+                        current = current[part]
+                edited_content = json.dumps(data, indent=2)  # Just assign, don't return
+            except json.JSONDecodeError:
+                return {"success": False, "error": "Invalid JSON content."}
+            except TypeError as e:
+                return {"success": False, "error": f"JSON path error: {e}"}
+
         else:
-            # Not HTML or no original content – append or create
-            merged = original + "\n\n" + code_edit if original else code_edit
+            return {
+                "success": False,
+                "error": f"Unsupported operation '{operation}' or file type for {target_file}.",
+            }
 
+        # --- Write back the edited content ---
         with open(absolute_file_path, "w", encoding="utf-8") as f:
-            f.write(merged)
+            f.write(edited_content)
 
-        return {"success": True, "message": f"File updated: {target_file}"}
+        action_word = "Updated" if file_exists else "Created"
+        return {
+            "success": True,
+            "message": f"File {action_word}: {target_file} with operation '{operation}'. Explanation: {explanation}",
+        }
 
-    except RuntimeError as e:
-        return {"success": False, "error": str(e)}
+    except Exception as e:
+        return {"success": False, "error": f"An unexpected error occurred: {e}"}

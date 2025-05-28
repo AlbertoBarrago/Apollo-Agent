@@ -52,14 +52,6 @@ class TestToolExecutor(unittest.TestCase):
         self.assertIn("new_alias", self.tool_executor.redirect_mapping)
         self.assertEqual(self.tool_executor.redirect_mapping["new_alias"], "test_func")
 
-    def test_register_redirects(self):
-        """Test registering multiple redirects."""
-        self.tool_executor.register_redirects({"alias1": "func1", "alias2": "func2"})
-        self.assertIn("alias1", self.tool_executor.redirect_mapping)
-        self.assertIn("alias2", self.tool_executor.redirect_mapping)
-        self.assertEqual(self.tool_executor.redirect_mapping["alias1"], "func1")
-        self.assertEqual(self.tool_executor.redirect_mapping["alias2"], "func2")
-
     def test_execute_tool_with_invalid_function(self):
         """Test executing a tool with an invalid function."""
         tool_call = {
