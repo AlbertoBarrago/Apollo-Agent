@@ -12,7 +12,7 @@ import json
 import mimetypes
 import os
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Optional
 from bs4 import BeautifulSoup
 
 
@@ -67,7 +67,6 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         "files": files,
     }
 
-
 async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
     """
     Remove dir from the workspace when a user asks for it
@@ -96,7 +95,6 @@ async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to remove directory {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
-
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -135,40 +133,15 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-
-async def edit_file_or_create(
-    agent, target_file: str, instructions: Dict[str, Any], explanation: str
-) -> Dict[str, Any]:
+async def edit_file_or_create(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
     """
-    Edits a file at the specified path based on detailed instructions.
-    This function supports various operations like inserting content, replacing lines,
-    or modifying structured data (HTML, JSON). It's designed to be robust and
-    handle different file types intelligently.
-
-    Args:
-        agent: The agent object (must have a `workspace_path` attribute).
-        target_file: The relative path to the file to create or modify
-                     (e.g., 'index.html', 'main.py', 'style.css').
-        instructions: A dictionary defining the editing operations. This
-                      allows for granular control over file modifications.
-                      Examples:
-                      - To append content: {"operation": "append", "content": "New line\n"}
-                      - To insert at a specific line: {"operation": "insert_line", "line_number": 5, "content": "import sys\n"}
-                      - To replace content matching a regex: {"operation": "replace_regex", "regex": "old_pattern", "new_content": "new_pattern"}
-                      - To insert HTML into body: {"operation": "insert_html_body", "html_content": "<div>New HTML</div>"}
-                      - To update a JSON field: {"operation": "update_json_field", "path": "$.settings.debug", "value": true}
-                      - To replace an entire file: {"operation": "replace_file_content", "content": "Full new file content"}
-                      See tool description for full instruction types.
-        explanation: A concise justification for the action being taken.
-
-    Returns:
-        A dictionary indicating success or failure, with a message or error.
-        :param agent:
-        :param target_file:
-        :param instructions:
-        :param explanation:
+    Edit or create a new File
+    :param agent:
+    :param target_file:
+    :param instructions:
+    :param explanation:
+    :return:
     """
-
     if not target_file:
         return {"success": False, "error": "Missing target file"}
 
@@ -183,183 +156,20 @@ async def edit_file_or_create(
     if directory and not os.path.exists(directory) and os.path.sep in target_file:
         try:
             os.makedirs(directory, exist_ok=True)
-            print(
-                f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}"
-            )
+            print(f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}")
         except OSError as e:
             return {"success": False, "error": f"Failed to create directory: {e}"}
 
+    file_exists = os.path.exists(file_path)
+    original_content = ""
+    if file_exists:
+        with open(file_path, "r", encoding="utf-8") as f:
+            original_content = f.read()
+
     try:
-        original_content = ""
-        file_exists = os.path.exists(file_path)
-        if file_exists:
-            with open(file_path, "r", encoding="utf-8") as f:
-                original_content = f.read()
-
-        edited_content = original_content
-        operation = instructions.get("operation")
-
-        if operation is None:
-            return {"success": False, "error": "Missing 'operation' in instructions."}
-
-        # --- File Type Detection (more robust) ---
-        mime_type, _ = mimetypes.guess_type(file_path)
-        is_html = target_file.lower().endswith(".html") or (
-            mime_type and "html" in mime_type
-        )
-        is_json = target_file.lower().endswith(".json") or (
-            mime_type and "json" in mime_type
-        )
-        # --- Dispatch based on Operation and File Type ---
-        if operation == "replace_file_content":
-            # This operation effectively overwrites the entire file.
-            edited_content = instructions.get("content", "")
-            if edited_content is None:  # Allow empty content to a clear file
-                edited_content = ""
-
-        elif operation == "append":
-            content_to_add = instructions.get("content", "")
-            edited_content = original_content + content_to_add
-
-        elif operation == "prepend":
-            content_to_add = instructions.get("content", "")
-            edited_content = content_to_add + original_content
-
-        elif operation == "insert_line":
-            line_number = instructions.get("line_number")
-            content_to_insert = instructions.get("content", "")
-            if line_number is None:
-                return {
-                    "success": False,
-                    "error": "Missing 'line_number' for 'insert_line' operation.",
-                }
-            lines = original_content.splitlines(keepends=True)
-            # Adjust for 1-based indexing and handle out-of-bounds
-            insert_idx = max(0, min(line_number - 1, len(lines)))
-            lines.insert(
-                insert_idx,
-                (
-                    content_to_insert + "\n"
-                    if not content_to_insert.endswith("\n")
-                    else content_to_insert
-                ),
-            )
-            edited_content = "".join(lines)
-
-        elif operation == "replace_line":
-            line_number = instructions.get("line_number")
-            new_content = instructions.get("content", "")
-            if line_number is None:
-                return {
-                    "success": False,
-                    "error": "Missing 'line_number' for 'replace_line' operation.",
-                }
-            lines = original_content.splitlines(keepends=True)
-            # Adjust for 1-based indexing and handle out-of-bounds
-            if 0 <= line_number - 1 < len(lines):
-                lines[line_number - 1] = (
-                    new_content + "\n"
-                    if not new_content.endswith("\n")
-                    else new_content
-                )
-                edited_content = "".join(lines)
-            else:
-                return {
-                    "success": False,
-                    "error": f"Line number {line_number} out of bounds for 'replace_line'.",
-                }
-
-        elif operation == "delete_line":
-            line_number = instructions.get("line_number")
-            if line_number is None:
-                return {
-                    "success": False,
-                    "error": "Missing 'line_number' for 'delete_line' operation.",
-                }
-            lines = original_content.splitlines(keepends=True)
-            if 0 <= line_number - 1 < len(lines):
-                del lines[line_number - 1]
-                edited_content = "".join(lines)
-            else:
-                return {
-                    "success": False,
-                    "error": f"Line number {line_number} out of bounds for 'delete_line'.",
-                }
-
-        elif operation == "replace_regex":
-            regex_pattern = instructions.get("regex")
-            new_content = instructions.get("new_content", "")
-            count = instructions.get("count", 0)  # 0 for all occurrences
-            if regex_pattern is None:
-                return {
-                    "success": False,
-                    "error": "Missing 'regex' for 'replace_regex' operation.",
-                }
-            try:
-                edited_content = re.sub(
-                    regex_pattern, new_content, original_content, count=count
-                )
-            except re.error as e:
-                return {
-                    "success": False,
-                    "error": f"Invalid regex pattern: {e}, {edited_content}",
-                }
-
-        elif operation == "insert_html_body" and is_html:
-            html_to_insert = instructions.get("html_content", "")
-            if not original_content.strip():
-                edited_content = f"<html><body>{html_to_insert}</body></html>"
-            else:
-                soup_original = BeautifulSoup(original_content, "html.parser")
-                soup_new = BeautifulSoup(html_to_insert, "html.parser")
-                body_orig = soup_original.find("body")
-                if not body_orig:
-                    # If no body in original, try to create one
-                    new_body = soup_original.new_tag("body")
-                    if soup_original.html:
-                        soup_original.html.append(new_body)
-                    else:  # Fallback if even an HTML tag is missing
-                        soup_original.append(new_body)
-                    body_orig = new_body
-
-                for el in soup_new.contents:
-                    body_orig.append(el)
-                edited_content = str(soup_original)
-
-        elif operation == "update_json_field" and is_json:
-            path_str = instructions.get(
-                "path"
-            )  # e.g., "settings.api_key" or "data[0].name"
-            value = instructions.get("value")
-            if path_str is None:
-                return {
-                    "success": False,
-                    "error": "Missing 'path' for 'update_json_field' operation.",
-                }
-
-            try:
-                data = json.loads(original_content) if original_content.strip() else {}
-                # Simple path parser (can be expanded for more complex JSONPath)
-                parts = path_str.split(".")
-                current = data
-                for i, part in enumerate(parts):
-                    if i == len(parts) - 1:
-                        current[part] = value
-                    else:
-                        if part not in current or not isinstance(current[part], dict):
-                            current[part] = {}
-                        current = current[part]
-                json.dumps(data, indent=2)
-            except json.JSONDecodeError:
-                return {"success": False, "error": "Invalid JSON content."}
-            except TypeError as e:
-                return {"success": False, "error": f"JSON path error: {e}"}
-
-        else:
-            return {
-                "success": False,
-                "error": f"Unsupported operation '{operation}' or file type for {target_file}.",
-            }
+        edited_content, error = apply_edit_operation(target_file, original_content, instructions)
+        if error:
+            return {"success": False, "error": error}
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(edited_content)
@@ -367,10 +177,109 @@ async def edit_file_or_create(
         action_word = "Updated" if file_exists else "Created"
         return {
             "success": True,
-            "message": f"File {action_word}: "
-                       f"{target_file} with operation '"
-                       f"{operation}'. Explanation: {explanation}",
+            "message": f"File {action_word}: {target_file} with operation '{instructions.get('operation')}'. Explanation: {explanation}",
         }
 
     except RuntimeError as e:
         return {"success": False, "error": f"An unexpected error occurred: {e}"}
+
+def apply_edit_operation(target_file: str, original_content: str, instructions: Dict[str, Any]) -> Tuple[str, Optional[str]]:
+    """
+    Apply edit operation to file
+    :param target_file:
+    :param original_content:
+    :param instructions:
+    :return:
+    """
+    operation = instructions.get("operation")
+    if not operation:
+        return original_content, "Missing 'operation' in instructions."
+
+    mime_type, _ = mimetypes.guess_type(target_file)
+    is_html = target_file.lower().endswith(".html") or (mime_type and "html" in mime_type)
+    is_json = target_file.lower().endswith(".json") or (mime_type and "json" in mime_type)
+
+    try:
+        if operation == "replace_file_content":
+            return instructions.get("content", "") or "", None
+
+        if operation == "append":
+            return original_content + instructions.get("content", ""), None
+
+        if operation == "prepend":
+            return instructions.get("content", "") + original_content, None
+
+        if operation == "insert_line":
+            line_number = instructions.get("line_number")
+            if line_number is None:
+                return original_content, "Missing 'line_number' for 'insert_line'."
+            lines = original_content.splitlines(keepends=True)
+            idx = max(0, min(line_number - 1, len(lines)))
+            content = instructions.get("content", "")
+            lines.insert(idx, content if content.endswith("\n") else content + "\n")
+            return "".join(lines), None
+
+        if operation == "replace_line":
+            line_number = instructions.get("line_number")
+            if line_number is None:
+                return original_content, "Missing 'line_number' for 'replace_line'."
+            lines = original_content.splitlines(keepends=True)
+            if 0 <= line_number - 1 < len(lines):
+                lines[line_number - 1] = instructions.get("content", "") + "\n"
+                return "".join(lines), None
+            return original_content, f"Line {line_number} out of bounds."
+
+        if operation == "delete_line":
+            line_number = instructions.get("line_number")
+            if line_number is None:
+                return original_content, "Missing 'line_number' for 'delete_line'."
+            lines = original_content.splitlines(keepends=True)
+            if 0 <= line_number - 1 < len(lines):
+                del lines[line_number - 1]
+                return "".join(lines), None
+            return original_content, f"Line {line_number} out of bounds."
+
+        if operation == "replace_regex":
+            regex = instructions.get("regex")
+            if regex is None:
+                return original_content, "Missing 'regex' for 'replace_regex'."
+            try:
+                new_content = instructions.get("new_content", "")
+                count = instructions.get("count", 0)
+                return re.sub(regex, new_content, original_content, count=count), None
+            except re.error as e:
+                return original_content, f"Regex error: {e}"
+
+        if operation == "insert_html_body" and is_html:
+            html_content = instructions.get("html_content", "")
+            if not original_content.strip():
+                return f"<html><body>{html_content}</body></html>", None
+            soup = BeautifulSoup(original_content, "html.parser")
+            body = soup.find("body")
+            if not body:
+                body = soup.new_tag("body")
+                (soup.html or soup).append(body)
+            new_soup = BeautifulSoup(html_content, "html.parser")
+            for el in new_soup.contents:
+                body.append(el)
+            return str(soup), None
+
+        if operation == "update_json_field" and is_json:
+            path_str = instructions.get("path")
+            if path_str is None:
+                return original_content, "Missing 'path' for 'update_json_field'."
+            value = instructions.get("value")
+            data = json.loads(original_content) if original_content.strip() else {}
+            keys = path_str.split(".")
+            current = data
+            for i, key in enumerate(keys):
+                if i == len(keys) - 1:
+                    current[key] = value
+                else:
+                    current = current.setdefault(key, {})
+            return json.dumps(data, indent=2), None
+
+    except RuntimeError as e:
+        return original_content, str(e)
+
+    return original_content, f"Unsupported operation '{operation}' or invalid file type."
