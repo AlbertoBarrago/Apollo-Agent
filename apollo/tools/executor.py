@@ -28,7 +28,6 @@ class ToolExecutor:
         """
         self.workspace_path = workspace_path
         self.available_functions = {}
-        self.redirect_mapping = {}
         self.last_edit_file = None
         self.last_edit_content = None
 
@@ -53,7 +52,7 @@ class ToolExecutor:
 
     async def execute_tool(self, tool_call) -> Any:
         """
-        Execute a tool function call (from LLM) with validated arguments and secure redirection.
+        Execute a tool function call (from LLM) with validated arguments
 
         Args:
             tool_call: The tool call from the LLM.
@@ -95,6 +94,7 @@ class ToolExecutor:
             return f"[ERROR] Function '{func_name}' not found."
 
         filtered_args = filter_valid_args(func, arguments_dict)
+        print(f"filtered_args: {filtered_args}")
 
         try:
             if inspect.iscoroutinefunction(func):

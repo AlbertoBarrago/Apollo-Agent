@@ -133,9 +133,9 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def edit_file_or_create(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
+async def create_file(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
     """
-    Edit or create a new File
+    Create a new file with the specified content
     :param agent:
     :param target_file:
     :param instructions:
@@ -145,51 +145,68 @@ async def edit_file_or_create(agent, target_file: str, instructions: Dict[str, A
     if not target_file:
         return {"success": False, "error": "Missing target file"}
 
+    # Normalize the target file path and ensure it's relative
     target_file = os.path.normpath(target_file).lstrip(os.sep)
-    file_path = os.path.join(agent.workspace_path, target_file)
-    absolute_workspace_path = os.path.abspath(agent.workspace_path)
 
+    # Get the workspace path from the agent (which could be ToolExecutor or ApolloAgent)
+    workspace_path = getattr(agent, 'workspace_path', os.getcwd())
+    absolute_workspace_path = os.path.abspath(workspace_path)
+
+    # Construct the full file path
+    file_path = os.path.abspath(os.path.join(absolute_workspace_path, target_file))
+
+    print(f"[INFO] Creating file: {target_file}")
+    print(f"[INFO] Instructions: {instructions}")
+    print(f"[INFO] Explanation: {explanation}")
+    print(f"[INFO] Absolute workspace path: {absolute_workspace_path}")
+    print(f"[INFO] Full file path: {file_path}")
+
+    # Ensure the file path is within the workspace
     if not file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
     directory = os.path.dirname(file_path)
-    if directory and not os.path.exists(directory) and os.path.sep in target_file:
+    if directory and not os.path.exists(directory):
         try:
             os.makedirs(directory, exist_ok=True)
             print(f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}")
         except OSError as e:
             return {"success": False, "error": f"Failed to create directory: {e}"}
 
-    file_exists = os.path.exists(file_path)
-    original_content = ""
-    if file_exists:
-        with open(file_path, "r", encoding="utf-8") as f:
-            original_content = f.read()
+    # Get the content from instructions
+    content = instructions.get("content", "")
 
+    # Actually write the file to disk
     try:
-        edited_content, error = apply_edit_operation(target_file, original_content, instructions)
-        if error:
-            return {"success": False, "error": error}
+        with open(file_path, 'w', encoding="utf-8") as f:
+            f.write(content)
 
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(edited_content)
+        file_exists = True
+        print(f"[INFO] File created successfully: {target_file}")
 
-        action_word = "Updated" if file_exists else "Created"
         return {
             "success": True,
-            "message": f"File {action_word}: {target_file} with operation '{instructions.get('operation')}'. Explanation: {explanation}",
+            "message": f"File created: {target_file}",
+            "file_path": file_path,
+            "file_exists": file_exists,
+            "explanation": explanation,
         }
+    except (OSError, IOError, RuntimeError) as e:
+        error_msg = f"Failed to write file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
+    except Exception as e:
+        error_msg = f"Unexpected error creating file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
 
-    except RuntimeError as e:
-        return {"success": False, "error": f"An unexpected error occurred: {e}"}
-
-def apply_edit_operation(target_file: str, original_content: str, instructions: Dict[str, Any]) -> Tuple[str, Optional[str]]:
+async def _apply_edit(target_file: str, original_content: str, instructions: Dict[str, Any]) -> Tuple[str, Optional[str]]:
     """
-    Apply edit operation to file
-    :param target_file:
-    :param original_content:
-    :param instructions:
-    :return:
+    Apply edit operations on file content
+    :param target_file: File path for context (used for mime type detection)
+    :param original_content: Original content of the file
+    :param instructions: Edit instructions
+    :return: Tuple of (new_content, error_message)
     """
     operation = instructions.get("operation")
     if not operation:
@@ -279,7 +296,90 @@ def apply_edit_operation(target_file: str, original_content: str, instructions: 
                     current = current.setdefault(key, {})
             return json.dumps(data, indent=2), None
 
-    except RuntimeError as e:
-        return original_content, str(e)
+    except (OSError, IOError, RuntimeError) as e:
+        return original_content, f"Error applying edit: {str(e)}"
+    except re.error as e:
+        return original_content, f"Regex error: {str(e)}"
+    except json.JSONDecodeError as e:
+        return original_content, f"JSON parsing error: {str(e)}"
+    except Exception as e:
+        return original_content, f"Unexpected error applying edit: {str(e)}"
 
     return original_content, f"Unsupported operation '{operation}' or invalid file type."
+
+async def edit_file(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
+    """
+    Edit an existing file with the specified instructions
+    :param agent: The agent instance (could be ToolExecutor or ApolloAgent)
+    :param target_file: Path to the file to edit, relative to workspace
+    :param instructions: Edit instructions
+    :param explanation: Explanation for the edit
+    :return: Dictionary with success/error information
+    """
+    if not target_file:
+        return {"success": False, "error": "Missing target file"}
+
+    # Normalize the target file path and ensure it's relative
+    target_file = os.path.normpath(target_file).lstrip(os.sep)
+
+    # Get the workspace path from the agent (which could be ToolExecutor or ApolloAgent)
+    workspace_path = getattr(agent, 'workspace_path', os.getcwd())
+    absolute_workspace_path = os.path.abspath(workspace_path)
+
+    # Construct the full file path
+    file_path = os.path.abspath(os.path.join(absolute_workspace_path, target_file))
+
+    print(f"[INFO] Editing file: {target_file}")
+    print(f"[INFO] Instructions: {instructions}")
+    print(f"[INFO] Explanation: {explanation}")
+    print(f"[INFO] Absolute workspace path: {absolute_workspace_path}")
+    print(f"[INFO] Full file path: {file_path}")
+
+    # Ensure the file path is within the workspace
+    if not file_path.startswith(absolute_workspace_path):
+        return {"success": False, "error": "Unsafe file path outside of workspace"}
+
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        return {"success": False, "error": f"File does not exist: {target_file}"}
+
+    if not os.path.isfile(file_path):
+        return {"success": False, "error": f"Path is not a file: {target_file}"}
+
+    # Read the original content
+    try:
+        with open(file_path, 'r', encoding="utf-8") as f:
+            original_content = f.read()
+    except (OSError, IOError) as e:
+        error_msg = f"Failed to read file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
+    except Exception as e:
+        error_msg = f"Unexpected error reading file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
+
+    try:
+        new_content, error = await _apply_edit(target_file, original_content, instructions)
+        if error:
+            return {"success": False, "error": error}
+
+        # Write the new content
+        with open(file_path, 'w', encoding="utf-8") as f:
+            f.write(new_content)
+
+        print(f"[INFO] File edited successfully: {target_file}")
+        return {
+            "success": True,
+            "message": f"File edited: {target_file}",
+            "file_path": file_path,
+            "explanation": explanation,
+        }
+    except (OSError, IOError) as e:
+        error_msg = f"Failed to write file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}
+    except Exception as e:
+        error_msg = f"Unexpected error editing file {target_file}: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {"success": False, "error": error_msg}

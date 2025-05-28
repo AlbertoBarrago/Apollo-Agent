@@ -20,8 +20,9 @@ from apollo.tools.chat import ApolloAgentChat
 from apollo.tools.files import (
     list_dir,
     delete_file,
-    edit_file_or_create,
-    remove_dir,
+    create_file,
+    edit_file,
+    remove_dir
 )
 from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
@@ -54,7 +55,8 @@ class ApolloAgent:
         self.tool_executor.register_functions(
             {
                 # File operations (core functionality)
-                "edit_file_or_create": edit_file_or_create,
+                "create_file": create_file,
+                "edit_file": edit_file,
                 "list_dir": list_dir,
                 "delete_file": delete_file,
                 "remove_dir": remove_dir,

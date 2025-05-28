@@ -76,14 +76,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "web_search",
-                "description": "Searches the web to find up-to-date information on a given topic. "
-                               "This tool is best used for general knowledge, current events, or technical information "
+                "description": "Searches the web to find up-to-date information on a given topic."
+                               "This tool is best used for general knowledge, "
+                               "current events, or technical information "
                                "not present in the local codebase or Wikipedia.",
                 "parameters": {
                     "type": "object",
-                    "required": ["search_query"],
+                    "required": ["q"],
                     "properties": {
-                        "search_query": {
+                        "q": {
                             "type": "string",
                             "description": "The search query to be sent to the search engine.",
                         }
@@ -172,9 +173,36 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "type": "function",
             "function": {
-                "name": "edit_file_or_create",
-                "description": "Creates a new file or modifies an existing one with a variety of granular operations. "
-                               "It is critical to first inspect the file's content to ensure the edit is appropriate. If the `target_file` does not exist, it will be created. Always provide a clear explanation for the modification.",
+                "name": "create_file",
+                "description": "Creates a new file with a variety of granular operations. "
+                               "Always provide a clear explanation for the modification.",
+                "parameters": {
+                    "type": "object",
+                    "required": ["target_file", "instructions", "explanation"],
+                    "properties": {
+                        "target_file": {
+                            "type": "string",
+                            "description": "The relative path to the file to be modified or created (e.g., 'src/main.py', 'config.json').",
+                        },
+                        "instructions": {
+                            "type": "object",
+                            "description": "A JSON object specifying the editing operation. Choose ONE of the following: ... "
+                                           "(Your detailed instructions are excellent here and remain unchanged)",
+                        },
+                        "explanation": {
+                            "type": "string",
+                            "description": "A clear and concise justification for why this file modification is necessary.",
+                        },
+                    },
+                },
+            },
+        },{
+            "type": "function",
+            "function": {
+                "name": "edit_file",
+                "description": "Modifies an existing one with a variety of granular operations. "
+                               "It is critical to first inspect the file's content to ensure the edit is appropriate. "
+                               "Always provide a clear explanation for the modification.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file", "instructions", "explanation"],
@@ -244,9 +272,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
                                "scientific concepts, or detailed biographies.",
                 "parameters": {
                     "type": "object",
-                    "required": ["search_query"],
+                    "required": ["q"],
                     "properties": {
-                        "search_query": {
+                        "q": {
                             "type": "string",
                             "description": "The topic to search for on Wikipedia.",
                         }
