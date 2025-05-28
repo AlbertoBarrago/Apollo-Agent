@@ -20,18 +20,19 @@ from apollo.tools.chat import ApolloAgentChat
 from apollo.tools.files import (
     list_dir,
     delete_file,
-    edit_file,
+    edit_file_or_create,
     remove_dir,
 )
 from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
-from apollo.tools.web_search import web_search
+from apollo.tools.web import web_search, wiki_search
 
 
 class ApolloAgent:
     """
     ApolloAgent is a custom AI agent that implements various functions for code assistance.
     """
+
     def __init__(self, workspace_path: str = None):
         """
         Initialize the ApolloAgent with a workspace path.
@@ -52,26 +53,23 @@ class ApolloAgent:
         # Register functions with the tool executor
         self.tool_executor.register_functions(
             {
-                "codebase_search": codebase_search,
+                # File operations (core functionality)
+                "edit_file_or_create": edit_file_or_create,
                 "list_dir": list_dir,
-                "file_search": file_search,
                 "delete_file": delete_file,
-                "edit_file": edit_file,
-                "chat": self.chat_agent.chat,
-                "grep_search": grep_search,
-                "web_search": web_search,
                 "remove_dir": remove_dir,
-            }
-        )
 
-        # Register redirects with the tool executor
-        self.tool_executor.register_redirects(
-            {
-                "create_file": "edit_file",
-                "read_file": "list_dir",
-                "delete_folder": "remove_dir",
-                "delete_file": "remove_dir",
-                "search": "web_search",
+                # Search operations (by increasing scope/complexity)
+                "file_search": file_search,
+                "grep_search": grep_search,
+                "codebase_search": codebase_search,
+
+                # External information sources
+                "web_search": web_search,
+                "wiki_search": wiki_search,
+
+                # Interaction
+                "chat": self.chat_agent.chat
             }
         )
 
@@ -107,9 +105,9 @@ class ApolloAgent:
             return
 
         agent = ApolloAgent(workspace_path=workspace_path)
-        print("🌟 Welcome to ApolloAgent Chat Mode!")
-        print("Type 'exit' to end the conversation.")
-        print("Workspace set to:", os.path.abspath(workspace_path))
+        print("🌟 Welcome to ApolloAgent Chat Mode!"
+              "\n > Type 'exit' to end the conversation."
+              "\n > Now in BETA MODE the workspace is set to:", os.path.abspath(workspace_path))
 
         while True:
             try:

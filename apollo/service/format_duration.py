@@ -6,6 +6,7 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
+
 def format_duration_ms(total_ms):
     """
     Format a duration given in milliseconds to a human-readable string.

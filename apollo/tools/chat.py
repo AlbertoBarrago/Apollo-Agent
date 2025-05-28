@@ -13,7 +13,7 @@ import time
 import ollama
 from typing import Any
 
-from apollo.config.avaiable_tools import get_available_tools
+from apollo.config.tools import get_available_tools
 from apollo.encoder.json_encoder import ApolloJSONEncoder
 from apollo.config.const import Constant
 from apollo.service.format_duration import format_duration_ms

@@ -8,8 +8,8 @@ ApolloAgent is a custom AI agent that implements various functions for code assi
 
 ApolloAgent provides the following functionality:
 
-- **Codebase Search**: Find snippets of code relevant to a search query.
-- **Directory Listing**: Get insights into your folder and project structure.
+- **Web Search**: Get info from duck duck.
+- **Wiki Search**: Get info from Wikipedia.
 - **Grep Search**: Perform fast, text-based regex searches within files or directories.
 - **File Search**: Locate files quickly using fuzzy matching on file paths.
 - **File Operations**: Delete and edit files directly through the agent.

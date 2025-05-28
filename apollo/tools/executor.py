@@ -51,25 +51,6 @@ class ToolExecutor:
         """
         self.available_functions.update(functions)
 
-    def register_redirect(self, from_name: str, to_name: str) -> None:
-        """
-        Register a function name redirect.
-
-        Args:
-            from_name: The name to redirect from.
-            to_name: The name to redirect to.
-        """
-        self.redirect_mapping[from_name] = to_name
-
-    def register_redirects(self, redirects: Dict[str, str]) -> None:
-        """
-        Register multiple function name redirects.
-
-        Args:
-            redirects: A dictionary mapping from_names to to_names.
-        """
-        self.redirect_mapping.update(redirects)
-
     async def execute_tool(self, tool_call) -> Any:
         """
         Execute a tool function call (from LLM) with validated arguments and secure redirection.
@@ -109,32 +90,17 @@ class ToolExecutor:
         except RuntimeError as e:
             return f"[ERROR] Failed to parse tool call: {e}"
 
-        redirected_name = self.redirect_mapping.get(func_name, func_name)
-
-        func = self.available_functions.get(redirected_name)
+        func = self.available_functions.get(func_name)
         if not func:
-            return f"[ERROR] Function '{redirected_name}' not found."
+            return f"[ERROR] Function '{func_name}' not found."
 
         filtered_args = filter_valid_args(func, arguments_dict)
 
         try:
-            if redirected_name == "web_search":
-                if inspect.iscoroutinefunction(func):
-                    if "search_query" in filtered_args:
-                        result = await func(filtered_args["search_query"])
-                    else:
-                        return "[ERROR] Missing required 'search_query' parameter for web_search function."
-                else:
-                    if "search_query" in filtered_args:
-                        result = func(filtered_args["search_query"])
-                    else:
-                        return "[ERROR] Missing required 'search_query' parameter for web_search function."
+            if inspect.iscoroutinefunction(func):
+                result = await func(self, **filtered_args)
             else:
-                if inspect.iscoroutinefunction(func):
-                    result = await func(self, **filtered_args)
-                else:
-                    result = func(self, **filtered_args)
+                result = func(self, **filtered_args)
             return result
-
         except RuntimeError as e:
-            return f"[ERROR] Exception while executing '{redirected_name}': {e}"
+            return f"[ERROR] Failed to execute tool: {e}"
