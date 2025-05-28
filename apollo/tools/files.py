@@ -137,7 +137,7 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
 
 
 async def edit_file_or_create(
-        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
 ) -> Dict[str, Any]:
     """
     Edits a file at the specified path based on detailed instructions.
@@ -163,23 +163,24 @@ async def edit_file_or_create(
 
     Returns:
         A dictionary indicating success or failure, with a message or error.
+        :param agent:
+        :param target_file:
+        :param instructions:
+        :param explanation:
     """
-    import json  # Import json module for JSON operations
 
     if not target_file:
         return {"success": False, "error": "Missing target file"}
 
+    target_file = os.path.normpath(target_file).lstrip(os.sep)
     file_path = os.path.join(agent.workspace_path, target_file)
-    absolute_file_path = os.path.abspath(file_path)
     absolute_workspace_path = os.path.abspath(agent.workspace_path)
 
-    # Security check: Ensure the path is within the workspace
-    if not absolute_file_path.startswith(absolute_workspace_path):
+    if not file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-    # Create parent directories if they don't exist
-    directory = os.path.dirname(absolute_file_path)
-    if directory and not os.path.exists(directory):
+    directory = os.path.dirname(file_path)
+    if directory and not os.path.exists(directory) and os.path.sep in target_file:
         try:
             os.makedirs(directory, exist_ok=True)
             print(
@@ -190,9 +191,9 @@ async def edit_file_or_create(
 
     try:
         original_content = ""
-        file_exists = os.path.exists(absolute_file_path)
+        file_exists = os.path.exists(file_path)
         if file_exists:
-            with open(absolute_file_path, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_content = f.read()
 
         edited_content = original_content
@@ -202,18 +203,18 @@ async def edit_file_or_create(
             return {"success": False, "error": "Missing 'operation' in instructions."}
 
         # --- File Type Detection (more robust) ---
-        mime_type, _ = mimetypes.guess_type(absolute_file_path)
+        mime_type, _ = mimetypes.guess_type(file_path)
         is_html = target_file.lower().endswith(".html") or (
-                mime_type and "html" in mime_type
+            mime_type and "html" in mime_type
         )
         is_json = target_file.lower().endswith(".json") or (
-                mime_type and "json" in mime_type
+            mime_type and "json" in mime_type
         )
         # --- Dispatch based on Operation and File Type ---
         if operation == "replace_file_content":
             # This operation effectively overwrites the entire file.
             edited_content = instructions.get("content", "")
-            if edited_content is None:  # Allow empty content to clear file
+            if edited_content is None:  # Allow empty content to a clear file
                 edited_content = ""
 
         elif operation == "append":
@@ -317,7 +318,7 @@ async def edit_file_or_create(
                     new_body = soup_original.new_tag("body")
                     if soup_original.html:
                         soup_original.html.append(new_body)
-                    else:  # Fallback if even html tag is missing
+                    else:  # Fallback if even an HTML tag is missing
                         soup_original.append(new_body)
                     body_orig = new_body
 
@@ -348,7 +349,7 @@ async def edit_file_or_create(
                         if part not in current or not isinstance(current[part], dict):
                             current[part] = {}
                         current = current[part]
-                edited_content = json.dumps(data, indent=2)  # Just assign, don't return
+                json.dumps(data, indent=2)
             except json.JSONDecodeError:
                 return {"success": False, "error": "Invalid JSON content."}
             except TypeError as e:
@@ -360,15 +361,16 @@ async def edit_file_or_create(
                 "error": f"Unsupported operation '{operation}' or file type for {target_file}.",
             }
 
-        # --- Write back the edited content ---
-        with open(absolute_file_path, "w", encoding="utf-8") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(edited_content)
 
         action_word = "Updated" if file_exists else "Created"
         return {
             "success": True,
-            "message": f"File {action_word}: {target_file} with operation '{operation}'. Explanation: {explanation}",
+            "message": f"File {action_word}: "
+                       f"{target_file} with operation '"
+                       f"{operation}'. Explanation: {explanation}",
         }
 
-    except Exception as e:
+    except RuntimeError as e:
         return {"success": False, "error": f"An unexpected error occurred: {e}"}

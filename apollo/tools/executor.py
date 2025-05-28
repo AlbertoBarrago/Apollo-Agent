@@ -64,8 +64,8 @@ class ToolExecutor:
 
         def filter_valid_args(valid_func, args_dict):
             valid_params = valid_func.__code__.co_varnames[
-                           : valid_func.__code__.co_argcount
-                           ]
+                : valid_func.__code__.co_argcount
+            ]
             return {k: v for k, v in args_dict.items() if k in valid_params}
 
         try:
