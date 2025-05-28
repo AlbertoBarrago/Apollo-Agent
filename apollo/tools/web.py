@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from apollo.config.const import Constant
 
 
-async def web_search(search_query: str) -> List[Dict[str, str]]:
+async def web_search(q: str) -> List[Dict[str, str]]:
     """
     Fetches search results from DuckDuckGo using its HTML search page.
 
@@ -27,13 +27,12 @@ async def web_search(search_query: str) -> List[Dict[str, str]]:
     result, its URL, and a snippet (if available). The function returns a list of
     such results structured as dictionaries.
 
-    :param search_query: Search query string to be sent to DuckDuckGo.
-    :type search_query: Str
+    :param q: Str - Search query string to be sent to DuckDuckGo.
     :return: A list of dictionaries, where each dictionary contains 'title', 'url',
         and 'snippet' representing a search result.
     :rtype: List[Dict[str, str]]
     """
-    url = f"https://html.duckduckgo.com/html/?q={quote_plus(search_query)}"
+    url = f"https://html.duckduckgo.com/html/?q={quote_plus(q)}"
     headers = {
         "User-Agent": random.choice(Constant.USER_AGENTS),
     }
@@ -63,7 +62,7 @@ async def web_search(search_query: str) -> List[Dict[str, str]]:
         return results
 
 
-async def wiki_search(search_query: str) -> List[Dict[str, str]]:
+async def wiki_search(q: str) -> List[Dict[str, str]]:
     """
     Fetches search results from Wikipedia for a given query string asynchronously.
 
@@ -74,12 +73,11 @@ async def wiki_search(search_query: str) -> List[Dict[str, str]]:
     The extracted data is returned as a list of dictionaries, each containing
     the title, URL, and snippet of a result.
 
-    :param search_query: The query string to search for on Wikipedia.
-    :type search_query: Str
+    :param q: Str - The query string to search for on Wikipedia.
     :return: A list of dictionaries containing titles, URLs, and snippets of the search results.
     :rtype: List[Dict[str, str]]
     """
-    url = f"https://en.wikipedia.org/w/index.php?search={quote_plus(search_query)}"
+    url = f"https://en.wikipedia.org/w/index.php?search={quote_plus(q)}"
     headers = {
         "User-Agent": random.choice(Constant.USER_AGENTS),
     }

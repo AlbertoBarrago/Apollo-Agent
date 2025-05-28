@@ -1,0 +1,2 @@
+- Simplify edit_or_create function now is buggy, or create in the wrong place or totally fails
+- Work on the cache system for speed respond

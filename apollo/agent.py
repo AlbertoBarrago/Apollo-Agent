@@ -20,8 +20,9 @@ from apollo.tools.chat import ApolloAgentChat
 from apollo.tools.files import (
     list_dir,
     delete_file,
-    edit_file_or_create,
-    remove_dir,
+    create_file,
+    edit_file,
+    remove_dir
 )
 from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
@@ -54,7 +55,8 @@ class ApolloAgent:
         self.tool_executor.register_functions(
             {
                 # File operations (core functionality)
-                "edit_file_or_create": edit_file_or_create,
+                "create_file": create_file,
+                "edit_file": edit_file,
                 "list_dir": list_dir,
                 "delete_file": delete_file,
                 "remove_dir": remove_dir,
@@ -92,22 +94,17 @@ class ApolloAgent:
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
         print(Constant.APPOLO_WELCOME)
-        workspace_cabled = Constant.WORKSPACE_CABLED  # ./workspace
-        if not os.path.exists(workspace_cabled):
-            workspace_path = input(
-                "Enter the workspace path." f"The workspace path is ${workspace_cabled}"
-            )
-        else:
-            workspace_path = workspace_cabled
-        if not os.path.exists(workspace_path) and workspace_path != "exit":
-            os.makedirs(workspace_path)
-        if workspace_path == "exit":
+        workspace_cabled = Constant.WORKSPACE_CABLED
+
+        if not os.path.exists(workspace_cabled) and workspace_cabled != "exit":
+            os.makedirs(workspace_cabled)
+        if workspace_cabled == "exit":
             return
 
-        agent = ApolloAgent(workspace_path=workspace_path)
+        agent = ApolloAgent(workspace_path=workspace_cabled)
         print("🌟 Welcome to ApolloAgent Chat Mode!"
               "\n > Type 'exit' to end the conversation."
-              "\n > Now in BETA MODE the workspace is set to:", os.path.abspath(workspace_path))
+              "\n > Now in BETA MODE the workspace is set to:", os.path.abspath(workspace_cabled))
 
         while True:
             try:
