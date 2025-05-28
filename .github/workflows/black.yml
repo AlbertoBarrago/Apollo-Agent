@@ -10,11 +10,15 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
     - uses: actions/checkout@v3
       with:
         ref: ${{ github.head_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -47,6 +51,7 @@ jobs:
       if: steps.git-check.outputs.changes == 'true' && github.event_name != 'pull_request'
       uses: peter-evans/create-pull-request@v5
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         title: "Apply Black formatting"
         commit-message: "Apply Black formatting"
         body: "This PR applies Black code formatting to the codebase."
