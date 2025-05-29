@@ -43,7 +43,7 @@ class TestApolloAgentChat(unittest.TestCase):
         # Verify that ollama.chat was called with the correct arguments
         mock_ollama_chat.assert_called_once()
         args, kwargs = mock_ollama_chat.call_args
-        self.assertEqual(kwargs["model"], Constant.LLM_MODEL)
+        self.assertEqual(kwargs["model"], Constant.llm_model)
         self.assertIn(
             {"role": "user", "content": "Hello, how are you?"}, kwargs["messages"]
         )
@@ -87,7 +87,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
         # Verify the result
         self.assertIn("response", result)
-        self.assertEqual(result["response"], Constant.ERROR_EMPTY_LLM_MESSAGE)
+        self.assertEqual(result["response"], Constant.error_empty_llm_message)
 
     @patch("apollo.tools.chat_operations.ollama.chat")
     async def test_chat_with_loop_detection(self, mock_ollama_chat):
@@ -111,7 +111,7 @@ class TestApolloAgentChat(unittest.TestCase):
         # Mock the _handle_tool_calls method to simulate a loop
         async def mock_handle_tool_calls(iterations, recent_tool_calls):
             if iterations > 1 and recent_tool_calls == ["test_func"]:
-                return {"response": Constant.ERROR_LOOP_DETECTED}, ["test_func"]
+                return {"response": Constant.error_loop_detected}, ["test_func"]
             return None, ["test_func"]
 
         self.chat._handle_tool_calls = mock_handle_tool_calls
@@ -121,7 +121,7 @@ class TestApolloAgentChat(unittest.TestCase):
 
         # Verify the result
         self.assertIn("response", result)
-        self.assertEqual(result["response"], Constant.ERROR_LOOP_DETECTED)
+        self.assertEqual(result["response"], Constant.error_loop_detected)
 
     def test_extract_command(self):
         """Test _extract_command method."""

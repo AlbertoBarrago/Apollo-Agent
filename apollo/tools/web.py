@@ -34,7 +34,7 @@ async def web_search(q: str) -> List[Dict[str, str]]:
     """
     url = f"https://html.duckduckgo.com/html/?q={quote_plus(q)}"
     headers = {
-        "User-Agent": random.choice(Constant.USER_AGENTS),
+        "User-Agent": random.choice(Constant.user_agents),
     }
 
     async with httpx.AsyncClient(headers=headers, timeout=20.0) as client:
@@ -79,7 +79,7 @@ async def wiki_search(q: str) -> List[Dict[str, str]]:
     """
     url = f"https://en.wikipedia.org/w/index.php?search={quote_plus(q)}"
     headers = {
-        "User-Agent": random.choice(Constant.USER_AGENTS),
+        "User-Agent": random.choice(Constant.user_agents),
     }
     async with httpx.AsyncClient(headers=headers, timeout=20.0) as client:
         resp = await client.get(url)
