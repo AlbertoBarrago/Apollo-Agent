@@ -1,5 +1,6 @@
 # ApolloAgent
-[![Tests](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/test.yml/badge.svg)](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/AlbertoBarrago/ApolloAgent/graph/badge.svg?token=SD0LGLSUY6)](https://codecov.io/gh/AlbertoBarrago/ApolloAgent)
+[![Black Code Formatter](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml/badge.svg)](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml)
 
 ![img.png](screen.png)
 
