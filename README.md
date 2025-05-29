@@ -1,4 +1,5 @@
 # ApolloAgent
+[![Tests](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/test.yml/badge.svg)](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/test.yml)
 
 ![img.png](screen.png)
 
