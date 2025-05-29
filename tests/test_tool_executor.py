@@ -43,7 +43,6 @@ class TestToolExecutor(unittest.TestCase):
         self.assertEqual(self.tool_executor.available_functions["func1"], func1)
         self.assertEqual(self.tool_executor.available_functions["func2"], func2)
 
-
     def test_execute_tool_with_invalid_function(self):
         """Test executing a tool with an invalid function."""
         tool_call = {

@@ -67,6 +67,7 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         "files": files,
     }
 
+
 async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
     """
     Remove dir from the workspace when a user asks for it
@@ -95,6 +96,7 @@ async def remove_dir(agent, target_file: str) -> Dict[str, Any]:
         error_msg = f"Failed to remove directory {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 async def delete_file(agent, target_file: str) -> Dict[str, Any]:
     """
@@ -133,7 +135,10 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def create_file(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
+
+async def create_file(
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
+) -> Dict[str, Any]:
     """
     Create a new file with the specified content
     :param agent:
@@ -149,7 +154,7 @@ async def create_file(agent, target_file: str, instructions: Dict[str, Any], exp
     target_file = os.path.normpath(target_file).lstrip(os.sep)
 
     # Get the workspace path from the agent (which could be ToolExecutor or ApolloAgent)
-    workspace_path = getattr(agent, 'workspace_path', os.getcwd())
+    workspace_path = getattr(agent, "workspace_path", os.getcwd())
     absolute_workspace_path = os.path.abspath(workspace_path)
 
     # Construct the full file path
@@ -169,7 +174,9 @@ async def create_file(agent, target_file: str, instructions: Dict[str, Any], exp
     if directory and not os.path.exists(directory):
         try:
             os.makedirs(directory, exist_ok=True)
-            print(f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}")
+            print(
+                f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}"
+            )
         except OSError as e:
             return {"success": False, "error": f"Failed to create directory: {e}"}
 
@@ -178,7 +185,7 @@ async def create_file(agent, target_file: str, instructions: Dict[str, Any], exp
 
     # Actually write the file to disk
     try:
-        with open(file_path, 'w', encoding="utf-8") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
         file_exists = True
@@ -200,7 +207,10 @@ async def create_file(agent, target_file: str, instructions: Dict[str, Any], exp
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-async def _apply_edit(target_file: str, original_content: str, instructions: Dict[str, Any]) -> Tuple[str, Optional[str]]:
+
+async def _apply_edit(
+    target_file: str, original_content: str, instructions: Dict[str, Any]
+) -> Tuple[str, Optional[str]]:
     """
     Apply edit operations on file content
     :param target_file: File path for context (used for mime type detection)
@@ -213,8 +223,12 @@ async def _apply_edit(target_file: str, original_content: str, instructions: Dic
         return original_content, "Missing 'operation' in instructions."
 
     mime_type, _ = mimetypes.guess_type(target_file)
-    is_html = target_file.lower().endswith(".html") or (mime_type and "html" in mime_type)
-    is_json = target_file.lower().endswith(".json") or (mime_type and "json" in mime_type)
+    is_html = target_file.lower().endswith(".html") or (
+        mime_type and "html" in mime_type
+    )
+    is_json = target_file.lower().endswith(".json") or (
+        mime_type and "json" in mime_type
+    )
 
     try:
         if operation == "replace_file_content":
@@ -305,9 +319,15 @@ async def _apply_edit(target_file: str, original_content: str, instructions: Dic
     except Exception as e:
         return original_content, f"Unexpected error applying edit: {str(e)}"
 
-    return original_content, f"Unsupported operation '{operation}' or invalid file type."
+    return (
+        original_content,
+        f"Unsupported operation '{operation}' or invalid file type.",
+    )
 
-async def edit_file(agent, target_file: str, instructions: Dict[str, Any], explanation: str) -> Dict[str, Any]:
+
+async def edit_file(
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
+) -> Dict[str, Any]:
     """
     Edit an existing file with the specified instructions
     :param agent: The agent instance (could be ToolExecutor or ApolloAgent)
@@ -323,7 +343,7 @@ async def edit_file(agent, target_file: str, instructions: Dict[str, Any], expla
     target_file = os.path.normpath(target_file).lstrip(os.sep)
 
     # Get the workspace path from the agent (which could be ToolExecutor or ApolloAgent)
-    workspace_path = getattr(agent, 'workspace_path', os.getcwd())
+    workspace_path = getattr(agent, "workspace_path", os.getcwd())
     absolute_workspace_path = os.path.abspath(workspace_path)
 
     # Construct the full file path
@@ -348,7 +368,7 @@ async def edit_file(agent, target_file: str, instructions: Dict[str, Any], expla
 
     # Read the original content
     try:
-        with open(file_path, 'r', encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             original_content = f.read()
     except (OSError, IOError) as e:
         error_msg = f"Failed to read file {target_file}: {str(e)}"
@@ -360,12 +380,14 @@ async def edit_file(agent, target_file: str, instructions: Dict[str, Any], expla
         return {"success": False, "error": error_msg}
 
     try:
-        new_content, error = await _apply_edit(target_file, original_content, instructions)
+        new_content, error = await _apply_edit(
+            target_file, original_content, instructions
+        )
         if error:
             return {"success": False, "error": error}
 
         # Write the new content
-        with open(file_path, 'w', encoding="utf-8") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_content)
 
         print(f"[INFO] File edited successfully: {target_file}")

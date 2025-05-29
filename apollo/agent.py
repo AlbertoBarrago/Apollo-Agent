@@ -17,13 +17,7 @@ from apollo.tools.search import (
     grep_search,
 )
 from apollo.tools.chat import ApolloAgentChat
-from apollo.tools.files import (
-    list_dir,
-    delete_file,
-    create_file,
-    edit_file,
-    remove_dir
-)
+from apollo.tools.files import list_dir, delete_file, create_file, edit_file, remove_dir
 from apollo.tools.executor import ToolExecutor
 from apollo.config.const import Constant
 from apollo.tools.web import web_search, wiki_search
@@ -60,18 +54,15 @@ class ApolloAgent:
                 "list_dir": list_dir,
                 "delete_file": delete_file,
                 "remove_dir": remove_dir,
-
                 # Search operations (by increasing scope/complexity)
                 "file_search": file_search,
                 "grep_search": grep_search,
                 "codebase_search": codebase_search,
-
                 # External information sources
                 "web_search": web_search,
                 "wiki_search": wiki_search,
-
                 # Interaction
-                "chat": self.chat_agent.chat
+                "chat": self.chat_agent.chat,
             }
         )
 
@@ -102,9 +93,12 @@ class ApolloAgent:
             return
 
         agent = ApolloAgent(workspace_path=workspace_cabled)
-        print("🌟 Welcome to ApolloAgent Chat Mode!"
-              "\n > Type 'exit' to end the conversation."
-              "\n > Now in BETA MODE the workspace is set to:", os.path.abspath(workspace_cabled))
+        print(
+            "🌟 Welcome to ApolloAgent Chat Mode!"
+            "\n > Type 'exit' to end the conversation."
+            "\n > Now in BETA MODE the workspace is set to:",
+            os.path.abspath(workspace_cabled),
+        )
 
         while True:
             try:

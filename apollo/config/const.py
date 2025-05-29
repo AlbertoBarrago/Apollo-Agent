@@ -6,6 +6,7 @@ This module contains Constant settings for the ApolloAgent.
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
+
 from dataclasses import dataclass
 
 
