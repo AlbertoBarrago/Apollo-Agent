@@ -170,15 +170,6 @@ async def create_file(
     if not file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-    directory = os.path.dirname(file_path)
-    if directory and not os.path.exists(directory):
-        try:
-            os.makedirs(directory, exist_ok=True)
-            print(
-                f"[INFO] Created directory: {os.path.relpath(directory, absolute_workspace_path)}"
-            )
-        except OSError as e:
-            return {"success": False, "error": f"Failed to create directory: {e}"}
 
     # Get the content from instructions
     content = instructions.get("content", "")

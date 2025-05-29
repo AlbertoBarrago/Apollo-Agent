@@ -84,7 +84,7 @@ class ApolloAgent:
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
-        print(Constant.APOLLO_WELCOME)
+        print(Constant.apollo_welcome)
         workspace_cabled = Constant.workspace_cabled
 
         if not os.path.exists(workspace_cabled) and workspace_cabled != "exit":
