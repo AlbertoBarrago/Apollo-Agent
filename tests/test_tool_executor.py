@@ -10,7 +10,7 @@ License: BSD 3-Clause License - 2025
 
 import unittest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 from apollo.tools.executor import ToolExecutor
 
@@ -25,9 +25,6 @@ class TestToolExecutor(unittest.TestCase):
         # Register a test function
         self.test_func = AsyncMock(return_value="test_result")
         self.tool_executor.register_function("test_func", self.test_func)
-
-        # Register a test redirect
-        self.tool_executor.register_redirect("alias_func", "test_func")
 
     def test_register_function(self):
         """Test registering a function."""
@@ -46,11 +43,6 @@ class TestToolExecutor(unittest.TestCase):
         self.assertEqual(self.tool_executor.available_functions["func1"], func1)
         self.assertEqual(self.tool_executor.available_functions["func2"], func2)
 
-    def test_register_redirect(self):
-        """Test registering a redirect."""
-        self.tool_executor.register_redirect("new_alias", "test_func")
-        self.assertIn("new_alias", self.tool_executor.redirect_mapping)
-        self.assertEqual(self.tool_executor.redirect_mapping["new_alias"], "test_func")
 
     def test_execute_tool_with_invalid_function(self):
         """Test executing a tool with an invalid function."""

@@ -84,8 +84,8 @@ class ApolloAgent:
     @staticmethod
     async def chat_terminal():
         """Start a Chat Session in the terminal."""
-        print(Constant.APPOLO_WELCOME)
-        workspace_cabled = Constant.WORKSPACE_CABLED
+        print(Constant.APOLLO_WELCOME)
+        workspace_cabled = Constant.workspace_cabled
 
         if not os.path.exists(workspace_cabled) and workspace_cabled != "exit":
             os.makedirs(workspace_cabled)
@@ -106,7 +106,7 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
 
-                prompt = f"${Constant.PROMPT_FINE_TUNE_V1} The command is ${user_input}"
+                prompt = f"${Constant.prompt_fine_tune_v1} The command is ${user_input}"
                 response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:

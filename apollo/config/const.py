@@ -6,13 +6,15 @@ This module contains Constant settings for the ApolloAgent.
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
+from dataclasses import dataclass
 
 
+@dataclass(frozen=True)
 class Constant:
     """Constant settings for the ApolloAgent."""
 
     # Welcome, Logo in ASCII
-    APPOLO_WELCOME = """
+    apollo_welcome: str = """
     
     # #   #####   ####  #      #       ####        
    #   #  #    # #    # #      #      #    #       
@@ -28,17 +30,17 @@ class Constant:
 """
 
     # File paths
-    CHAT_HISTORY_FILE = "chat_history.json"
+    chat_history_file = "chat_history.json"
 
     # LLM settings
-    LLM_MODEL = "llama3.1"
+    llm_model = "llama3.1"
 
     # Chat settings
-    MAX_CHAT_ITERATIONS = 10
-    MAX_HISTORY_MESSAGES = 10
-    MAX_SESSION_MESSAGES = 10
+    max_chat_iterations = 10
+    max_history_messages = 10
+    max_session_messages = 10
 
-    PROMPT_FINE_TUNE_V1 = """
+    prompt_fine_tune_v1 = """
     You are Apollo, a powerful, agentic AI pair-programming assistant.
 
     **Your Persona:**
@@ -63,28 +65,28 @@ class Constant:
     """
 
     # Error messages
-    ERROR_CHAT_IN_PROGRESS = (
+    error_chat_in_progress = (
         "Chat already in progress, please wait for current request to complete"
     )
-    ERROR_EMPTY_LLM_MESSAGE = "Received an empty message from the model."
-    ERROR_LOOP_DETECTED = (
+    error_empty_llm_message = "Received an empty message from the model."
+    error_loop_detected = (
         "I noticed a potential loop in my processing. "
         "Let me summarize what I've found so far."
     )
-    ERROR_MAX_ITERATIONS = (
+    error_max_iterations = (
         "Reached maximum number of tool call iterations ({max_iterations}). "
         "Let me summarize what I've found so far."
     )
-    ERROR_NO_AGENT = "No agent associated with this chat instance"
+    error_no_agent = "No agent associated with this chat instance"
 
     # System messages
-    SYSTEM_NEW_SESSION = "New session started at {timestamp}"
-    SYSTEM_CONCLUDE_SOON = (
+    system_new_session = "New session started at {timestamp}"
+    system_conclude_soon = (
         "Please try to reach a conclusion soon. "
         "Avoid using more tools unless absolutely necessary."
     )
 
-    USER_AGENTS = [
+    user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:115.0) Gecko/20100101 Firefox/115.0",
@@ -96,4 +98,4 @@ class Constant:
         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
     ]
 
-    WORKSPACE_CABLED = "./workspace"
+    workspace_cabled = "./workspace"

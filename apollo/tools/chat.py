@@ -104,11 +104,11 @@ class ApolloAgentChat:
             current_tool_calls.append(func_name)
 
         if (
-            iterations > Constant.MAX_CHAT_ITERATIONS
+            iterations > Constant.max_chat_iterations
             and current_tool_calls == recent_tool_calls
         ):
             print("[WARNING] Detected repeated tool call pattern, breaking loop")
-            loop_detected_msg = Constant.ERROR_LOOP_DETECTED
+            loop_detected_msg = Constant.error_loop_detected
             self.permanent_history.append(
                 {"role": "assistant", "content": loop_detected_msg}
             )
@@ -144,13 +144,13 @@ class ApolloAgentChat:
         """
         try:
             # Add a system message to encourage concluding after a few iterations
-            if iterations > Constant.MAX_CHAT_ITERATIONS:
+            if iterations > Constant.max_chat_iterations:
                 self.chat_history.append(
-                    {"role": "system", "content": Constant.SYSTEM_CONCLUDE_SOON}
+                    {"role": "system", "content": Constant.system_conclude_soon}
                 )
 
             llm_response = ollama.chat(
-                model=Constant.LLM_MODEL,
+                model=Constant.llm_model,
                 messages=self.chat_history,
                 tools=get_available_tools(),
                 stream=False,
@@ -213,7 +213,7 @@ class ApolloAgentChat:
         """
         if self._chat_in_progress:
             print("[WARNING] Chat already in progress, ignoring concurrent request")
-            return {"error": Constant.ERROR_CHAT_IN_PROGRESS}
+            return {"error": Constant.error_chat_in_progress}
 
         self._chat_in_progress = True
 
@@ -243,7 +243,7 @@ class ApolloAgentChat:
         Executes several iterations of interaction with a language model (LLM) and processes
         the result, showing the reasoning process at each step.
         """
-        while iterations < Constant.MAX_CHAT_ITERATIONS:
+        while iterations < Constant.max_chat_iterations:
             iterations += 1
             # print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
 
@@ -259,7 +259,7 @@ class ApolloAgentChat:
                 await self._process_llm_response(llm_response)
             )
             if message is None:
-                return {"response": Constant.ERROR_EMPTY_LLM_MESSAGE}
+                return {"response": Constant.error_empty_llm_message}
 
             if tool_calls:
                 result, current_tool_calls = await self._handle_tool_calls(
@@ -281,8 +281,8 @@ class ApolloAgentChat:
                     "response": "Completed processing, but received no final message content."
                 }
         # Handle reaching maximum iterations
-        timeout_message = Constant.ERROR_MAX_ITERATIONS.format(
-            max_iterations=Constant.MAX_CHAT_ITERATIONS
+        timeout_message = Constant.error_max_iterations.format(
+            max_iterations=Constant.max_chat_iterations
         )
         self.permanent_history.append({"role": "assistant", "content": timeout_message})
         return {"response": timeout_message}
@@ -325,8 +325,8 @@ class ApolloAgentChat:
             max_messages: Maximum number of user messages to keep in history.
             Default to Constant.MAX_HISTORY_MESSAGES.
         """
-        file_path = file_path or Constant.CHAT_HISTORY_FILE
-        max_messages = max_messages or Constant.MAX_HISTORY_MESSAGES
+        file_path = file_path or Constant.chat_history_file
+        max_messages = max_messages or Constant.max_history_messages
         try:
             user_messages = []
 
@@ -350,7 +350,7 @@ class ApolloAgentChat:
                     if not existing_data or not cleaned_history:
                         session_marker = {
                             "role": "system",
-                            "content": Constant.SYSTEM_NEW_SESSION.format(
+                            "content": Constant.system_new_session.format(
                                 timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
                             ),
                         }
@@ -358,7 +358,7 @@ class ApolloAgentChat:
             except (FileNotFoundError, json.JSONDecodeError):
                 session_marker = {
                     "role": "system",
-                    "content": Constant.SYSTEM_NEW_SESSION.format(
+                    "content": Constant.system_new_session.format(
                         timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
                     ),
                 }
@@ -392,8 +392,8 @@ class ApolloAgentChat:
             max_session_messages: Maximum number of messages to load from the last session.
             Default to Constant.MAX_SESSION_MESSAGES.
         """
-        file_path = file_path or Constant.CHAT_HISTORY_FILE
-        max_session_messages = max_session_messages or Constant.MAX_SESSION_MESSAGES
+        file_path = file_path or Constant.chat_history_file
+        max_session_messages = max_session_messages or Constant.max_session_messages
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 all_history = json.load(file)
@@ -445,7 +445,7 @@ class ApolloAgentChat:
     async def _execute_tool(self, tool_call: dict) -> Any:
         """Execute a tool call using the associated tool executors execute_tool method."""
         if not self.tool_executor:
-            return Constant.ERROR_NO_AGENT
+            return Constant.error_no_agent
 
         try:
             return await self.tool_executor.execute_tool(tool_call)
