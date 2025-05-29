@@ -45,6 +45,14 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=requirements,
+    extras_require={
+        "dev": [
+            "black~=25.1.0",
+            "pytest~=8.3.5",
+            "pytest-cov~=6.1.1",
+            "pytest-asyncio>=0.23.5",
+        ],
+    },
     entry_points={
         "console_scripts": [
             "apollo=apollo.cli.main:main",

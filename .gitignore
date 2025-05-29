@@ -6,4 +6,5 @@ workspace
 instructions.txt
 chat_history.json
 .cadence
+.coverage
 

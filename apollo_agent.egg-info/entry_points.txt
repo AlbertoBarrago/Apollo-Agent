@@ -1,0 +1,3 @@
+[console_scripts]
+apollo = apollo.cli.main:main
+apollo-version = apollo.cli.version_info:print_version_info
