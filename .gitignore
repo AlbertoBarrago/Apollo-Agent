@@ -7,4 +7,5 @@ instructions.txt
 chat_history.json
 .cadence
 .coverage
+apollo_agent.egg-info
 
