@@ -119,9 +119,7 @@ class ApolloAgentChat:
             try:
                 tool_result = await self._execute_tool(tool_call)
 
-                if isinstance(tool_result, str) and "[ERROR]" in str(tool_result):
-                    print(f"[WARNING] Tool execution failed: {tool_result}")
-            except Exception as e:
+            except RuntimeError as e:
                 tool_result = f"[ERROR] Exception during tool execution: {str(e)}"
                 print(tool_result)
 
@@ -231,7 +229,7 @@ class ApolloAgentChat:
             error_message = f"[ERROR] RuntimeError during chat processing: {e}"
             print(error_message)
             return {"error": error_message}
-        except Exception as e:
+        except IOError as e:
             error_message = f"[ERROR] An unexpected error occurred: {str(e)}"
             print(error_message)
             return {"error": error_message}
@@ -258,6 +256,7 @@ class ApolloAgentChat:
             message, tool_calls, content, total_duration = (
                 await self._process_llm_response(llm_response)
             )
+            print(f"duration {total_duration}")
             if message is None:
                 return {"response": Constant.error_empty_llm_message}
 
@@ -272,7 +271,7 @@ class ApolloAgentChat:
                 recent_tool_calls = current_tool_calls
                 # print("[TOOLS EXECUTED - CONTINUING REASONING]")
             elif content is not None:
-                print("[FINAL RESPONSE READY]")
+                print("[FINAL RESPONSE READY]\n")
                 self.permanent_history.append({"role": "assistant", "content": content})
                 return {"response": content}
             else:
