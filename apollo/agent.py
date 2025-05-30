@@ -19,7 +19,7 @@ from apollo.tools.search import (
 )
 from apollo.tools.core import ApolloCore
 from apollo.tools.files import list_dir, delete_file, create_file, edit_file, remove_dir
-from apollo.service.executor import ToolExecutor
+from apollo.service.tool.executor import ToolExecutor
 from apollo.config.const import Constant
 from apollo.tools.web import web_search, wiki_search
 
