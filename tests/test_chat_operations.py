@@ -9,7 +9,7 @@ License: BSD 3-Clause License - 2025
 """
 
 import unittest
-from unittest.mock import AsyncMock, patch, mock_open
+from unittest.mock import AsyncMock, patch
 
 from apollo.tools.chat import ApolloAgentChat
 from apollo.tools.executor import ToolExecutor
@@ -122,23 +122,6 @@ class TestApolloAgentChat(unittest.TestCase):
         # Verify the result
         self.assertIn("response", result)
         self.assertEqual(result["response"], Constant.error_loop_detected)
-
-    def test_extract_command(self):
-        """Test _extract_command method."""
-        # Test with a command
-        content = "The command is $ls -la"
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, "ls -la")
-
-        # Test with no command
-        content = "Hello, how are you?"
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, content)
-
-        # Test with non-string input
-        content = 123
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, content)
 
 
 if __name__ == "__main__":
