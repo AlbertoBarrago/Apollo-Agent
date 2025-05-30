@@ -100,10 +100,12 @@ class ToolExecutor:
 
         args_to_pass = filtered_args.copy()
 
-        if 'agent' in params:  # Check if the tool function explicitly accepts an 'agent' parameter
+        if (
+            "agent" in params
+        ):  # Check if the tool function explicitly accepts an 'agent' parameter
             # If the tool function expects 'agent', pass the ToolExecutor instance itself.
             # This makes the ToolExecutor the "agent" for the tool.
-            args_to_pass['agent'] = self
+            args_to_pass["agent"] = self
 
         try:
             if inspect.iscoroutinefunction(func):
