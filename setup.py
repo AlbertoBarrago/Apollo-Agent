@@ -8,11 +8,11 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-from setuptools import setup, find_packages
 import os
 import re
+from setuptools import setup, find_packages
 
-with open(os.path.join("apollo", "version.py"), "r") as f:
+with open(os.path.join("apollo", "version.py"), "r", encoding="utf-8") as f:
     version_file = f.read()
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:

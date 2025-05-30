@@ -240,27 +240,6 @@ def get_available_tools() -> List[Dict[str, Any]]:
         {
             "type": "function",
             "function": {
-                "name": "chat",
-                "description": "Engages in a direct, conversational exchange with the user. "
-                "This tool should be used when "
-                "a direct response is needed, no other tool is appropriate, "
-                "or to ask for clarification. "
-                "Remember your persona: Apollo, the nerdy code assistant.",
-                "parameters": {
-                    "type": "object",
-                    "required": ["text"],
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "The conversational message to send to the user.",
-                        }
-                    },
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
                 "name": "web_search",
                 "description": "Searches the web to find up-to-date information on a given topic."
                 "This tool is best used for general knowledge, "

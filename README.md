@@ -15,9 +15,6 @@ ApolloAgent provides the following functionality:
 - **Grep Search**: Perform fast, text-based regex searches within files or directories.
 - **File Search**: Locate files quickly using fuzzy matching on file paths.
 - **File Operations**: Delete and edit files directly through the agent.
-- **Chat Interface**: Engage conversationally with ApolloAgent, powered by Google's Gemini Flash AI.
-- **Continuous Mode**: Chat and execute Python code seamlessly during interactive sessions.
-- **Reasoning Visualization**: See the AI's step-by-step reasoning process and tool execution planning in real-time.
 
 ## Installation
 

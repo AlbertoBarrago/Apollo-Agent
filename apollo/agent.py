@@ -61,8 +61,6 @@ class ApolloAgent:
                 # External information sources
                 "web_search": web_search,
                 "wiki_search": wiki_search,
-                # Interaction
-                "chat": self.chat_agent.chat,
             }
         )
 
@@ -110,7 +108,7 @@ class ApolloAgent:
                 response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:
-                    print(f"🤖 Apollo: {response['response']}")
+                    print(f"\n🤖 {response['response']}")
                 elif response and isinstance(response, dict) and "error" in response:
                     print(f"🤖 Apollo (Error): {response['error']}")
                 else:
