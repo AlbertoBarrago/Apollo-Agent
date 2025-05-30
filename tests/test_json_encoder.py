@@ -12,6 +12,7 @@ from datetime import datetime, date, time
 from decimal import Decimal
 from apollo.encoder.json_encoder import ApolloJSONEncoder
 
+
 class TestApolloJSONEncoder(unittest.TestCase):
     """Test cases for the ApolloJSONEncoder class."""
 
@@ -40,14 +41,14 @@ class TestApolloJSONEncoder(unittest.TestCase):
     def test_encode_complex_object(self):
         """Test encoding complex objects with multiple nested types."""
         complex_obj = {
-            'datetime': datetime(2023, 1, 1, 12, 0, 0),
-            'date': date(2023, 1, 1),
-            'time': time(12, 0, 0),
-            'decimal': Decimal('10.5'),
-            'bytes': b'test',
-            'set': {1, 2, 3}
+            "datetime": datetime(2023, 1, 1, 12, 0, 0),
+            "date": date(2023, 1, 1),
+            "time": time(12, 0, 0),
+            "decimal": Decimal("10.5"),
+            "bytes": b"test",
+            "set": {1, 2, 3},
         }
-        
+
         # This should not raise any exceptions
         encoded = self.encoder.encode(complex_obj)
         self.assertIsInstance(encoded, str)
@@ -55,12 +56,13 @@ class TestApolloJSONEncoder(unittest.TestCase):
     def test_encode_none(self):
         """Test encoding None value."""
         result = self.encoder.encode(None)
-        self.assertEqual(result, 'null')
+        self.assertEqual(result, "null")
 
     def test_encode_empty_containers(self):
         """Test encoding empty containers."""
-        self.assertEqual(self.encoder.encode([]), '[]')
-        self.assertEqual(self.encoder.encode({}), '{}')
+        self.assertEqual(self.encoder.encode([]), "[]")
+        self.assertEqual(self.encoder.encode({}), "{}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

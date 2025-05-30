@@ -75,36 +75,48 @@ def print_version_info(print_json=False):
 
 def parse_args():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='ApolloAgent CLI')
-    parser.add_argument('--workspace', type=str, help='Workspace path')
-    parser.add_argument('--mode', type=str, choices=['chat', 'execute'], default='chat',
-                        help='Operation mode: chat or execute')
-    parser.add_argument('--version', action='store_true', help='Show version information')
-    parser.add_argument('--json', action='store_true', help='Output version info as JSON')
+    parser = argparse.ArgumentParser(description="ApolloAgent CLI")
+    parser.add_argument("--workspace", type=str, help="Workspace path")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["chat", "execute"],
+        default="chat",
+        help="Operation mode: chat or execute",
+    )
+    parser.add_argument(
+        "--version", action="store_true", help="Show version information"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Output version info as JSON"
+    )
     return parser.parse_args()
+
 
 async def run_apollo(args):
     """Run ApolloAgent with the specified arguments."""
     agent = ApolloAgent(workspace_path=args.workspace)
-    
-    if args.mode == 'chat':
+
+    if args.mode == "chat":
         await agent.chat_terminal()
-    elif args.mode == 'execute':
+    elif args.mode == "execute":
         await agent.execute_tool({})
+
 
 def main():
     """Main entry point for the CLI."""
     args = parse_args()
-    
+
     try:
         if args.version:
             print_version_info(print_json=args.json)
             return
-            
+
         asyncio.run(run_apollo(args))
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
