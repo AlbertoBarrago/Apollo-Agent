@@ -11,7 +11,10 @@ def get_session_filename(base_dir: str):
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     return os.path.join(base_dir, f"chat_history_{timestamp}.json")
 
-def save_user_history_to_json(message: str, role: str, current_session_file: str = None):
+
+def save_user_history_to_json(
+    message: str, role: str, current_session_file: str = None
+):
     """
     Save a single new message to a JSON file, maintaining a session-based history
     and trimming old messages to a maximum limit. All messages (system, user, assistant)
@@ -32,7 +35,9 @@ def save_user_history_to_json(message: str, role: str, current_session_file: str
     # Ensure the session directory exists
     os.makedirs(session_dir, exist_ok=True)
 
-    file_path = current_session_file # Initialize with the current session file if provided
+    file_path = (
+        current_session_file  # Initialize with the current session file if provided
+    )
 
     # Determine if a new session needs to be started
     is_new_session_needed = False
@@ -45,22 +50,31 @@ def save_user_history_to_json(message: str, role: str, current_session_file: str
                 if isinstance(existing_data, list):
                     current_history = existing_data
                 else:
-                    print(f"[WARNING] Existing chat history file '{file_path}' "
-                          f"is not a list. Starting new history.")
-                    is_new_session_needed = True # File exists but is malformed, treat as new session
+                    print(
+                        f"[WARNING] Existing chat history file '{file_path}' "
+                        f"is not a list. Starting new history."
+                    )
+                    is_new_session_needed = (
+                        True  # File exists but is malformed, treat as new session
+                    )
         except json.JSONDecodeError:
-            print(f"[WARNING] Chat history file '{file_path}' corrupted. Starting new history.")
-        except FileNotFoundError: # Should not happen if file_path exists, but good for robustness
+            print(
+                f"[WARNING] Chat history file '{file_path}' corrupted. Starting new history."
+            )
+        except (
+            FileNotFoundError
+        ):  # Should not happen if file_path exists, but good for robustness
             is_new_session_needed = True
     else:
-        is_new_session_needed = True # No file path provided or file exists
+        is_new_session_needed = True  # No file path provided or file exists
 
     # Check for system marker if history was loaded successfully
     if not is_new_session_needed and current_history:
         is_system_marker_present_at_start = (
-            isinstance(current_history[0], dict) and
-            current_history[0].get("role") == "system" and
-            Constant.system_new_session.split('{')[0] in current_history[0].get("content", "")
+            isinstance(current_history[0], dict)
+            and current_history[0].get("role") == "system"
+            and Constant.system_new_session.split("{")[0]
+            in current_history[0].get("content", "")
         )
         if not is_system_marker_present_at_start:
             is_new_session_needed = True
@@ -80,20 +94,19 @@ def save_user_history_to_json(message: str, role: str, current_session_file: str
     else:
         print(f"Continuing existing session in '{file_path}'")
 
-
     try:
         cleaned_message_content = message.strip()
         cleaned_message_content = " ".join(cleaned_message_content.split())
 
-        formatted_new_message = {
-            "role": role,
-            "content": cleaned_message_content
-        }
+        formatted_new_message = {"role": role, "content": cleaned_message_content}
         current_history.append(formatted_new_message)
 
         trimmed_history = []
         if current_history:
-            if isinstance(current_history[0], dict) and current_history[0].get("role") == "system":
+            if (
+                isinstance(current_history[0], dict)
+                and current_history[0].get("role") == "system"
+            ):
                 trimmed_history.append(current_history[0])
                 chat_messages = current_history[1:]
                 trimmed_history.extend(chat_messages[-max_messages:])
@@ -104,12 +117,14 @@ def save_user_history_to_json(message: str, role: str, current_session_file: str
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(trimmed_history, file, indent=4, cls=ApolloJSONEncoder)
-            #print(f"Chat history successfully saved to '{file_path}'")
+            # print(f"Chat history successfully saved to '{file_path}'")
 
     except OSError as e:
         print(f"[ERROR] Failed to read/write file '{file_path}': {e}")
     except TypeError as e:
         print(f"[ERROR] JSON serialization error: {e}")
-        print("Not saving chat history due to serialization error. Please check message structure.")
+        print(
+            "Not saving chat history due to serialization error. Please check message structure."
+        )
 
-    return file_path # Return the file path for future reference if needed(for saving to a database or file system).
+    return file_path  # Return the file path for future reference if needed(for saving to a database or file system).
