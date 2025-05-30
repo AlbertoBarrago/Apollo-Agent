@@ -24,14 +24,13 @@ __keywords__ = ["ai", "agent", "code-assistant", "llm", "ollama"]
 __status__ = "Development"
 
 __requires__ = [
+    "requests",
     "ollama",
     "beautifulsoup4",
     "requests",
-    "google-generativeai",
-    "transformers",
-    "torch",
-    "accelerate",
     "python-dotenv",
+    "httpx",
+    "setuptools",
 ]
 
 __python_requires__ = ">=3.8"
