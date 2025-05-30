@@ -137,7 +137,7 @@ async def delete_file(agent, target_file: str) -> Dict[str, Any]:
 
 
 async def create_file(
-        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
 ) -> Dict[str, Any]:
     """
     Create a new file with the specified content
@@ -199,7 +199,7 @@ async def create_file(
 
 
 async def _apply_edit(
-        target_file: str, original_content: str, instructions: Dict[str, Any]
+    target_file: str, original_content: str, instructions: Dict[str, Any]
 ) -> Tuple[str, Optional[str]]:
     """
     Apply edit operations on file content
@@ -214,10 +214,10 @@ async def _apply_edit(
 
     mime_type, _ = mimetypes.guess_type(target_file)
     is_html = target_file.lower().endswith(".html") or (
-            mime_type and "html" in mime_type
+        mime_type and "html" in mime_type
     )
     is_json = target_file.lower().endswith(".json") or (
-            mime_type and "json" in mime_type
+        mime_type and "json" in mime_type
     )
 
     try:
@@ -316,7 +316,7 @@ async def _apply_edit(
 
 
 async def edit_file(
-        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
 ) -> Dict[str, Any]:
     """
     Edit an existing file with the specified instructions
