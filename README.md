@@ -15,6 +15,7 @@ ApolloAgent provides the following functionality:
 - **Grep Search**: Perform fast, text-based regex searches within files or directories.
 - **File Search**: Locate files quickly using fuzzy matching on file paths.
 - **File Operations**: Delete and edit files directly through the agent.
+- **Session**: Each session is stored in a separate file inside the chat_sessions folder 
 
 ## Installation
 
@@ -42,8 +43,10 @@ python main.py
 ```
 
 You can:
-- Search for a file: `search filename.py`
-- Use the chat interface for assistance: `chat [query]`
+- Search for a file: `search {file_name}`
+- Search on web: `Search on web {query}`
+- Search on wiki: `Search on wiki {argument}`
+- Create a New file: `Create a new file called {file_name} with this content: {content}`
 
 ## License
 

@@ -34,7 +34,6 @@ class ApolloAgentChat:
         self.chat_history: list[dict] = []
         self._chat_in_progress: bool = False
         self.tool_executor = None
-        self.file_path = Constant.chat_history_file_path
 
     async def _process_llm_response(self, llm_response):
         """
