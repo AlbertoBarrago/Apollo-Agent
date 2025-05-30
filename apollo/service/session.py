@@ -1,3 +1,11 @@
+"""
+In this file, we define functions for saving user chat history to a JSON file.
+The file will be saved in the workspace's chat history
+and will be named 'chat_history_YYYYMMDD.json'.
+
+Author: Alberto Barrago
+License: BSD 3-Clause License - 2025
+"""
 import datetime
 import json
 import os
@@ -66,7 +74,7 @@ def save_user_history_to_json(message: str, role: str):
             is_system_marker_present_at_start = (
                 isinstance(current_history[0], dict)
                 and current_history[0].get("role") == "system"
-                and Constant.system_new_session.split("{")[0]
+                and Constant.system_new_session.split("{", maxsplit=1)[0]
                 in current_history[0].get("content", "")
             )
             if not is_system_marker_present_at_start:
