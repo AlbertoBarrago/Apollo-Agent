@@ -77,7 +77,7 @@ def save_user_history_to_json(message: str, role: str):
                 is_new_session_for_today = True
     else:
         is_new_session_for_today = (
-            True  # File does not exist, so it's a new session for today
+            True
         )
 
     if is_new_session_for_today:
@@ -89,9 +89,6 @@ def save_user_history_to_json(message: str, role: str):
             ),
         }
         current_history.append(session_marker)
-        # print(f"Starting new chat session for today and saving to '{file_path}'")
-    # else:
-    # print(f"Continuing existing daily session in '{file_path}'")
 
     try:
         cleaned_message_content = message.strip()
@@ -102,7 +99,6 @@ def save_user_history_to_json(message: str, role: str):
 
         trimmed_history = []
         if current_history:
-            # If the first message is a system message, preserve it and trim others
             if (
                 isinstance(current_history[0], dict)
                 and current_history[0].get("role") == "system"
@@ -111,9 +107,7 @@ def save_user_history_to_json(message: str, role: str):
                 chat_messages = current_history[1:]  # Actual chat messages
                 trimmed_history.extend(chat_messages[-max_messages:])
             else:
-                # If no system message at the start (shouldn't happen with new logic, but robust)
                 trimmed_history = current_history[-max_messages:]
-        # No else needed; if current_history is empty, trimmed_history remains empty
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(trimmed_history, file, indent=4)
