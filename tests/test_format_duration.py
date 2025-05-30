@@ -13,6 +13,7 @@ from apollo.service.format import (
     format_duration_ms,
 )
 
+
 class TestFormatDuration(unittest.TestCase):
     """Test cases for duration formatting functions."""
 
@@ -36,17 +37,16 @@ class TestFormatDuration(unittest.TestCase):
         self.assertEqual(format_duration_ms(60000), "1 minute")
         self.assertEqual(format_duration_ms(3600000), "1 hour")
 
-
     def test_edge_cases(self):
         """Test edge cases for duration formatting."""
         # Test very small values
         self.assertEqual(format_duration_ns(1), "0 ms")
         self.assertEqual(format_duration_ms(1), "1 ms")
-        
+
         # Test very large values
         self.assertEqual(format_duration_ns(86400000000000), "24 hours")
         self.assertEqual(format_duration_ms(86400000), "24 hours")
-        
+
         # Test decimal precision
         self.assertEqual(format_duration_ns(1234), "0 ms")
         self.assertEqual(format_duration_ms(1234), "1 second, 234 ms")
@@ -63,5 +63,6 @@ class TestFormatDuration(unittest.TestCase):
         self.assertEqual(format_duration_ns(1234567), "1 ms")
         self.assertEqual(format_duration_ms(1234), "1 second, 234 ms")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from apollo.tools.web import web_search, wiki_search
 
+
 class TestWebOperations(unittest.TestCase):
     """Test cases for web operations."""
 
@@ -18,108 +19,109 @@ class TestWebOperations(unittest.TestCase):
         """Set up test fixtures."""
         self.agent = MagicMock()
 
-    @patch('requests.get')
+    @patch("requests.get")
     async def test_web_search_success(self, mock_get):
         """Test successful web search."""
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            'items': [
+            "items": [
                 {
-                    'title': 'Test Result',
-                    'link': 'https://test.com',
-                    'snippet': 'Test snippet'
+                    "title": "Test Result",
+                    "link": "https://test.com",
+                    "snippet": "Test snippet",
                 }
             ]
         }
         mock_get.return_value = mock_response
 
-        result = await web_search(self.agent, 'test query')
-        
-        self.assertTrue(result['success'])
-        self.assertEqual(len(result['results']), 1)
-        self.assertEqual(result['results'][0]['title'], 'Test Result')
+        result = await web_search(self.agent, "test query")
 
-    @patch('requests.get')
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(result["results"][0]["title"], "Test Result")
+
+    @patch("requests.get")
     async def test_web_search_no_results(self, mock_get):
         """Test web search with no results."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {'items': []}
+        mock_response.json.return_value = {"items": []}
         mock_get.return_value = mock_response
 
-        result = await web_search(self.agent, 'test query')
-        
-        self.assertTrue(result['success'])
-        self.assertEqual(len(result['results']), 0)
+        result = await web_search(self.agent, "test query")
 
-    @patch('requests.get')
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 0)
+
+    @patch("requests.get")
     async def test_web_search_api_error(self, mock_get):
         """Test web search with API error."""
-        mock_get.side_effect = Exception('API Error')
+        mock_get.side_effect = Exception("API Error")
 
-        result = await web_search(self.agent, 'test query')
-        
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
+        result = await web_search(self.agent, "test query")
 
-    @patch('requests.get')
+        self.assertFalse(result["success"])
+        self.assertIn("error", result)
+
+    @patch("requests.get")
     async def test_web_search_invalid_response(self, mock_get):
         """Test web search with invalid API response."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {'invalid': 'response'}
+        mock_response.json.return_value = {"invalid": "response"}
         mock_get.return_value = mock_response
 
-        result = await web_search(self.agent, 'test query')
-        
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
+        result = await web_search(self.agent, "test query")
 
-    @patch('wikipedia.search')
-    @patch('wikipedia.summary')
+        self.assertFalse(result["success"])
+        self.assertIn("error", result)
+
+    @patch("wikipedia.search")
+    @patch("wikipedia.summary")
     async def test_wiki_search_success(self, mock_summary, mock_search):
         """Test successful wiki search."""
-        mock_search.return_value = ['Test Page']
-        mock_summary.return_value = 'Test summary'
+        mock_search.return_value = ["Test Page"]
+        mock_summary.return_value = "Test summary"
 
-        result = await wiki_search(self.agent, 'test query')
-        
-        self.assertTrue(result['success'])
-        self.assertEqual(len(result['results']), 1)
-        self.assertEqual(result['results'][0]['title'], 'Test Page')
-        self.assertEqual(result['results'][0]['summary'], 'Test summary')
+        result = await wiki_search(self.agent, "test query")
 
-    @patch('wikipedia.search')
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(result["results"][0]["title"], "Test Page")
+        self.assertEqual(result["results"][0]["summary"], "Test summary")
+
+    @patch("wikipedia.search")
     async def test_wiki_search_no_results(self, mock_search):
         """Test wiki search with no results."""
         mock_search.return_value = []
 
-        result = await wiki_search(self.agent, 'test query')
-        
-        self.assertTrue(result['success'])
-        self.assertEqual(len(result['results']), 0)
+        result = await wiki_search(self.agent, "test query")
 
-    @patch('wikipedia.search')
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 0)
+
+    @patch("wikipedia.search")
     async def test_wiki_search_error(self, mock_search):
         """Test wiki search with error."""
-        mock_search.side_effect = Exception('Wiki Error')
+        mock_search.side_effect = Exception("Wiki Error")
 
-        result = await wiki_search(self.agent, 'test query')
-        
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
+        result = await wiki_search(self.agent, "test query")
 
-    @patch('wikipedia.search')
-    @patch('wikipedia.summary')
+        self.assertFalse(result["success"])
+        self.assertIn("error", result)
+
+    @patch("wikipedia.search")
+    @patch("wikipedia.summary")
     async def test_wiki_search_summary_error(self, mock_summary, mock_search):
         """Test wiki search with summary fetch error."""
-        mock_search.return_value = ['Test Page']
-        mock_summary.side_effect = Exception('Summary Error')
+        mock_search.return_value = ["Test Page"]
+        mock_summary.side_effect = Exception("Summary Error")
 
-        result = await wiki_search(self.agent, 'test query')
-        
-        self.assertTrue(result['success'])
-        self.assertEqual(len(result['results']), 1)
-        self.assertEqual(result['results'][0]['title'], 'Test Page')
-        self.assertIn('error', result['results'][0]['summary'])
+        result = await wiki_search(self.agent, "test query")
 
-if __name__ == '__main__':
+        self.assertTrue(result["success"])
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(result["results"][0]["title"], "Test Page")
+        self.assertIn("error", result["results"][0]["summary"])
+
+
+if __name__ == "__main__":
     unittest.main()
