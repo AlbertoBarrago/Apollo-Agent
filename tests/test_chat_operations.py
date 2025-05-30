@@ -34,7 +34,7 @@ class TestApolloAgentChat(unittest.TestCase):
         }
 
         # Call the chat method
-        result = await self.chat.chat("Hello, how are you?")
+        result = await self.chat.handle_request("Hello, how are you?")
 
         # Verify the result
         self.assertIn("response", result)
@@ -83,7 +83,7 @@ class TestApolloAgentChat(unittest.TestCase):
         mock_ollama_chat.return_value = {}
 
         # Call the chat method
-        result = await self.chat.chat("Hello")
+        result = await self.chat.handle_request("Hello")
 
         # Verify the result
         self.assertIn("response", result)
@@ -117,7 +117,7 @@ class TestApolloAgentChat(unittest.TestCase):
         self.chat._handle_tool_calls = mock_handle_tool_calls
 
         # Call the chat method
-        result = await self.chat.chat("Use a tool repeatedly")
+        result = await self.chat.handle_request("Use a tool repeatedly")
 
         # Verify the result
         self.assertIn("response", result)
