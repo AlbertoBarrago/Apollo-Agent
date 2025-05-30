@@ -73,7 +73,7 @@ class TestApolloAgent(unittest.TestCase):
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=["test input", "exit"])
-    async def test_chat_terminal(self, mock_input, mock_print):
+    async def test_chat_terminal(self, mock_print):
         """Test chat terminal functionality."""
         # Mock the necessary components
         with patch("os.path.exists", return_value=True), patch(
@@ -92,19 +92,19 @@ class TestApolloAgent(unittest.TestCase):
             # Verify history was saved
             mock_save_history.assert_called_with(message="test input", role="user")
 
-            # Verify chat request was handled
+            # Verify a chat request was handled
             mock_handle_request.assert_called_once()
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=KeyboardInterrupt)
-    async def test_chat_terminal_keyboard_interrupt(self, mock_input, mock_print):
+    async def test_chat_terminal_keyboard_interrupt(self, mock_print):
         """Test chat terminal keyboard interrupt handling."""
         await ApolloAgent.chat_terminal()
         mock_print.assert_any_call("\nExiting chat.")
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=EOFError)
-    async def test_chat_terminal_eof(self, mock_input, mock_print):
+    async def test_chat_terminal_eof(self, mock_print):
         """Test chat terminal EOF handling."""
         await ApolloAgent.chat_terminal()
         mock_print.assert_any_call("\nExiting chat.")
@@ -112,7 +112,7 @@ class TestApolloAgent(unittest.TestCase):
     @patch("os.path.exists")
     @patch("os.makedirs")
     async def test_chat_terminal_workspace_creation(self, mock_makedirs, mock_exists):
-        """Test workspace directory creation in chat terminal."""
+        """Test workspace directory creation in the chat terminal."""
         mock_exists.return_value = False
         with patch("builtins.input", side_effect=["exit"]):
             await ApolloAgent.chat_terminal()
