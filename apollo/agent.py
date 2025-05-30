@@ -101,6 +101,7 @@ class ApolloAgent:
                     break
                 save_user_history_to_json(message=user_input, role="user")
                 prompt = f"${Constant.prompt_fine_tune_v1} The command is ${user_input}"
+
                 response = await agent.chat_agent.handle_request(
                     prompt
                 )  # start the magic

@@ -30,20 +30,15 @@ def save_user_history_to_json(message: str, role: str):
                 if isinstance(existing_data, list):
                     current_history = existing_data
                 else:
-                    print(
-                        f"[WARNING] Existing chat history file '{file_path}' is not a list. Starting new history."
-                    )
+                    print(f"[WARNING] Existing chat history file '{file_path}' is not a list. Starting new history.")
         except (FileNotFoundError, json.JSONDecodeError):
-            print(
-                f"[WARNING] Chat history file '{file_path}' not found or corrupted. Starting new history."
-            )
+            print(f"[WARNING] Chat history file '{file_path}' not found or corrupted. Starting new history.")
 
         is_system_marker_present_at_start = (
-            current_history
-            and isinstance(current_history[0], dict)
-            and current_history[0].get("role") == "system"
-            and Constant.system_new_session.split("{")[0]
-            in current_history[0].get("content", "")
+            current_history and
+            isinstance(current_history[0], dict) and
+            current_history[0].get("role") == "system" and
+            Constant.system_new_session.split('{')[0] in current_history[0].get("content", "")
         )
 
         if not is_system_marker_present_at_start:
@@ -61,15 +56,15 @@ def save_user_history_to_json(message: str, role: str):
         cleaned_message_content = message.strip()
         cleaned_message_content = " ".join(cleaned_message_content.split())
 
-        formatted_new_message = {"role": role, "content": cleaned_message_content}
+        formatted_new_message = {
+            "role": role,
+            "content": cleaned_message_content
+        }
         current_history.append(formatted_new_message)
 
         trimmed_history = []
         if current_history:
-            if (
-                isinstance(current_history[0], dict)
-                and current_history[0].get("role") == "system"
-            ):
+            if isinstance(current_history[0], dict) and current_history[0].get("role") == "system":
                 trimmed_history.append(current_history[0])
                 chat_messages = current_history[1:]
                 trimmed_history.extend(chat_messages[-max_messages:])
@@ -80,12 +75,10 @@ def save_user_history_to_json(message: str, role: str):
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(trimmed_history, file, indent=4, cls=ApolloJSONEncoder)
-            # print(f"Chat history successfully saved to '{file_path}'")
+            #print(f"Chat history successfully saved to '{file_path}'")
 
     except OSError as e:
         print(f"[ERROR] Failed to read/write file '{file_path}': {e}")
     except TypeError as e:
         print(f"[ERROR] JSON serialization error: {e}")
-        print(
-            "Not saving chat history due to serialization error. Please check message structure."
-        )
+        print("Not saving chat history due to serialization error. Please check message structure.")
