@@ -29,10 +29,6 @@ class Constant:
   Copyright (c) 2025, Alberto Barrago
   All rights reserved.
 """
-
-    # File paths
-    chat_history_file_path = "chat_history.json"
-
     # LLM settings
     llm_model = "llama3.1"
 
@@ -87,7 +83,9 @@ class Constant:
     error_no_agent = "No agent associated with this chat instance"
 
     # System messages
-    system_new_session = "New session started at {timestamp}"
+    system_new_session = "SYSTEM: New chat session started at {timestamp}."
+    chat_history_dir = "chat_sessions"
+
     system_conclude_soon = (
         "Please try to reach a conclusion soon. "
         "Avoid using more tools unless absolutely necessary."
