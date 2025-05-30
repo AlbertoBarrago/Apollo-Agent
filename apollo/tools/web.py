@@ -59,7 +59,7 @@ async def web_search(query: str) -> List[Dict[str, str]]:
                         ),
                     }
                 )
-                #print(f"Result from web {results}")
+                # print(f"Result from web {results}")
         return results
 
 
@@ -102,5 +102,5 @@ async def wiki_search(query: str) -> List[Dict[str, str]]:
                         ),
                     }
                 )
-                #print(f"Result from web {results}")
+                # print(f"Result from web {results}")
         return results

@@ -9,7 +9,7 @@ License: BSD 3-Clause License - 2025
 """
 
 import unittest
-from unittest.mock import AsyncMock, patch, mock_open
+from unittest.mock import AsyncMock, patch
 
 from apollo.tools.chat import ApolloAgentChat
 from apollo.tools.executor import ToolExecutor
