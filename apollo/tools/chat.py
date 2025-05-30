@@ -16,7 +16,7 @@ from typing import Any
 from apollo.config.tools import get_available_tools
 from apollo.encoder.json_encoder import ApolloJSONEncoder
 from apollo.config.const import Constant
-from apollo.service.format_duration import format_duration_ms
+from apollo.service.format_duration import format_duration_ns
 
 
 class ApolloAgentChat:
@@ -121,7 +121,6 @@ class ApolloAgentChat:
 
             except RuntimeError as e:
                 tool_result = f"[ERROR] Exception during tool execution: {str(e)}"
-                print(tool_result)
 
             tool_outputs.append(
                 {
@@ -136,68 +135,50 @@ class ApolloAgentChat:
         self.chat_history.extend(tool_outputs)
         return None, current_tool_calls
 
-    async def _get_llm_response_from_ollama(self, iterations: int):
+    async def _get_llm_response_from_ollama(self):
         """
         Fetches the LLM response from Ollama, adding a system message if needed.
         """
-        try:
-            # Add a system message to encourage concluding after a few iterations
-            if iterations > Constant.max_chat_iterations:
-                self.chat_history.append(
-                    {"role": "system", "content": Constant.system_conclude_soon}
-                )
 
-            llm_response = ollama.chat(
-                model=Constant.llm_model,
-                messages=self.chat_history,
-                tools=get_available_tools(),
-                stream=False,
-            )
-            # Extract and print the reasoning
-            message = llm_response.get("message", {})
-            content = (
-                message.get("content", "")
-                if isinstance(message, dict)
-                else getattr(message, "content", "")
-            )
-            tool_calls = (
-                message.get("tool_calls", [])
-                if isinstance(message, dict)
-                else getattr(message, "tool_calls", [])
-            )
-            # Extract total_duration
-            total_duration = llm_response.get("total_duration", 0)
+        llm_response = ollama.chat(
+            model=Constant.llm_model,
+            messages=self.chat_history,
+            tools=get_available_tools(),
+            stream=False,
+        )
 
-            print(f"\n{'=' * 50}")
-            print(f"[ITERATION {iterations} - REASONING]")
-            if content:
-                print(f"\nThinking: {content}\n")
+        message = llm_response.get("message", {})
+        # content = (
+        #     message.get("content", "")
+        #     if isinstance(message, dict)
+        #     else getattr(message, "content", "")
+        # )
+        tool_calls = (
+            message.get("tool_calls", [])
+            if isinstance(message, dict)
+            else getattr(message, "tool_calls", [])
+        )
 
-            if tool_calls:
-                print("Planning to use tools:")
-                for i, tool in enumerate(tool_calls):
-                    if isinstance(tool, dict) and "function" in tool:
-                        func_name = tool["function"].get("name", "unknown")
-                        func_args = tool["function"].get("arguments", {})
-                    else:
-                        func_name = (
-                            getattr(tool.function, "name", "unknown")
-                            if hasattr(tool, "function")
-                            else "unknown"
-                        )
-                        func_args = (
-                            getattr(tool.function, "arguments", {})
-                            if hasattr(tool, "function")
-                            else {}
-                        )
+        if tool_calls:
+            for i, tool in enumerate(tool_calls):
+                if isinstance(tool, dict) and "function" in tool:
+                    func_name = tool["function"].get("name", "unknown")
+                    func_args = tool["function"].get("arguments", {})
+                else:
+                    func_name = (
+                        getattr(tool.function, "name", "unknown")
+                        if hasattr(tool, "function")
+                        else "unknown"
+                    )
+                    func_args = (
+                        getattr(tool.function, "arguments", {})
+                        if hasattr(tool, "function")
+                        else {}
+                    )
 
-                    print(f"  {i + 1}. {func_name}({json.dumps(func_args, indent=2)})")
-            print(f"{'=' * 50}\n")
+                print(f"  {i + 1}. {func_name}({json.dumps(func_args, indent=2)})")
 
-            return llm_response
-        except RuntimeError as e:
-            print(f"[ERROR] Exception during ollama.chat call: {str(e)}")
-            raise
+        return llm_response
 
     async def chat(self, text: str) -> None | dict[str, str] | dict[str, Any | None]:
         """
@@ -218,7 +199,7 @@ class ApolloAgentChat:
         try:
             self._initialize_chat_session(text)
 
-            print("🤖 Give me a second... ", flush=True)
+            #print("🤖 Give me a second... ", flush=True)
 
             iterations = 0
             recent_tool_calls = []
@@ -241,76 +222,143 @@ class ApolloAgentChat:
         Executes several iterations of interaction with a language model (LLM) and processes
         the result, showing the reasoning process at each step.
         """
+
         while iterations < Constant.max_chat_iterations:
-            iterations += 1
-            # print(f"\n[STARTING ITERATION {iterations}/{Constant.MAX_CHAT_ITERATIONS}]")
-
             try:
-                llm_response = await self._get_llm_response_from_ollama(iterations)
-                # print(f"[LLM RESPONSE] {llm_response}")
+                llm_response = await self._get_llm_response_from_ollama()
             except RuntimeError as e:
-                return {
-                    "error": f"Failed to get response from language model: {str(e)}"
-                }
+                return {"error": f"Failed to get response from language model: {str(e)}"}
 
-            message, tool_calls, content, total_duration = (
-                await self._process_llm_response(llm_response)
-            )
-            print(f"duration {total_duration}")
+            message, tool_calls, content, total_duration = await self._process_llm_response(llm_response)
+            duration_str = format_duration_ns(total_duration)
+
             if message is None:
                 return {"response": Constant.error_empty_llm_message}
+
+            if content and not tool_calls:
+                self.permanent_history.append({"role": "assistant", "content": content})
+                return {"response": f"[{duration_str}] {content}"}
 
             if tool_calls:
                 result, current_tool_calls = await self._handle_tool_calls(
                     tool_calls, iterations, recent_tool_calls
                 )
-                print(f"[EXECUTING TOOLS], ${current_tool_calls}")
+
+                print(f"\n[{duration_str}], Tools used: {current_tool_calls}\n")
+
                 if result:
-                    # print("[LOOP DETECTED - FINISHING]")
                     return result
+
                 recent_tool_calls = current_tool_calls
-                # print("[TOOLS EXECUTED - CONTINUING REASONING]")
-            elif content is not None:
-                print("[FINAL RESPONSE READY]\n")
-                self.permanent_history.append({"role": "assistant", "content": content})
-                return {"response": content}
-            else:
-                print("[WARNING] LLM response had neither tool_calls nor content.")
-                return {
-                    "response": "Completed processing, but received no final message content."
-                }
-        # Handle reaching maximum iterations
+                iterations += 1
+                continue
+
+            return {
+                "response": f"[{duration_str}] No content or tools were provided in the response."
+            }
+
         timeout_message = Constant.error_max_iterations.format(
             max_iterations=Constant.max_chat_iterations
         )
         self.permanent_history.append({"role": "assistant", "content": timeout_message})
         return {"response": timeout_message}
 
+    async def _execute_tool(self, tool_call: dict) -> Any:
+        """Execute a tool call using the associated tool executors execute_tool method."""
+        if not self.tool_executor:
+            return Constant.error_no_agent
+
+        try:
+            return await self.tool_executor.execute_tool(tool_call)
+        except RuntimeError as e:
+            return f"[ERROR] Exception during tool execution: {str(e)}"
+
+    def load_chat_history(self, file_path=None, max_session_messages=None):
+        """
+        Load only the most recent session messages from a JSON file into permanent_history.
+
+        Args:
+            file_path: Path to the JSON file containing chat history.
+            Default to Constant.CHAT_HISTORY_FILE.
+            max_session_messages: Maximum number of messages to load from the last session.
+            Default to Constant.MAX_SESSION_MESSAGES.
+        """
+        file_path = file_path or Constant.chat_history_file
+        max_session_messages = max_session_messages or Constant.max_session_messages
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                all_history = json.load(file)
+
+                if not all_history:
+                    self.permanent_history = []
+                    self.chat_history = []
+                    return
+
+                session_indices = [
+                    i
+                    for i, msg in enumerate(all_history)
+                    if msg.get("role") == "system"
+                    and "New session started at" in msg.get("content", "")
+                ]
+
+                if not session_indices:
+                    self.permanent_history = (
+                        all_history[-max_session_messages:] if all_history else []
+                    )
+                else:
+                    last_session_start = session_indices[-1]
+                    self.permanent_history = all_history[last_session_start:]
+
+                self.chat_history = self.permanent_history.copy()
+
+            print(
+                f"Chat history successfully loaded from {file_path} (last session only)"
+            )
+        except FileNotFoundError:
+            print(
+                f"[WARNING] {file_path} not found. Starting with an empty chat history."
+            )
+            self.permanent_history = []
+            self.chat_history = []
+        except json.JSONDecodeError as jde:
+            print(f"[ERROR] Failed to decode JSON from file {file_path}: {jde}")
+            self.permanent_history = []
+            self.chat_history = []
+        except OSError as e:
+            print(f"[ERROR] Failed to read file {file_path}: {e}")
+            self.permanent_history = []
+            self.chat_history = []
+
+    def set_tool_executor(self, tool_executor):
+        """Associate this chat instance with a ToolExecutor instance."""
+        self.tool_executor = tool_executor
+
     def _initialize_chat_session(self, text: str):
         """Initializes the session and updates chat history."""
         if not self.session_id:
             self.session_id = str(uuid.uuid4())
-            print(f"[INFO] New chat session initialized: {self.session_id}")
+            print(f"[INFO] New chat session: {self.session_id}")
 
         last_message = self.permanent_history[-1] if self.permanent_history else None
         if (
-            not last_message
-            or last_message.get("role") != "user"
-            or last_message.get("content") != text
+                not last_message
+                or last_message.get("role") != "user"
+                or last_message.get("content") != text
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
             # self._save_user_history_to_json()
         else:
             self.chat_history = self.permanent_history.copy()
+            print(f"Chat History {self.chat_history}")
 
         # Remove any "conclude soon" messages from previous iterations
         self.chat_history = [
             msg
             for msg in self.chat_history
             if not (
-                msg.get("role") == "system"
-                and "try to reach a conclusion soon" in msg.get("content", "").lower()
+                    msg.get("role") == "system"
+                    and "try to reach a conclusion soon" in msg.get("content", "").lower()
             )
         ]
 
@@ -380,76 +428,6 @@ class ApolloAgentChat:
             print(f"[ERROR] JSON serialization error: {e}")
             print("Resetting chat history due to serialization error")
             self.permanent_history = []
-
-    def load_chat_history(self, file_path=None, max_session_messages=None):
-        """
-        Load only the most recent session messages from a JSON file into permanent_history.
-
-        Args:
-            file_path: Path to the JSON file containing chat history.
-            Default to Constant.CHAT_HISTORY_FILE.
-            max_session_messages: Maximum number of messages to load from the last session.
-            Default to Constant.MAX_SESSION_MESSAGES.
-        """
-        file_path = file_path or Constant.chat_history_file
-        max_session_messages = max_session_messages or Constant.max_session_messages
-        try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                all_history = json.load(file)
-
-                if not all_history:
-                    self.permanent_history = []
-                    self.chat_history = []
-                    return
-
-                session_indices = [
-                    i
-                    for i, msg in enumerate(all_history)
-                    if msg.get("role") == "system"
-                    and "New session started at" in msg.get("content", "")
-                ]
-
-                if not session_indices:
-                    self.permanent_history = (
-                        all_history[-max_session_messages:] if all_history else []
-                    )
-                else:
-                    last_session_start = session_indices[-1]
-                    self.permanent_history = all_history[last_session_start:]
-
-                self.chat_history = self.permanent_history.copy()
-
-            print(
-                f"Chat history successfully loaded from {file_path} (last session only)"
-            )
-        except FileNotFoundError:
-            print(
-                f"[WARNING] {file_path} not found. Starting with an empty chat history."
-            )
-            self.permanent_history = []
-            self.chat_history = []
-        except json.JSONDecodeError as jde:
-            print(f"[ERROR] Failed to decode JSON from file {file_path}: {jde}")
-            self.permanent_history = []
-            self.chat_history = []
-        except OSError as e:
-            print(f"[ERROR] Failed to read file {file_path}: {e}")
-            self.permanent_history = []
-            self.chat_history = []
-
-    def set_tool_executor(self, tool_executor):
-        """Associate this chat instance with a ToolExecutor instance."""
-        self.tool_executor = tool_executor
-
-    async def _execute_tool(self, tool_call: dict) -> Any:
-        """Execute a tool call using the associated tool executors execute_tool method."""
-        if not self.tool_executor:
-            return Constant.error_no_agent
-
-        try:
-            return await self.tool_executor.execute_tool(tool_call)
-        except Exception as e:
-            return f"[ERROR] Exception during tool execution: {str(e)}"
 
     @staticmethod
     def _extract_command(content: str) -> str:

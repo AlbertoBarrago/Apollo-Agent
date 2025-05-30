@@ -94,13 +94,13 @@ class ToolExecutor:
             return f"[ERROR] Function '{func_name}' not found."
 
         filtered_args = filter_valid_args(func, arguments_dict)
-        print(f"filtered_args: {filtered_args}")
+        #print(f"filtered_args: {filtered_args}")
 
         try:
             if inspect.iscoroutinefunction(func):
-                result = await func(self, **filtered_args)
+                result = await func(**filtered_args)
             else:
-                result = func(self, **filtered_args)
+                result = func(**filtered_args)
             return result
         except RuntimeError as e:
             return f"[ERROR] Failed to execute tool: {e}"
