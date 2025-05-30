@@ -27,7 +27,7 @@ def save_user_history_to_json(message: str, role: str, current_session_file: str
 
     if not isinstance(message, str) or not role:
         print("[WARNING] Invalid message content or role provided. Skipping save.")
-        return
+        return None
 
     # Ensure the session directory exists
     os.makedirs(session_dir, exist_ok=True)
