@@ -170,7 +170,6 @@ async def create_file(
     if not file_path.startswith(absolute_workspace_path):
         return {"success": False, "error": "Unsafe file path outside of workspace"}
 
-
     # Get the content from instructions
     content = instructions.get("content", "")
 
