@@ -14,6 +14,7 @@ from typing import List
 
 class TimeUnit(float, Enum):
     """Time units with their conversion factors to milliseconds."""
+
     MILLISECOND = 1.0
     SECOND = 1000.0
     MINUTE = 60.0 * 1000.0
@@ -24,6 +25,7 @@ class TimeUnit(float, Enum):
 @dataclass()
 class Duration:
     """Represents a duration with a specific time unit."""
+
     value: int
     unit: TimeUnit
 

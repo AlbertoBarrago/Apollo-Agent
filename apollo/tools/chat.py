@@ -199,7 +199,7 @@ class ApolloAgentChat:
         try:
             self._initialize_chat_session(text)
 
-            #print("🤖 Give me a second... ", flush=True)
+            # print("🤖 Give me a second... ", flush=True)
 
             iterations = 0
             recent_tool_calls = []
@@ -227,9 +227,13 @@ class ApolloAgentChat:
             try:
                 llm_response = await self._get_llm_response_from_ollama()
             except RuntimeError as e:
-                return {"error": f"Failed to get response from language model: {str(e)}"}
+                return {
+                    "error": f"Failed to get response from language model: {str(e)}"
+                }
 
-            message, tool_calls, content, total_duration = await self._process_llm_response(llm_response)
+            message, tool_calls, content, total_duration = (
+                await self._process_llm_response(llm_response)
+            )
             duration_str = format_duration_ns(total_duration)
 
             if message is None:
@@ -341,9 +345,9 @@ class ApolloAgentChat:
 
         last_message = self.permanent_history[-1] if self.permanent_history else None
         if (
-                not last_message
-                or last_message.get("role") != "user"
-                or last_message.get("content") != text
+            not last_message
+            or last_message.get("role") != "user"
+            or last_message.get("content") != text
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
@@ -357,8 +361,8 @@ class ApolloAgentChat:
             msg
             for msg in self.chat_history
             if not (
-                    msg.get("role") == "system"
-                    and "try to reach a conclusion soon" in msg.get("content", "").lower()
+                msg.get("role") == "system"
+                and "try to reach a conclusion soon" in msg.get("content", "").lower()
             )
         ]
 
