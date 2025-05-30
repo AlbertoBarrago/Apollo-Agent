@@ -13,7 +13,7 @@ import ollama
 
 from apollo.config.instructions import get_available_tools
 from apollo.config.const import Constant
-from apollo.service.format import format_duration_ns
+from apollo.service.tool.format import format_duration_ns
 from apollo.service.session import save_user_history_to_json
 
 
