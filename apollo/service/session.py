@@ -6,6 +6,7 @@ and will be named 'chat_history_YYYYMMDD.json'.
 Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
+
 import datetime
 import json
 import os
@@ -84,9 +85,7 @@ def save_user_history_to_json(message: str, role: str):
                 )
                 is_new_session_for_today = True
     else:
-        is_new_session_for_today = (
-            True
-        )
+        is_new_session_for_today = True
 
     if is_new_session_for_today:
         current_history = []  # Start fresh
