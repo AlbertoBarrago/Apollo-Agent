@@ -31,15 +31,14 @@ class Constant:
 """
 
     # File paths
-    chat_history_file = "chat_history.json"
+    chat_history_file_path = "chat_history.json"
 
     # LLM settings
     llm_model = "llama3.1"
 
     # Chat settings
     max_chat_iterations = 10
-    max_history_messages = 10
-    max_session_messages = 10
+    max_history_messages = 50
 
     prompt_fine_tune_v1 = """
     You are Apollo, a powerful and funny, agentic AI pair-programming assistant.

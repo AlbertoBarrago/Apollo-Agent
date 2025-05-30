@@ -34,7 +34,7 @@ class TestApolloAgentChat(unittest.TestCase):
         }
 
         # Call the chat method
-        result = await self.chat.chat("Hello, how are you?")
+        result = await self.chat.handle_request("Hello, how are you?")
 
         # Verify the result
         self.assertIn("response", result)
@@ -83,7 +83,7 @@ class TestApolloAgentChat(unittest.TestCase):
         mock_ollama_chat.return_value = {}
 
         # Call the chat method
-        result = await self.chat.chat("Hello")
+        result = await self.chat.handle_request("Hello")
 
         # Verify the result
         self.assertIn("response", result)
@@ -117,28 +117,11 @@ class TestApolloAgentChat(unittest.TestCase):
         self.chat._handle_tool_calls = mock_handle_tool_calls
 
         # Call the chat method
-        result = await self.chat.chat("Use a tool repeatedly")
+        result = await self.chat.handle_request("Use a tool repeatedly")
 
         # Verify the result
         self.assertIn("response", result)
         self.assertEqual(result["response"], Constant.error_loop_detected)
-
-    def test_extract_command(self):
-        """Test _extract_command method."""
-        # Test with a command
-        content = "The command is $ls -la"
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, "ls -la")
-
-        # Test with no command
-        content = "Hello, how are you?"
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, content)
-
-        # Test with non-string input
-        content = 123
-        result = self.chat._extract_command(content)
-        self.assertEqual(result, content)
 
 
 if __name__ == "__main__":

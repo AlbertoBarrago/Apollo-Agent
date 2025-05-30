@@ -9,14 +9,13 @@ License: BSD 3-Clause License - 2025
 import re
 import json
 import uuid
-import time
 import ollama
 from typing import Any
 
 from apollo.config.tools import get_available_tools
-from apollo.encoder.json_encoder import ApolloJSONEncoder
 from apollo.config.const import Constant
 from apollo.service.format_duration import format_duration_ns
+from apollo.service.save_history import save_user_history_to_json
 
 
 class ApolloAgentChat:
@@ -36,6 +35,7 @@ class ApolloAgentChat:
         self.chat_history: list[dict] = []
         self._chat_in_progress: bool = False
         self.tool_executor = None
+        self.file_path = Constant.chat_history_file_path
 
     async def _process_llm_response(self, llm_response):
         """
@@ -180,7 +180,7 @@ class ApolloAgentChat:
 
         return llm_response
 
-    async def chat(self, text: str) -> None | dict[str, str] | dict[str, Any | None]:
+    async def handle_request(self, text: str) -> None | dict[str, str] | dict[str, Any | None]:
         """
         Responds to the user's message, handling potential tool calls and multi-turn interactions.
 
@@ -197,9 +197,7 @@ class ApolloAgentChat:
         self._chat_in_progress = True
 
         try:
-            self._initialize_chat_session(text)
-
-            #print("🤖 Give me a second... ", flush=True)
+            self._initialize_chat_session(text)# Init session and update chat history
 
             iterations = 0
             recent_tool_calls = []
@@ -220,7 +218,7 @@ class ApolloAgentChat:
     async def start_iterations(self, iterations, recent_tool_calls):
         """
         Executes several iterations of interaction with a language model (LLM) and processes
-        the result, showing the reasoning process at each step.
+        the result.
         """
 
         while iterations < Constant.max_chat_iterations:
@@ -229,8 +227,13 @@ class ApolloAgentChat:
             except RuntimeError as e:
                 return {"error": f"Failed to get response from language model: {str(e)}"}
 
-            message, tool_calls, content, total_duration = await self._process_llm_response(llm_response)
+            (message,
+             tool_calls,
+             content,
+             total_duration) = await self._process_llm_response(llm_response)
             duration_str = format_duration_ns(total_duration)
+
+            save_user_history_to_json(message=content, role="assistant")
 
             if message is None:
                 return {"response": Constant.error_empty_llm_message}
@@ -273,62 +276,6 @@ class ApolloAgentChat:
         except RuntimeError as e:
             return f"[ERROR] Exception during tool execution: {str(e)}"
 
-    def load_chat_history(self, file_path=None, max_session_messages=None):
-        """
-        Load only the most recent session messages from a JSON file into permanent_history.
-
-        Args:
-            file_path: Path to the JSON file containing chat history.
-            Default to Constant.CHAT_HISTORY_FILE.
-            max_session_messages: Maximum number of messages to load from the last session.
-            Default to Constant.MAX_SESSION_MESSAGES.
-        """
-        file_path = file_path or Constant.chat_history_file
-        max_session_messages = max_session_messages or Constant.max_session_messages
-        try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                all_history = json.load(file)
-
-                if not all_history:
-                    self.permanent_history = []
-                    self.chat_history = []
-                    return
-
-                session_indices = [
-                    i
-                    for i, msg in enumerate(all_history)
-                    if msg.get("role") == "system"
-                    and "New session started at" in msg.get("content", "")
-                ]
-
-                if not session_indices:
-                    self.permanent_history = (
-                        all_history[-max_session_messages:] if all_history else []
-                    )
-                else:
-                    last_session_start = session_indices[-1]
-                    self.permanent_history = all_history[last_session_start:]
-
-                self.chat_history = self.permanent_history.copy()
-
-            print(
-                f"Chat history successfully loaded from {file_path} (last session only)"
-            )
-        except FileNotFoundError:
-            print(
-                f"[WARNING] {file_path} not found. Starting with an empty chat history."
-            )
-            self.permanent_history = []
-            self.chat_history = []
-        except json.JSONDecodeError as jde:
-            print(f"[ERROR] Failed to decode JSON from file {file_path}: {jde}")
-            self.permanent_history = []
-            self.chat_history = []
-        except OSError as e:
-            print(f"[ERROR] Failed to read file {file_path}: {e}")
-            self.permanent_history = []
-            self.chat_history = []
-
     def set_tool_executor(self, tool_executor):
         """Associate this chat instance with a ToolExecutor instance."""
         self.tool_executor = tool_executor
@@ -340,6 +287,7 @@ class ApolloAgentChat:
             print(f"[INFO] New chat session: {self.session_id}")
 
         last_message = self.permanent_history[-1] if self.permanent_history else None
+
         if (
                 not last_message
                 or last_message.get("role") != "user"
@@ -361,93 +309,3 @@ class ApolloAgentChat:
                     and "try to reach a conclusion soon" in msg.get("content", "").lower()
             )
         ]
-
-    def _save_user_history_to_json(self, file_path=None, max_messages=None):
-        """
-        Save only the recent user messages to a JSON file, maintaining a session-based history.
-
-        Args:
-            file_path: Path to save the JSON file.
-            Default to Constant.CHAT_HISTORY_FILE.
-            max_messages: Maximum number of user messages to keep in history.
-            Default to Constant.MAX_HISTORY_MESSAGES.
-        """
-        file_path = file_path or Constant.chat_history_file
-        max_messages = max_messages or Constant.max_history_messages
-        try:
-            user_messages = []
-
-            for message in self.permanent_history:
-                if message.get("role") == "user":
-                    clean_message = message.copy()
-                    content = clean_message.get("content", "")
-
-                    if isinstance(content, str):
-                        content = content.strip()
-                        content = " ".join(content.split())
-
-                    clean_message["content"] = self._extract_command(content)
-                    user_messages.append(clean_message)
-
-            cleaned_history = user_messages[-max_messages:] if user_messages else []
-
-            try:
-                with open(file_path, "r", encoding="utf-8") as file:
-                    existing_data = json.load(file)
-                    if not existing_data or not cleaned_history:
-                        session_marker = {
-                            "role": "system",
-                            "content": Constant.system_new_session.format(
-                                timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
-                            ),
-                        }
-                        cleaned_history.insert(0, session_marker)
-            except (FileNotFoundError, json.JSONDecodeError):
-                session_marker = {
-                    "role": "system",
-                    "content": Constant.system_new_session.format(
-                        timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
-                    ),
-                }
-                cleaned_history.insert(0, session_marker)
-
-            with open(file_path, "w", encoding="utf-8") as file:
-                json.dump(cleaned_history, file, indent=4, cls=ApolloJSONEncoder)
-            # print(f"Chat history successfully saved to {file_path}")
-        except FileNotFoundError:
-            print(
-                f"[WARNING] {file_path} not found. Starting with an empty chat history."
-            )
-            self.permanent_history = []
-        except json.JSONDecodeError as jde:
-            print(f"[ERROR] Failed to decode JSON from file {file_path}: {jde}")
-            self.permanent_history = []
-        except OSError as e:
-            print(f"[ERROR] Failed to read/write file {file_path}: {e}")
-        except TypeError as e:
-            print(f"[ERROR] JSON serialization error: {e}")
-            print("Resetting chat history due to serialization error")
-            self.permanent_history = []
-
-    @staticmethod
-    def _extract_command(content: str) -> str:
-        """
-        Extracts a command from user input if present.
-
-        Args:
-            content: The user's message content.
-
-        Returns:
-            The extracted command or the original content if no command is found.
-        """
-        if not isinstance(content, str):
-            return content
-
-        command_pattern = r"The command is \$(.*?)(?:$|[.?!])"
-        match = re.search(command_pattern, content)
-
-        if match:
-            command = match.group(1).strip()
-            return command
-
-        return content

@@ -11,6 +11,7 @@ License: BSD 3-Clause License - 2025
 
 import os
 
+from apollo.service.save_history import save_user_history_to_json
 from apollo.tools.search import (
     codebase_search,
     file_search,
@@ -64,11 +65,6 @@ class ApolloAgent:
             }
         )
 
-        # Load chat history
-        # self.chat_agent.load_chat_history(
-        #     file_path=Constant.CHAT_HISTORY_FILE,
-        #     max_session_messages=Constant.MAX_SESSION_MESSAGES)
-
     async def execute_tool(self, tool_call):
         """
         Execute a tool function call (from LLM) with
@@ -103,9 +99,9 @@ class ApolloAgent:
                 user_input = input("\n> You: ")
                 if user_input.lower() == "exit":
                     break
-
+                save_user_history_to_json(message=user_input, role="user")
                 prompt = f"${Constant.prompt_fine_tune_v1} The command is ${user_input}"
-                response = await agent.chat_agent.chat(prompt)
+                response = await agent.chat_agent.handle_request(prompt) #start the magic
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"\n🤖 {response['response']}")
