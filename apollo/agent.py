@@ -100,11 +100,10 @@ class ApolloAgent:
                 if user_input.lower() == "exit":
                     break
                 save_user_history_to_json(message=user_input, role="user")
-                prompt = f"${Constant.prompt_fine_tune_v1} The command is ${user_input}"
 
-                response = await agent.chat_agent.handle_request(
-                    prompt
-                )  # start the magic
+                prompt = f"${Constant.prompt_fine_tune_v1} The command is: ${user_input}"
+                # The magic begun
+                response = await agent.chat_agent.handle_request(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:
                     print(f"\n🤖 {response['response']}")
