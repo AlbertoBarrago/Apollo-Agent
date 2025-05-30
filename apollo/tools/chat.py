@@ -6,7 +6,6 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-import re
 import json
 import uuid
 import ollama
