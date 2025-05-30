@@ -8,16 +8,16 @@ License: BSD 3-Clause License - 2025
 
 import json
 import uuid
-import ollama
 from typing import Any
+import ollama
 
 from apollo.config.tools import get_available_tools
 from apollo.config.const import Constant
-from apollo.service.format_duration import format_duration_ns
-from apollo.service.save_history import save_user_history_to_json
+from apollo.service.format import format_duration_ns
+from apollo.service.session import save_user_history_to_json
 
 
-class ApolloAgentChat:
+class ApolloCore:
     """
     Handles chat interactions and tool function definitions for ApolloAgent.
 
@@ -35,7 +35,7 @@ class ApolloAgentChat:
         self._chat_in_progress: bool = False
         self.tool_executor = None
 
-    async def _process_llm_response(self, llm_response):
+    async def process_llm_response(self, llm_response):
         """
         Process the response from the LLM, extracting message, tool calls, and content.
 
@@ -230,7 +230,7 @@ class ApolloAgentChat:
                 }
 
             (message, tool_calls, content, total_duration) = (
-                await self._process_llm_response(llm_response)
+                await self.process_llm_response(llm_response)
             )
             duration_str = format_duration_ns(total_duration)
 
@@ -296,7 +296,6 @@ class ApolloAgentChat:
         ):
             self.permanent_history.append({"role": "user", "content": text})
             self.chat_history = self.permanent_history.copy()
-            # self._save_user_history_to_json()
         else:
             self.chat_history = self.permanent_history.copy()
             print(f"Chat History {self.chat_history}")

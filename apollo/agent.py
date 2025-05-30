@@ -11,15 +11,15 @@ License: BSD 3-Clause License - 2025
 
 import os
 
-from apollo.service.save_history import save_user_history_to_json
+from apollo.service.session import save_user_history_to_json
 from apollo.tools.search import (
     codebase_search,
     file_search,
     grep_search,
 )
-from apollo.tools.chat import ApolloAgentChat
+from apollo.tools.core import ApolloCore
 from apollo.tools.files import list_dir, delete_file, create_file, edit_file, remove_dir
-from apollo.tools.executor import ToolExecutor
+from apollo.service.executor import ToolExecutor
 from apollo.config.const import Constant
 from apollo.tools.web import web_search, wiki_search
 
@@ -43,7 +43,7 @@ class ApolloAgent:
         self.tool_executor = ToolExecutor(self.workspace_path)
 
         # Initialize the chat agent
-        self.chat_agent = ApolloAgentChat()
+        self.chat_agent = ApolloCore()
         self.chat_agent.set_tool_executor(self.tool_executor)
 
         # Register functions with the tool executor
@@ -102,7 +102,8 @@ class ApolloAgent:
                 save_user_history_to_json(message=user_input, role="user")
 
                 prompt = (
-                    f"${Constant.prompt_fine_tune_v1} The command is: ${user_input}"
+                    f"Follow this instructions:{ Constant.prompt_fine_tune_v1}"
+                    f" The command is: ${user_input}"
                 )
                 # The magic begun
                 response = await agent.chat_agent.handle_request(prompt)
