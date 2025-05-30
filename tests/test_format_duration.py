@@ -8,7 +8,7 @@ License: BSD 3-Clause License - 2025
 """
 
 import unittest
-from apollo.service.format import (
+from apollo.service.tool.format import (
     format_duration_ns,
     format_duration_ms,
 )
