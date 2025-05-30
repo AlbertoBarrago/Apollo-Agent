@@ -12,7 +12,7 @@ import unittest
 import asyncio
 from unittest.mock import AsyncMock
 
-from apollo.service.executor import ToolExecutor
+from apollo.service.tool.executor import ToolExecutor
 
 
 class TestToolExecutor(unittest.TestCase):

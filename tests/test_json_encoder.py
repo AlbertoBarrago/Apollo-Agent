@@ -10,7 +10,7 @@ License: BSD 3-Clause License - 2025
 import unittest
 from datetime import datetime, date, time
 from decimal import Decimal
-from apollo.encoder.json_encoder import ApolloJSONEncoder
+from apollo.service.encoder import ApolloJSONEncoder
 
 
 class TestApolloJSONEncoder(unittest.TestCase):

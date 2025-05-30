@@ -4,7 +4,6 @@ import os
 import time
 
 from apollo.config.const import Constant
-from apollo.encoder.json_encoder import ApolloJSONEncoder
 
 
 def get_daily_session_filename(base_dir: str):
@@ -117,7 +116,7 @@ def save_user_history_to_json(message: str, role: str):
         # No else needed; if current_history is empty, trimmed_history remains empty
 
         with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(trimmed_history, file, indent=4, cls=ApolloJSONEncoder)
+            json.dump(trimmed_history, file, indent=4)
             # print(f"Chat history successfully saved to '{file_path}'")
 
     except OSError as e:

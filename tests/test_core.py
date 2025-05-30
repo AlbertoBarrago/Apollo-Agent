@@ -10,7 +10,7 @@ License: BSD 3-Clause License - 2025
 import unittest
 from unittest.mock import patch
 from apollo.tools.core import ApolloCore
-from apollo.service.executor import ToolExecutor
+from apollo.service.tool.executor import ToolExecutor
 from apollo.config.const import Constant
 
 
