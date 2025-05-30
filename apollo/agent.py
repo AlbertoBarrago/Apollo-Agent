@@ -108,7 +108,7 @@ class ApolloAgent:
                 response = await agent.chat_agent.chat(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:
-                    print(f"\n\n🤖 {response['response']}")
+                    print(f"\n🤖 {response['response']}")
                 elif response and isinstance(response, dict) and "error" in response:
                     print(f"🤖 Apollo (Error): {response['error']}")
                 else:

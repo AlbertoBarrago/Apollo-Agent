@@ -94,13 +94,22 @@ class ToolExecutor:
             return f"[ERROR] Function '{func_name}' not found."
 
         filtered_args = filter_valid_args(func, arguments_dict)
-        #print(f"filtered_args: {filtered_args}")
+
+        sig = inspect.signature(func)
+        params = sig.parameters
+
+        args_to_pass = filtered_args.copy()
+
+        if 'agent' in params:  # Check if the tool function explicitly accepts an 'agent' parameter
+            # If the tool function expects 'agent', pass the ToolExecutor instance itself.
+            # This makes the ToolExecutor the "agent" for the tool.
+            args_to_pass['agent'] = self
 
         try:
             if inspect.iscoroutinefunction(func):
-                result = await func(**filtered_args)
+                result = await func(**args_to_pass)
             else:
-                result = func(**filtered_args)
+                result = func(**args_to_pass)
             return result
         except RuntimeError as e:
             return f"[ERROR] Failed to execute tool: {e}"
