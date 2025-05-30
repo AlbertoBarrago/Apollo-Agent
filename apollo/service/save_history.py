@@ -12,8 +12,8 @@ def save_user_history_to_json(message: str, role: str):
     are saved as dictionaries with 'role' and 'content' keys.
 
     Args:
-       message (str): The content of the new message to save.
-       role (str): The role of the sender of the message (e.g., "user", "assistant").
+       message: The content of the new message to save.
+       role: The role of the sender in the message (e.g., "user", "assistant").
     """
     file_path = Constant.chat_history_file_path
     max_messages = Constant.max_history_messages
@@ -30,9 +30,11 @@ def save_user_history_to_json(message: str, role: str):
                 if isinstance(existing_data, list):
                     current_history = existing_data
                 else:
-                    print(f"[WARNING] Existing chat history file '{file_path}' is not a list. Starting new history.")
+                    print(f"[WARNING] Existing chat history file '{file_path}' "
+                          f"is not a list. Starting new history.")
         except (FileNotFoundError, json.JSONDecodeError):
-            print(f"[WARNING] Chat history file '{file_path}' not found or corrupted. Starting new history.")
+            print(f"[WARNING] Chat history file '{file_path}' "
+                  f"not found or corrupted. Starting new history.")
 
         is_system_marker_present_at_start = (
             current_history and
