@@ -55,7 +55,7 @@ class TestApolloAgentChat(IsolatedAsyncioTestCase):
         ) = await self.core.process_llm_response(llm_response)
 
         self.assertEqual(returned_message_obj, expected_message_dict)
-        self.assertIsNone(returned_tool_calls) # No tool_calls in the message
+        self.assertIsNone(returned_tool_calls)  # No tool_calls in the message
         self.assertEqual(returned_content_str, "Test content")
         self.assertEqual(returned_duration, 1000)
 
