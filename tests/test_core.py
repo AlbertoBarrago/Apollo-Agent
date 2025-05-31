@@ -1,3 +1,4 @@
+# /Users/albz/PycharmProjects/ApolloAgent/tests/test_core.py
 """Unit tests for the ApolloAgentChat class.
 
 This module contains comprehensive unit tests for the ApolloAgentChat class,
@@ -9,12 +10,13 @@ License: BSD 3-Clause License - 2025
 
 import unittest
 from unittest.mock import patch
+from unittest import IsolatedAsyncioTestCase
 from apollo.tools.core import ApolloCore
 from apollo.service.tool.executor import ToolExecutor
 from apollo.config.const import Constant
 
 
-class TestApolloAgentChat(unittest.TestCase):
+class TestApolloAgentChat(IsolatedAsyncioTestCase):
     """Test cases for the ApolloAgentChat class."""
 
     def setUp(self):
@@ -24,29 +26,38 @@ class TestApolloAgentChat(unittest.TestCase):
         self.core.set_tool_executor(self.tool_executor)
 
     async def test_process_llm_response_empty_message(self):
-        """Test processing LLM response with a empty message."""
+        """Test processing LLM response with an empty message field in llm_response."""
         llm_response = {}
-        message, tool_calls, content, duration = await self.core.process_llm_response(
-            llm_response
-        )
-        self.assertIsNone(message)
-        self.assertIsNone(tool_calls)
-        self.assertIsNone(content)
-        self.assertIsNone(duration)
+        (
+            returned_message_obj,
+            returned_tool_calls,
+            returned_content_str,
+            returned_duration,
+        ) = await self.core.process_llm_response(llm_response)
+
+        self.assertIsNone(returned_message_obj)
+        self.assertIsNone(returned_tool_calls)
+        self.assertIsNone(returned_content_str)
+        self.assertIsNone(returned_duration)
 
     async def test_process_llm_response_with_content(self):
-        """Test processing LLM response with content."""
+        """Test processing LLM response with content and no tool calls."""
+        expected_message_dict = {"content": "Test content", "role": "assistant"}
         llm_response = {
-            "message": {"content": "Test content", "role": "assistant"},
+            "message": expected_message_dict,
             "total_duration": 1000,
         }
-        message, tool_calls, content, duration = await self.core.process_llm_response(
-            llm_response
-        )
-        self.assertEqual(content, "Test content")
-        self.assertEqual(duration, 1000)
-        self.assertIsNone(message)
-        self.assertIsNone(tool_calls)
+        (
+            returned_message_obj,
+            returned_tool_calls,
+            returned_content_str,
+            returned_duration,
+        ) = await self.core.process_llm_response(llm_response)
+
+        self.assertEqual(returned_message_obj, expected_message_dict)
+        self.assertIsNone(returned_tool_calls) # No tool_calls in the message
+        self.assertEqual(returned_content_str, "Test content")
+        self.assertEqual(returned_duration, 1000)
 
     async def test_handle_tool_calls_invalid_format(self):
         """Test handling tool calls with invalid format."""
@@ -81,6 +92,9 @@ class TestApolloAgentChat(unittest.TestCase):
         mock_ollama_chat.return_value = mock_response
         response = await self.core._get_llm_response_from_ollama()
         self.assertEqual(response, mock_response)
+        # If this method is not supposed to return a value (as per the DeprecationWarning
+        # you mentioned earlier), ensure it returns None or has no return statement.
+        # For now, assuming it's intended to return the response.
 
     async def test_handle_request_concurrent_request(self):
         """Test handling concurrent requests."""

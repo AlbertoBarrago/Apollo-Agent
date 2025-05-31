@@ -55,7 +55,7 @@ class ApolloCore:
                     "content": "[Error: Empty message received from LLM]",
                 }
             )
-            return None, None, None
+            return None, None, None, None
 
         if isinstance(message, dict):
             tool_calls = message.get("tool_calls")
