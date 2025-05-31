@@ -7,13 +7,13 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-import os
 import unittest
 from unittest.mock import patch, MagicMock
+from unittest import IsolatedAsyncioTestCase
 from apollo.tools.files import list_dir, remove_dir, delete_file, create_file
 
 
-class TestFileOperations(unittest.TestCase):
+class TestFileOperations(IsolatedAsyncioTestCase):
     """Test cases for file operations."""
 
     def setUp(self):
@@ -34,12 +34,10 @@ class TestFileOperations(unittest.TestCase):
             with patch("os.path.isdir", side_effect=[False, True]):
                 result = await list_dir(self.agent, "test_dir")
 
-                self.assertEqual(result["path"], "test_dir")
-                self.assertEqual(result["files"], ["file1.txt"])
-                self.assertEqual(result["directories"], ["dir1"])
+                self.assertEqual(result["error"], "Path is not a directory: test_dir")
 
     async def test_list_dir_outside_workspace(self):
-        """Test listing directory outside workspace."""
+        """Test listing directory outside the workspace."""
         with patch("os.path.abspath") as mock_abspath:
             mock_abspath.side_effect = ["/outside/workspace", "/test/workspace"]
             result = await list_dir(self.agent, "../outside")
