@@ -1,3 +1,4 @@
+# /Users/albz/PycharmProjects/ApolloAgent/apollo/tools/web.py
 """
 Web Search operations for the ApolloAgent.
 
@@ -43,23 +44,22 @@ async def web_search(query: str) -> List[Dict[str, str]]:
         results = []
 
         for result in soup.select(".result"):
-            title = result.select_one(".result__title")
-            snippet = result.select_one(".result__snippet")
+            title_tag = result.select_one(".result__title")
+            snippet_tag = result.select_one(".result__snippet")
             link_tag = result.select_one(".result__url")
 
-            if title and link_tag:
+            if title_tag and link_tag:
                 results.append(
                     {
-                        "title": title.get_text(strip=True),
+                        "title": title_tag.get_text(strip=True),
                         "url": link_tag.get("href"),
                         "snippet": (
-                            snippet.get_text(strip=True)
-                            if snippet
+                            snippet_tag.get_text(strip=True)
+                            if snippet_tag
                             else "No snippet available."
                         ),
                     }
                 )
-                # print(f"Result from web {results}")
         return results
 
 
@@ -86,21 +86,37 @@ async def wiki_search(query: str) -> List[Dict[str, str]]:
         resp = await client.get(url)
         soup = BeautifulSoup(resp.text, "html.parser")
         results = []
-        for result in soup.select(".mw-search-result-heading"):
-            title = result.select_one(".mw-search-result-heading")
-            snippet = result.select_one(".mw-search-result-snippet")
-            link_tag = result.select_one(".mw-search-result-title a")
-            if title and link_tag:
-                results.append(
-                    {
-                        "title": title.get_text(strip=True),
-                        "url": link_tag.get("href"),
-                        "snippet": (
-                            snippet.get_text(strip=True)
-                            if snippet
-                            else "No snippet available."
-                        ),
-                    }
-                )
-                # print(f"Result from web {results}")
+        # Iterate over each search result a heading element
+        for heading_element in soup.select(".mw-search-result-heading"):
+            # The title and link are usually within an 'a' tag inside the heading
+            link_anchor_tag = heading_element.select_one("a.mw-search-result-title")
+            if not link_anchor_tag: # Fallback if class is directly on 'a'
+                link_anchor_tag = heading_element.select_one("a")
+
+            if not link_anchor_tag: # If still no anchor tag, skip this result
+                continue
+
+            title_text = link_anchor_tag.get_text(strip=True)
+            link_url = link_anchor_tag.get("href")
+
+            # The snippet is typically in a sibling div with class 'searchresult',
+            # which then contains a 'p' tag with class 'mw-search-result-snippet'.
+            snippet_to_store = "No snippet available."
+            snippet_container_div = heading_element.find_next_sibling("div", class_="searchresult")
+            if snippet_container_div:
+                snippet_p_element = snippet_container_div.select_one("p.mw-search-result-snippet")
+                if snippet_p_element: # This 'if' condition is what line 94 was about
+                    snippet_to_store = snippet_p_element.get_text(strip=True)
+                # Optional: Fallback if p.mw-search-result-snippet is not found, but div.searchresult is
+                # elif snippet_container_div.get_text(strip=True):
+                #     snippet_to_store = snippet_container_div.get_text(strip=True)
+
+
+            results.append(
+                {
+                    "title": title_text,
+                    "url": link_url,
+                    "snippet": snippet_to_store,
+                }
+            )
         return results

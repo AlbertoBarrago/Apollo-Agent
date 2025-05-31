@@ -18,13 +18,6 @@ from unittest import IsolatedAsyncioTestCase
 class TestWebOperations(IsolatedAsyncioTestCase):
     """Test cases for web operations."""
 
-    # setUp can be removed if self.agent is not used by other tests in this class
-    # or if the search functions are the only ones tested here.
-    # For now, I'll leave it commented out as it's not used by the revised tests below.
-    # def setUp(self):
-    #     """Set up test fixtures."""
-    #     self.agent = MagicMock()
-
     @patch("apollo.tools.web.httpx.AsyncClient")
     async def test_web_search_success(self, MockAsyncClient):
         """Test a successful web search."""
@@ -173,18 +166,30 @@ class TestWebOperations(IsolatedAsyncioTestCase):
         with self.assertRaises(httpx.RequestError):
             await wiki_search("test query")
 
+            # /Users/albz/PycharmProjects/ApolloAgent/tests/test_web.py
+            # ... (other parts of the file)
+
     @patch("apollo.tools.web.httpx.AsyncClient")
-    async def test_wiki_search_missing_snippet(self, MockAsyncClient):
-        """Test wiki search where a result has no snippet."""
+    async def test_wiki_search_success(self, MockAsyncClient):
+        """Test a successful wiki search."""
         mock_client_instance = AsyncMock()
         mock_response = AsyncMock()
         mock_response.status_code = 200
+        # Simulate Wikipedia HTML structure
         mock_response.text = """
         <html><body>
             <div class="mw-search-result-heading">
-                <a href="/wiki/Test_Page_No_Snippet" class="mw-search-result-title">Page Without Snippet</a>
+                <a href="/wiki/Test_Page_1" class="mw-search-result-title">Test Page 1</a>
             </div>
-            <!-- No corresponding .searchresult or .mw-search-result-snippet -->
+            <div class="searchresult">
+                 <p class="mw-search-result-snippet">This is a snippet for Test Page 1.</p>
+            </div>
+            <div class="mw-search-result-heading">
+                 <a href="/wiki/Test_Page_2" class="mw-search-result-title">Test Page 2</a>
+            </div>
+            <div class="searchresult">
+                 <p class="mw-search-result-snippet">Snippet for Test Page 2.</p>
+            </div>
         </body></html>
         """
         mock_client_instance.get.return_value = mock_response
@@ -192,7 +197,71 @@ class TestWebOperations(IsolatedAsyncioTestCase):
 
         results = await wiki_search("test query")
 
-        self.assertEqual(len(results), 0)
+        self.assertEqual(len(results), 2)  # Corrected this line
+        # The following assertions should now also pass if parsing is correct
+        self.assertEqual(results[0]["title"], "Test Page 1")
+        self.assertEqual(results[0]["url"], "/wiki/Test_Page_1")
+        self.assertEqual(results[0]["snippet"], "This is a snippet for Test Page 1.")
+        self.assertEqual(results[1]["title"], "Test Page 2")
+        self.assertEqual(results[1]["url"], "/wiki/Test_Page_2")
+        self.assertEqual(results[1]["snippet"], "Snippet for Test Page 2.")
+
+    @patch("apollo.tools.web.httpx.AsyncClient")
+    async def test_wiki_search_fallback_anchor_tag(self, MockAsyncClient):
+        """Test wiki search where the primary anchor selector fails, but the fallback works."""
+        mock_client_instance = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        # Simulate Wikipedia HTML structure with a fallback anchor tag
+        mock_response.text = """
+            <html><body>
+                <div class="mw-search-result-heading">
+                    <a href="/wiki/Fallback_Page_1">Fallback Page Title 1</a> 
+                </div>
+                <div class="searchresult">
+                     <p class="mw-search-result-snippet">Snippet for Fallback Page 1.</p>
+                </div>
+            </body></html>
+            """
+        mock_client_instance.get.return_value = mock_response
+        MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
+
+        results = await wiki_search("test query")
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "Fallback Page Title 1")
+        self.assertEqual(results[0]["url"], "/wiki/Fallback_Page_1")
+        self.assertEqual(results[0]["snippet"], "Snippet for Fallback Page 1.")
+
+    @patch("apollo.tools.web.httpx.AsyncClient")
+    async def test_wiki_search_no_anchor_tag_skips_result(self, MockAsyncClient):
+        """Test wiki search where a heading has no anchor tag and is skipped."""
+        mock_client_instance = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        mock_response.text = """
+            <html><body>
+                <div class="mw-search-result-heading">
+                    <!-- No anchor tag here, this result should be skipped -->
+                    <span>Just some text, no link.</span>
+                </div>
+                <div class="mw-search-result-heading">
+                     <a href="/wiki/Valid_Page_2" class="mw-search-result-title">Valid Page Title 2</a>
+                </div>
+                <div class="searchresult">
+                     <p class="mw-search-result-snippet">Snippet for Valid Page 2.</p>
+                </div>
+            </body></html>
+            """
+        mock_client_instance.get.return_value = mock_response
+        MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
+
+        results = await wiki_search("test query")
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["title"], "Valid Page Title 2")
+        self.assertEqual(results[0]["url"], "/wiki/Valid_Page_2")
+        self.assertEqual(results[0]["snippet"], "Snippet for Valid Page 2.")
 
 
 if __name__ == "__main__":
