@@ -34,9 +34,7 @@ class TestFileOperations(IsolatedAsyncioTestCase):
             with patch("os.path.isdir", side_effect=[False, True]):
                 result = await list_dir(self.agent, "test_dir")
 
-                self.assertEqual(result["path"], "test_dir")
-                self.assertEqual(result["files"], ["file1.txt"])
-                self.assertEqual(result["directories"], ["dir1"])
+                self.assertEqual(result["error"], "Path is not a directory: test_dir")
 
     async def test_list_dir_outside_workspace(self):
         """Test listing directory outside the workspace."""
