@@ -144,7 +144,7 @@ class ApolloCore:
             messages=self.chat_history,
             tools=get_available_tools(),
             stream=False,
-            options={"host": Constant.ollama_host}
+            options={"host": Constant.ollama_host},
         )
 
         message = llm_response.get("message", {})
