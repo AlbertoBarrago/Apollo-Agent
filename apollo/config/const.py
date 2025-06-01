@@ -31,6 +31,7 @@ class Constant:
 """
     # LLM settings
     llm_model = "llama3.1"
+    ollama_host = "http://ollama:11434"
 
     # Chat settings
     max_chat_iterations = 10

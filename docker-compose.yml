@@ -1,0 +1,33 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    networks:
+      - apollo-network
+    command:  serve # Ensure Ollama is running in server mode
+
+  apolloagent:
+    build: .
+    container_name: apollo-agent
+    depends_on:
+      - ollama # Ensures ollama starts before apolloagent
+    environment:
+      # OLLAMA_HOST is used by the Ollama Python client to find the Ollama service.
+      # 'ollama' here refers to the service name in docker-compose, which resolves to the container's IP on the same network.
+      - OLLAMA_HOST=http://ollama:11434
+    networks:
+      - apollo-network
+    stdin_open: true  # Keep stdin open for interactive mode
+    tty: true         # Allocate a TTY for interactive mode
+    command: python main.py
+
+volumes:
+  ollama_storage:
+
+networks:
+  apollo-network:
+    driver: bridge

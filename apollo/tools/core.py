@@ -34,6 +34,7 @@ class ApolloCore:
         self.chat_history: list[dict] = []
         self._chat_in_progress: bool = False
         self.tool_executor = None
+        self.ollama_client = ollama.Client(host=Constant.ollama_host)
 
     async def process_llm_response(self, llm_response):
         """
@@ -143,6 +144,7 @@ class ApolloCore:
             messages=self.chat_history,
             tools=get_available_tools(),
             stream=False,
+            options={"host": Constant.ollama_host}
         )
 
         message = llm_response.get("message", {})

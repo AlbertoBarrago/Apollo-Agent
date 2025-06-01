@@ -48,6 +48,39 @@ You can:
 - Search on wiki: `Search on wiki {argument}`
 - Create a New file: `Create a new file called {file_name} with this content: {content}`
 
+### Docker (docker-compose)
+**Pull the LLM model into Ollama**:
+    Ensure the required LLM model (e.g., `llama3.1`) is available in your Ollama container before running ApolloAgent.
+    * First, start just the Ollama service:
+        ```bash
+        docker compose up -d ollama
+        ```
+    * Then, execute the pull command inside the running Ollama container:
+        ```bash
+        docker exec -it ollama ollama pull llama3.1
+        ```
+    * Wait for the download to complete.
+
+1. **Start all services**:
+    From your project root (where `docker-compose.yml` is located), run:
+    ```bash
+    docker compose up -d
+    ```
+    This command builds your `apolloagent` image, creates the Docker network, and starts both Ollama and ApolloAgent in detached mode.
+
+2. **Interact with ApolloAgent**:
+    To access the interactive chat terminal of ApolloAgent:
+    ```bash
+    docker attach apollo-agent
+    ```
+    You can detach from the terminal by pressing `Ctrl+C`.
+
+3. **Stop and Clean Up**:
+    To stop and remove all services defined in your `docker-compose.yml` file:
+    ```bash
+    docker compose down
+    ```
+
 ## License
 
 ApolloAgent is licensed under the BSD 3-Clause License. See the `LICENSE` file for more details.
