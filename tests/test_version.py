@@ -10,22 +10,24 @@ License: BSD 3-Clause License - 2025
 import unittest
 from apollo import version
 
+
 class TestVersion(unittest.TestCase):
     """Test cases for version information"""
+
     def test_case_string_exist_and_is_string(self):
         self.assertTrue(hasattr(version, "__version__"))
         self.assertIsInstance(version.__version__, str)
-        
+
     def test_title_exist_and_is_string(self):
         self.assertTrue(hasattr(version, "__title__"))
         self.assertIsInstance(version.__title__, str)
-        
+
     def test_description_exists_and_is_string(self):
         self.assertTrue(hasattr(version, "__description__"))
         self.assertIsInstance(version.__description__, str)
         self.assertEqual(
             version.__description__,
-            "A custom AI agent that implements various functions for code assistance"
+            "A custom AI agent that implements various functions for code assistance",
         )
 
     def test_author_exists_and_is_string(self):
@@ -64,7 +66,9 @@ class TestVersion(unittest.TestCase):
         """Test that __keywords__ exists, is a list, and contains strings."""
         self.assertTrue(hasattr(version, "__keywords__"))
         self.assertIsInstance(version.__keywords__, list)
-        self.assertGreater(len(version.__keywords__), 0, "Keywords list should not be empty")
+        self.assertGreater(
+            len(version.__keywords__), 0, "Keywords list should not be empty"
+        )
         for keyword in version.__keywords__:
             self.assertIsInstance(keyword, str)
         self.assertEqual(
@@ -82,7 +86,9 @@ class TestVersion(unittest.TestCase):
         """Test that __requires__ exists, is a list, and contains strings."""
         self.assertTrue(hasattr(version, "__requires__"))
         self.assertIsInstance(version.__requires__, list)
-        self.assertGreater(len(version.__requires__), 0, "Requires list should not be empty")
+        self.assertGreater(
+            len(version.__requires__), 0, "Requires list should not be empty"
+        )
         for req in version.__requires__:
             self.assertIsInstance(req, str)
         # Note: The duplicate "requests" in your original list is preserved here.
@@ -108,5 +114,3 @@ class TestVersion(unittest.TestCase):
 
     if __name__ == "__main__":
         unittest.main()
-        
-    

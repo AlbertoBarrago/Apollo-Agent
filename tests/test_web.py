@@ -56,7 +56,7 @@ class TestWebOperations(IsolatedAsyncioTestCase):
         mock_client_instance = AsyncMock()
         mock_response = AsyncMock()
         mock_response.status_code = 200
-        mock_response.text = "<html><body><div>No results found.</div></body></html>" # HTML with no .result elements
+        mock_response.text = "<html><body><div>No results found.</div></body></html>"  # HTML with no .result elements
         mock_client_instance.get.return_value = mock_response
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
 
@@ -68,7 +68,9 @@ class TestWebOperations(IsolatedAsyncioTestCase):
     async def test_web_search_api_error(self, MockAsyncClient):
         """Test web search with an API error (e.g., network error)."""
         mock_client_instance = AsyncMock()
-        mock_client_instance.get.side_effect = httpx.RequestError("API Error", request=None) # Simulate httpx error
+        mock_client_instance.get.side_effect = httpx.RequestError(
+            "API Error", request=None
+        )  # Simulate httpx error
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
 
         with self.assertRaises(httpx.RequestError):
@@ -87,7 +89,11 @@ class TestWebOperations(IsolatedAsyncioTestCase):
         # it would likely parse the error page and return no results.
         # For a more robust test, you might want web_search to handle non-200 codes.
         # For now, let's assume it parses and finds nothing.
-        mock_response.raise_for_status = AsyncMock(side_effect=httpx.HTTPStatusError("Server Error", request=None, response=mock_response))
+        mock_response.raise_for_status = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "Server Error", request=None, response=mock_response
+            )
+        )
 
         mock_client_instance.get.return_value = mock_response
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
@@ -98,7 +104,9 @@ class TestWebOperations(IsolatedAsyncioTestCase):
 
         # If web_search does NOT call resp.raise_for_status() and just tries to parse:
         results = await web_search("test query")
-        self.assertEqual(len(results), 0) # Or assert specific error handling if implemented
+        self.assertEqual(
+            len(results), 0
+        )  # Or assert specific error handling if implemented
 
     @patch("apollo.tools.web.httpx.AsyncClient")
     async def test_wiki_search_success(self, MockAsyncClient):
@@ -136,7 +144,9 @@ class TestWebOperations(IsolatedAsyncioTestCase):
         mock_client_instance = AsyncMock()
         mock_response = AsyncMock()
         mock_response.status_code = 200
-        mock_response.text = "<html><body><div>No matching results found.</div></body></html>"
+        mock_response.text = (
+            "<html><body><div>No matching results found.</div></body></html>"
+        )
         mock_client_instance.get.return_value = mock_response
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
 
@@ -148,7 +158,9 @@ class TestWebOperations(IsolatedAsyncioTestCase):
     async def test_wiki_search_api_error(self, MockAsyncClient):
         """Test wiki search with an API error."""
         mock_client_instance = AsyncMock()
-        mock_client_instance.get.side_effect = httpx.RequestError("API Error", request=None)
+        mock_client_instance.get.side_effect = httpx.RequestError(
+            "API Error", request=None
+        )
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
 
         with self.assertRaises(httpx.RequestError):

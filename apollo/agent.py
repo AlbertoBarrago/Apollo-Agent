@@ -105,7 +105,7 @@ class ApolloAgent:
                     f"Follow this instructions:{ Constant.prompt_fine_tune_v1}"
                     f" The command is: ${user_input}"
                 )
-                # The magic begun
+                # The magic begin
                 response = await agent.chat_agent.handle_request(prompt)
 
                 if response and isinstance(response, dict) and "response" in response:

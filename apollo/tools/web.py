@@ -90,10 +90,10 @@ async def wiki_search(query: str) -> List[Dict[str, str]]:
         for heading_element in soup.select(".mw-search-result-heading"):
             # The title and link are usually within an 'a' tag inside the heading
             link_anchor_tag = heading_element.select_one("a.mw-search-result-title")
-            if not link_anchor_tag: # Fallback if class is directly on 'a'
+            if not link_anchor_tag:  # Fallback if class is directly on 'a'
                 link_anchor_tag = heading_element.select_one("a")
 
-            if not link_anchor_tag: # If still no anchor tag, skip this result
+            if not link_anchor_tag:  # If still no anchor tag, skip this result
                 continue
 
             title_text = link_anchor_tag.get_text(strip=True)
@@ -102,15 +102,18 @@ async def wiki_search(query: str) -> List[Dict[str, str]]:
             # The snippet is typically in a sibling div with class 'searchresult',
             # which then contains a 'p' tag with class 'mw-search-result-snippet'.
             snippet_to_store = "No snippet available."
-            snippet_container_div = heading_element.find_next_sibling("div", class_="searchresult")
+            snippet_container_div = heading_element.find_next_sibling(
+                "div", class_="searchresult"
+            )
             if snippet_container_div:
-                snippet_p_element = snippet_container_div.select_one("p.mw-search-result-snippet")
-                if snippet_p_element: # This 'if' condition is what line 94 was about
+                snippet_p_element = snippet_container_div.select_one(
+                    "p.mw-search-result-snippet"
+                )
+                if snippet_p_element:  # This 'if' condition is what line 94 was about
                     snippet_to_store = snippet_p_element.get_text(strip=True)
                 # Optional: Fallback if p.mw-search-result-snippet is not found, but div.searchresult is
                 # elif snippet_container_div.get_text(strip=True):
                 #     snippet_to_store = snippet_container_div.get_text(strip=True)
-
 
             results.append(
                 {

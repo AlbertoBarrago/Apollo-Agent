@@ -73,14 +73,18 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=KeyboardInterrupt)
-    async def test_chat_terminal_keyboard_interrupt(self, mock_input, mock_print): # Corrected mock order
+    async def test_chat_terminal_keyboard_interrupt(
+        self, mock_input, mock_print
+    ):  # Corrected mock order
         """Test chat terminal keyboard interrupt handling."""
         await ApolloAgent.chat_terminal()
         mock_print.assert_any_call("\nExiting chat.")
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=EOFError)
-    async def test_chat_terminal_eof(self, mock_input, mock_print): # Corrected mock order
+    async def test_chat_terminal_eof(
+        self, mock_input, mock_print
+    ):  # Corrected mock order
         """Test chat terminal EOF handling."""
         await ApolloAgent.chat_terminal()
         mock_print.assert_any_call("\nExiting chat.")
@@ -103,7 +107,7 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
         try:
             # Patch input for this specific test run if chat_terminal expects input
             with patch("builtins.input", side_effect=["some_input_if_needed", "exit"]):
-                 result = await ApolloAgent.chat_terminal()
+                result = await ApolloAgent.chat_terminal()
             self.assertIsNone(result)
         finally:
             Constant.workspace_cabled = original_workspace
