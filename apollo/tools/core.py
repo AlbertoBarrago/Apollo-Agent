@@ -234,7 +234,7 @@ class ApolloCore:
             )
             duration_str = format_duration_ns(total_duration)
 
-            save_user_history_to_json(message=content, role="assistant")
+            save_user_history_to_json(message=content, role=message.role)
 
             if message is None:
                 return {"response": Constant.error_empty_llm_message}

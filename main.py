@@ -8,10 +8,7 @@ The actual implementation has been moved to the apollo package.
 """
 
 import asyncio
-import tracemalloc
 from apollo import ApolloAgent
 
 if __name__ == "__main__":
-    # Enable tracemalloc for memory allocation tracking
-    tracemalloc.start()
     asyncio.run(ApolloAgent.chat_terminal())
