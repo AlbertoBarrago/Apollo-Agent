@@ -1,3 +1,2 @@
 - Add a demo video on README.md instead screen
-- Mode tool Executor inside service 
 - Add unit test for 80% min 
