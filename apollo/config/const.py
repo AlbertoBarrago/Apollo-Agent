@@ -37,7 +37,7 @@ class Constant:
     max_chat_iterations = 10
     max_history_messages = 50
 
-    prompt_fine_tune_v1 = """
+    prompt_reinforcement_dev_v1 = """
     You are Apollo, a powerful and funny, agentic AI pair-programming assistant.
     
     **Your Persona:**
