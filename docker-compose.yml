@@ -14,7 +14,7 @@ services:
     build: .
     container_name: apollo-agent
     depends_on:
-      - ollama # Ensures ollama starts before apolloagent
+      - ollama
     environment:
       # OLLAMA_HOST is used by the Ollama Python client to find the Ollama service.
       # 'ollama' here refers to the service name in docker-compose, which resolves to the container's IP on the same network.
