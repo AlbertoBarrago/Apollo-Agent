@@ -23,14 +23,14 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
         self.agent = ApolloAgent(workspace_path=self.test_workspace)
 
     def test_init_with_workspace(self):
-        """Test initialization with workspace path."""
+        """Test initialization with the workspace path."""
         agent = ApolloAgent(workspace_path=self.test_workspace)
         self.assertEqual(agent.workspace_path, self.test_workspace)
         self.assertIsNotNone(agent.tool_executor)
         self.assertIsNotNone(agent.chat_agent)
 
     def test_init_without_workspace(self):
-        """Test initialization without workspace path."""
+        """Test initialization without the workspace path."""
         with patch("os.getcwd", return_value=self.test_workspace):
             agent = ApolloAgent()
             self.assertEqual(agent.workspace_path, self.test_workspace)
@@ -74,7 +74,7 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
     @patch("builtins.print")
     @patch("builtins.input", side_effect=KeyboardInterrupt)
     async def test_chat_terminal_keyboard_interrupt(
-        self, mock_input, mock_print
+        self, _, mock_print
     ):  # Corrected mock order
         """Test chat terminal keyboard interrupt handling."""
         await ApolloAgent.chat_terminal()
@@ -83,7 +83,7 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
     @patch("builtins.print")
     @patch("builtins.input", side_effect=EOFError)
     async def test_chat_terminal_eof(
-        self, mock_input, mock_print
+        self, _, mock_print
     ):  # Corrected mock order
         """Test chat terminal EOF handling."""
         await ApolloAgent.chat_terminal()
