@@ -148,11 +148,7 @@ class ApolloCore:
         )
 
         message = llm_response.get("message", {})
-        # content = (
-        #     message.get("content", "")
-        #     if isinstance(message, dict)
-        #     else getattr(message, "content", "")
-        # )
+
         tool_calls = (
             message.get("tool_calls", [])
             if isinstance(message, dict)
