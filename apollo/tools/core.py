@@ -36,7 +36,7 @@ class ApolloCore:
         self.tool_executor = None
         self.ollama_client = ollama.Client(host=Constant.ollama_host)
 
-    async def process_llm_response(self, llm_response):
+    async def process_llm_response(self, llm_response) -> tuple[dict | None, list | None, str | None, int | None]:
         """
         Process the response from the LLM, extracting message, tool calls, and content.
 
@@ -263,7 +263,7 @@ class ApolloCore:
             max_iterations=Constant.max_chat_iterations
         )
         self.permanent_history.append({"role": "assistant", "content": timeout_message})
-        return {"response": timeout_message}
+        return {"Max iterations reached: ": timeout_message}
 
     async def _execute_tool(self, tool_call: dict) -> Any:
         """Execute a tool call using the associated tool executors execute_tool method."""
@@ -297,13 +297,3 @@ class ApolloCore:
         else:
             self.chat_history = self.permanent_history.copy()
             print(f"Chat History {self.chat_history}")
-
-        # Remove any "conclude soon" messages from previous iterations
-        self.chat_history = [
-            msg
-            for msg in self.chat_history
-            if not (
-                msg.get("role") == "system"
-                and "try to reach a conclusion soon" in msg.get("content", "").lower()
-            )
-        ]
