@@ -36,7 +36,9 @@ class ApolloCore:
         self.tool_executor = None
         self.ollama_client = ollama.Client(host=Constant.ollama_host)
 
-    async def process_llm_response(self, llm_response) -> tuple[dict | None, list | None, str | None, int | None]:
+    async def process_llm_response(
+        self, llm_response
+    ) -> tuple[dict | None, list | None, str | None, int | None]:
         """
         Process the response from the LLM, extracting message, tool calls, and content.
 
