@@ -248,7 +248,7 @@ class ApolloCore:
                     tool_calls, iterations, recent_tool_calls
                 )
 
-                #print(f"\n[{duration_str}], Tools used: {current_tool_calls}\n")
+                # print(f"\n[{duration_str}], Tools used: {current_tool_calls}\n")
 
                 if result:
                     return result
