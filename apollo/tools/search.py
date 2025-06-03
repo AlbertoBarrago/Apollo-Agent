@@ -16,10 +16,7 @@ from typing import Dict, Any, AsyncGenerator, List
 import aiofiles
 
 
-async def codebase_search(
-        agent: Any,
-        query: str
-) -> Dict[str, Any]:
+async def codebase_search(agent: Any, query: str) -> Dict[str, Any]:
     """
     Finds code snippets from the codebase most relevant to the search query.
     This function performs a keyword-based search by checking if all significant
@@ -42,16 +39,26 @@ async def codebase_search(
 
     if not os.path.isdir(workspace_root_abs):
         # Log a warning and return an error if the workspace path is not a valid directory
-        print(f"[WARNING] Workspace path is not a valid directory, skipping: {agent.workspace_path}")
+        print(
+            f"[WARNING] Workspace path is not a valid directory, skipping: {agent.workspace_path}"
+        )
         return {
             "query": query,
             "results": [],
-            "error": f"Workspace path '{agent.workspace_path}' is not a valid directory."
+            "error": f"Workspace path '{agent.workspace_path}' is not a valid directory.",
         }
 
     # Define file extensions to be included in the search.
     included_extensions = (
-        ".py", ".js", ".ts", ".html", ".css", ".java", ".c", ".cpp", ".txt",
+        ".py",
+        ".js",
+        ".ts",
+        ".html",
+        ".css",
+        ".java",
+        ".c",
+        ".cpp",
+        ".txt",
         ".md",
     )
 
@@ -61,10 +68,27 @@ async def codebase_search(
     # Process the query to get keywords
     # Split by non-alphanumeric characters, convert to lower, filter short/common words
     # Basic stop words list; can be expanded or made more sophisticated
-    basic_stop_words = {"the", "for", "and", "with", "this", "that", "how", "what", "why", "is", "in", "it", "of", "to",
-                        "a", "an"}
+    basic_stop_words = {
+        "the",
+        "for",
+        "and",
+        "with",
+        "this",
+        "that",
+        "how",
+        "what",
+        "why",
+        "is",
+        "in",
+        "it",
+        "of",
+        "to",
+        "a",
+        "an",
+    }
     query_keywords = [
-        word for word in re.split(r'\W+', query.lower())
+        word
+        for word in re.split(r"\W+", query.lower())
         if len(word) > 2 and word not in basic_stop_words
     ]
 
@@ -76,7 +100,9 @@ async def codebase_search(
             if file_name.endswith(included_extensions):
                 file_path_abs = os.path.join(root, file_name)
                 try:
-                    async with aiofiles.open(file_path_abs, "r", encoding="utf-8", errors="ignore") as f:
+                    async with aiofiles.open(
+                        file_path_abs, "r", encoding="utf-8", errors="ignore"
+                    ) as f:
                         content = await f.read()
 
                     content_lower = content.lower()
@@ -88,7 +114,9 @@ async def codebase_search(
                             match_found = True
 
                     if match_found:
-                        relative_file_path: str = os.path.relpath(file_path_abs, workspace_root_abs)
+                        relative_file_path: str = os.path.relpath(
+                            file_path_abs, workspace_root_abs
+                        )
                         results.append(
                             {
                                 "file_path": relative_file_path,
@@ -107,12 +135,16 @@ async def codebase_search(
                     print(f"[ERROR] Error reading file {file_path_abs}: {e}")
                 except RuntimeError as e:
                     # Log other unexpected errors during file processing and continue
-                    print(f"[ERROR] Unexpected error processing file {file_path_abs}: {e}")
+                    print(
+                        f"[ERROR] Unexpected error processing file {file_path_abs}: {e}"
+                    )
 
             if len(results) >= max_result:  # Check after processing each file
                 break  # Break from the inner files loop if limit reached
 
-        if len(results) >= max_result:  # Check after processing all files in a directory
+        if (
+            len(results) >= max_result
+        ):  # Check after processing all files in a directory
             break  # Break from the outer os.walk loop if limit reached
 
     return {"query": query, "results": results}
@@ -161,10 +193,10 @@ async def _walk_files_async(dir_path: str) -> AsyncGenerator[str, None]:
 
 
 async def grep_search(
-        agent: Any,
-        query: str,
-        max_results: int = 50,
-        regex_flags: int = 0,
+    agent: Any,
+    query: str,
+    max_results: int = 50,
+    regex_flags: int = 0,
 ) -> Dict[str, Any]:
     """
     Asynchronously searches for a regex pattern within files in a directory.
@@ -182,13 +214,17 @@ async def grep_search(
     results: List[Dict[str, Any]] = []
     errors: List[Dict[str, str]] = []
 
-    if not hasattr(agent, 'workspace_path') or not isinstance(agent.workspace_path, str):
+    if not hasattr(agent, "workspace_path") or not isinstance(
+        agent.workspace_path, str
+    ):
         return {
             "query": query,
             "results": [],
             "total_matches_found": 0,
             "capped": False,
-            "errors": [{"file": "N/A", "error": "Agent has no valid workspace_path attribute."}],
+            "errors": [
+                {"file": "N/A", "error": "Agent has no valid workspace_path attribute."}
+            ],
         }
 
     try:
@@ -212,7 +248,9 @@ async def grep_search(
         relative_file_path = os.path.relpath(file_path_str, agent.workspace_path)
         try:
             # Open and read file asynchronously
-            async with aiofiles.open(file_path_str, "r", encoding="utf-8", errors="ignore") as f:
+            async with aiofiles.open(
+                file_path_str, "r", encoding="utf-8", errors="ignore"
+            ) as f:
                 line_number = 0
                 async for line in f:  # Asynchronously iterate over lines
                     line_number += 1
@@ -237,7 +275,9 @@ async def grep_search(
         except OSError as e:
             errors.append({"file": relative_file_path, "error": f"OSError: {e}"})
         except RuntimeError as e:  # Catch other potential errors during file processing
-            errors.append({"file": relative_file_path, "error": f"Unexpected error: {e}"})
+            errors.append(
+                {"file": relative_file_path, "error": f"Unexpected error: {e}"}
+            )
 
         # This check ensures we break from the file iteration loop if max_results
         # was hit by processing the current file.
