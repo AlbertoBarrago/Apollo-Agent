@@ -19,7 +19,7 @@ ApolloAgent provides the following functionality:
 
 ## Installation
 
-Ensure you have Python 3.8+ installed.
+Ensure you have Python 3.10+ installed.
 
 ```bash
 # Clone the repository
