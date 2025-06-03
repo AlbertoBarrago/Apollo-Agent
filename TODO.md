@@ -1,2 +1,0 @@
-- Add a demo video on README.md instead screen
-- Add unit test for 80% min 
