@@ -23,9 +23,12 @@ with open(os.path.join("apollo", "version.py"), "r", encoding="utf-8") as f:
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
-# Read requirements from requirements.txt
 with open("requirements.txt", "r", encoding="utf-8") as f:
-    requirements = f.read().splitlines()
+    install_reqs = f.read().splitlines()
+
+# Optionally read dev requirements from requirements_dev.txt
+# with open("requirements_dev.txt", "r", encoding="utf-8") as f:
+#     dev_reqs = f.read().splitlines()
 
 setup(
     name="apollo-agent",
@@ -44,7 +47,7 @@ setup(
         "Development Status :: 3 - Alpha",
     ],
     python_requires=">=3.8",
-    install_requires=requirements,
+    install_requires=install_reqs,
     extras_require={
         "dev": [
             "black~=25.1.0",

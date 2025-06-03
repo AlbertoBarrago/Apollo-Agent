@@ -27,9 +27,8 @@ __requires__ = [
     "requests",
     "ollama",
     "beautifulsoup4",
-    "requests",
-    "python-dotenv",
     "httpx",
+    "aiofiles",
     "setuptools",
 ]
 
