@@ -140,4 +140,4 @@ class Constant:
         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
     ]
 
-    workspace_cabled = "./workspace"
+    workspace_cabled = "./"

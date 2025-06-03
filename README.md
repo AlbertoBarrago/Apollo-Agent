@@ -80,7 +80,48 @@ You can:
     ```bash
     docker compose down
     ```
+   
+## Tool: `codebase_search`
 
+The `codebase_search` tool is designed to help you find relevant code snippets within the project's codebase based on a natural language query. It's particularly useful when you're looking for code related to a specific concept or functionality but don't know the exact file names or precise syntax.
+
+### How it Works
+
+Internally, `codebase_search` takes your natural language query and processes it to extract significant keywords. It then searches through the files in the workspace (respecting specified `included_extensions` like `.py`, `.js`, `.md`, etc.) to find files that contain **all** of these extracted keywords. This approach aims to provide more relevant results than a simple substring match of the entire query.
+
+### When to Use
+
+Use `codebase_search` when:
+
+*   You want to understand how a particular feature is implemented.
+*   You're looking for code related to a general concept (e.g., "error handling," "user authentication").
+*   You remember what a piece of code does but not where it is or its exact variable/function names.
+
+### Parameters
+
+When the ApolloAgent decides to use this tool, it will invoke it with the following parameter:
+
+*   `query` (string): Your natural language search query. For example:
+    *   `"how are database connections managed"`
+    *   `"find the main configuration settings"`
+    *   `"show me code related to payment processing"`
+
+### Return Value
+
+The `codebase_search` tool returns a JSON object. This object will always contain `query`, `results`, and `error` keys.
+
+*   `query` (string): The original natural language query you provided.
+*   `results` (array of objects): A list of found items.
+    *   If matches are found, each object in the array represents a distinct match and includes the following fields:
+        *   `file_path` (string): The path to the file where the keywords were found, relative to the workspace root.
+        *   `content_snippet` (string): A preview of the file's content (up to the first 500 characters).
+        *   `relevance_score` (number): A score indicating the relevance. (Note: This is currently a fixed value for keyword matches but is designed for future semantic enhancements).
+    *   If no matches are found (but no error occurred), this will be an empty list (`[]`).
+*   `error` (string | null):
+    *   If the search operation encounters an issue (e.g., an invalid workspace path, permission errors), this field will contain a descriptive error message (string). In such cases, the `results` list will typically be empty.
+    *   If the search completes successfully (even if no items are found), this field will be `null`.
+
+**Example JSON Response (Success with results):**
 ## License
 
 ApolloAgent is licensed under the BSD 3-Clause License. See the `LICENSE` file for more details.
@@ -90,37 +131,6 @@ ApolloAgent is licensed under the BSD 3-Clause License. See the `LICENSE` file f
 We welcome contributions to ApolloAgent! If you'd like to help:
 - Report bugs or suggest new features via [GitHub Issues](https://github.com/AlbertoBarrago/Apollo-Agent/issues).
 - Submit pull requests for enhancements or changes.
-
-## Collaboration Opportunities
-
-ApolloAgent is a proof-of-concept project with many opportunities for improvement and expansion. Here are specific areas where your contributions would be valuable:
-
-### Session Management
-- **Chat History Persistence**: Implement more robust storage solutions for chat history (e.g., SQLite, Redis).
-- **User Profiles**: Add support for multiple user profiles with personalized settings.
-- **Context Retention**: Improve how the agent maintains context across multiple interactions.
-
-### Error Handling
-- **Graceful Recovery**: Enhance error recovery mechanisms to prevent session termination on failures.
-- **User-Friendly Messages**: Create more informative error messages for end users.
-- **Logging System**: Implement a comprehensive logging system for debugging and monitoring.
-
-### New Tools and Capabilities
-- **Code Generation**: Add tools for generating boilerplate code or common patterns.
-- **Refactoring Assistance**: Implement tools to help with code refactoring tasks.
-- **Integration with Development Tools**: Add support for Git operations, linters, or test runners.
-- **Language Support**: Extend functionality to support additional programming languages.
-
-### Performance Optimization
-- **Caching Mechanisms**: Implement caching for frequently accessed files or search results.
-- **Parallel Processing**: Use async/await patterns more extensively for I/O-bound operations.
-- **Resource Management**: Improve memory usage for large codebases or long sessions.
-
-### Testing and Documentation
-- **Test Coverage**: Increase unit test coverage for core functionality.
-- **Integration Tests**: Add integration tests for end-to-end workflows.
-- **Documentation**: Improve inline documentation and add more examples to the README.
-- **Tutorials**: Create tutorials or examples demonstrating common use cases.
 
 ### Getting Started with Contributions
 
