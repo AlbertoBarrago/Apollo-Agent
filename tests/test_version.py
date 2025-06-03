@@ -99,9 +99,8 @@ class TestVersion(unittest.TestCase):
                 "requests",
                 "ollama",
                 "beautifulsoup4",
-                "requests",  # Duplicate
-                "python-dotenv",
                 "httpx",
+                "aiofiles",
                 "setuptools",
             ],
         )

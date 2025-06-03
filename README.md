@@ -2,8 +2,6 @@
 [![codecov](https://codecov.io/gh/AlbertoBarrago/ApolloAgent/graph/badge.svg?token=SD0LGLSUY6)](https://codecov.io/gh/AlbertoBarrago/ApolloAgent)
 [![Black Code Formatter](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml/badge.svg)](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml)
 
-![img.png](screen.png)
-
 ApolloAgent is a custom AI agent that implements various functions for code assistance.
 
 > "_ApolloAgent is a versatile PoC showcasing how AI-driven tools can simplify coding tasks and enhance productivity._"
@@ -42,46 +40,43 @@ To start ApolloAgent, simply run:
 python main.py
 ```
 
-You can:
-- Search for a file: `search {file_name}`
-- Search on web: `Search on web {query}`
-- Search on wiki: `Search on wiki {argument}`
-- Create a New file: `Create a new file called {file_name} with this content: {content}`
+### Tool: `list_dir`
 
-### Docker (docker-compose)
-**Pull the LLM model into Ollama**:
-    Ensure the required LLM model (e.g., `llama3.1`) is available in your Ollama container before running ApolloAgent.
-    * First, start just the Ollama service:
-        ```bash
-        docker compose up -d ollama
-        ```
-    * Then, execute the pull command inside the running Ollama container:
-        ```bash
-        docker exec -it ollama ollama pull llama3.1
-        ```
-    * Wait for the download to complete.
+Lists all files and subdirectories within a specified directory path, relative to the workspace root. This is useful for exploring the project structure and discovering files.
 
-1. **Start all services**:
-    From your project root (where `docker-compose.yml` is located), run:
-    ```bash
-    docker compose up -d
-    ```
-    This command builds your `apolloagent` image, creates the Docker network, and starts both Ollama and ApolloAgent in detached mode.
+### Tool: `grep_search`
 
-2. **Interact with ApolloAgent**:
-    To access the interactive chat terminal of ApolloAgent:
-    ```bash
-    docker attach apollo-agent
-    ```
-    You can detach from the terminal by pressing `Ctrl+C`.
+Performs a fast, text-based search for an exact string or regular expression pattern within files. This is highly effective for locating specific function names, variable declarations, or log messages when the exact text is known.
 
-3. **Stop and Clean Up**:
-    To stop and remove all services defined in your `docker-compose.yml` file:
-    ```bash
-    docker compose down
-    ```
-   
-## Tool: `codebase_search`
+### Tool: `file_search`
+
+Find files by performing a fuzzy search against their paths. This is useful when you know a part of the filename or path but are unsure of the exact location or spelling.
+
+### Tool: `delete_file`
+
+Permanently deletes a file from the workspace.
+
+### Tool: `create_file`
+
+Create a new file with a variety of granular operations. Always provide a clear explanation for the modification.
+
+### Tool: `edit_file`
+
+Modifies an existing one with a variety of granular operations. It is critical to first inspect the file's content to ensure the edit is appropriate. Always provide a clear explanation for the modification.
+
+### Tool: `remove_dir`
+
+Recursively and permanently removes a directory and all of its contents. This action is irreversible.
+
+### Tool: `web_search`
+
+Search the web to find up-to-date information on a given topic. This tool is best used for general knowledge, current events, or technical information not present in the local codebase or Wikipedia.
+
+### Tool: `wiki_search`
+
+Search Wikipedia for encyclopedic information on a topic. This is best for historical events, scientific concepts, or detailed biographies.
+
+### Tool: `codebase_search` (the coolest one! for now...)
 
 The `codebase_search` tool is designed to help you find relevant code snippets within the project's codebase based on a natural language query. It's particularly useful when you're looking for code related to a specific concept or functionality but don't know the exact file names or precise syntax.
 
@@ -122,6 +117,40 @@ The `codebase_search` tool returns a JSON object. This object will always contai
     *   If the search completes successfully (even if no items are found), this field will be `null`.
 
 **Example JSON Response (Success with results):**
+
+### Docker (docker-compose)
+**Pull the LLM model into Ollama**:
+    Ensure the required LLM model (e.g., `llama3.1`) is available in your Ollama container before running ApolloAgent.
+    * First, start just the Ollama service:
+        ```bash
+        docker compose up -d ollama
+        ```
+    * Then, execute the pull command inside the running Ollama container:
+        ```bash
+        docker exec -it ollama ollama pull llama3.1
+        ```
+    * Wait for the download to complete.
+
+1. **Start all services**:
+    From your project root (where `docker-compose.yml` is located), run:
+    ```bash
+    docker compose up -d
+    ```
+    This command builds your `apolloagent` image, creates the Docker network, and starts both Ollama and ApolloAgent in detached mode.
+
+2. **Interact with ApolloAgent**:
+    To access the interactive chat terminal of ApolloAgent:
+    ```bash
+    docker attach apollo-agent
+    ```
+    You can detach from the terminal by pressing `Ctrl+C`.
+
+3. **Stop and Clean Up**:
+    To stop and remove all services defined in your `docker-compose.yml` file:
+    ```bash
+    docker compose down
+    ```
+
 ## License
 
 ApolloAgent is licensed under the BSD 3-Clause License. See the `LICENSE` file for more details.
