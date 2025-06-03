@@ -339,11 +339,11 @@ async def edit_file(
     # Construct the full file path
     file_path = os.path.abspath(os.path.join(absolute_workspace_path, target_file))
 
-    print(f"[INFO] Editing file: {target_file}")
-    print(f"[INFO] Instructions: {instructions}")
-    print(f"[INFO] Explanation: {explanation}")
-    print(f"[INFO] Absolute workspace path: {absolute_workspace_path}")
-    print(f"[INFO] Full file path: {file_path}")
+    # print(f"[INFO] Editing file: {target_file}")
+    # print(f"[INFO] Instructions: {instructions}")
+    # print(f"[INFO] Explanation: {explanation}")
+    # print(f"[INFO] Absolute workspace path: {absolute_workspace_path}")
+    # print(f"[INFO] Full file path: {file_path}")
 
     # Ensure the file path is within the workspace
     if not file_path.startswith(absolute_workspace_path):
