@@ -10,4 +10,6 @@ chat_history.json
 apollo_agent.egg-info
 chat_sessions
 .pypirc
+dist
+
 

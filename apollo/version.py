@@ -8,7 +8,7 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __title__ = "ApolloAgent"
 __description__ = (
@@ -32,4 +32,4 @@ __requires__ = [
     "setuptools",
 ]
 
-__python_requires__ = ">=3.8"
+__python_requires__ = ">=3.10"

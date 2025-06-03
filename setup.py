@@ -46,7 +46,7 @@ setup(
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=install_reqs,
     extras_require={
         "dev": [
