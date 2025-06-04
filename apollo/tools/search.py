@@ -18,13 +18,14 @@ from thefuzz import fuzz
 from typing import Protocol
 
 
-
 class AgentWithWorkspace(Protocol):
     """
     Protocol for objects that are expected to have a workspace_path attribute.
     This defines the minimum interface required by search functions.
     """
+
     workspace_path: str
+
 
 async def codebase_search(agent: AgentWithWorkspace, query: str) -> Dict[str, Any]:
     """
@@ -135,7 +136,7 @@ async def codebase_search(agent: AgentWithWorkspace, query: str) -> Dict[str, An
                                     if len(content) > 500
                                     else content
                                 ),
-                                "relevance_score": 0.75, # This is a placeholder, real relevance is complex
+                                "relevance_score": 0.75,  # This is a placeholder, real relevance is complex
                             }
                         )
                         if len(results) >= max_result:
@@ -293,7 +294,9 @@ async def grep_search(
     }
 
 
-async def file_search(agent: AgentWithWorkspace, query: str, threshold: int = 75, max_results: int = 10) -> Dict[str, Any]:
+async def file_search(
+    agent: AgentWithWorkspace, query: str, threshold: int = 75, max_results: int = 10
+) -> Dict[str, Any]:
     """
     Fast file search based on fuzzy matching against a file path.
     Uses the `thefuzz` library to find files with similar names to the query.
@@ -322,7 +325,9 @@ async def file_search(agent: AgentWithWorkspace, query: str, threshold: int = 75
             if score >= threshold:
                 # If the score is above the threshold, consider it a match
                 full_file_path = os.path.join(root, file_name)
-                relative_file_path = os.path.relpath(full_file_path, agent.workspace_path)
+                relative_file_path = os.path.relpath(
+                    full_file_path, agent.workspace_path
+                )
                 results.append(
                     {
                         "file_path": relative_file_path,
