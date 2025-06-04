@@ -30,7 +30,7 @@ __requires__ = [
     "httpx",
     "aiofiles",
     "setuptools",
-    "thefuzz"
+    "thefuzz",
 ]
 
 __python_requires__ = ">=3.10"
