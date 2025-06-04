@@ -1,6 +1,6 @@
 """Unit tests for the version module information
 
-This module contains version informations and metadata about ApolloAgent,
+This module contains version information and metadata about ApolloAgent,
 
 
 Author: Alberto Barrago
@@ -102,6 +102,7 @@ class TestVersion(unittest.TestCase):
                 "httpx",
                 "aiofiles",
                 "setuptools",
+                "thefuzz",
             ],
         )
 
