@@ -6,7 +6,6 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-import json
 import uuid
 from typing import Any
 import ollama
@@ -148,33 +147,6 @@ class ApolloCore:
             stream=False,
             options={"host": Constant.ollama_host},
         )
-
-        message = llm_response.get("message", {})
-
-        tool_calls = (
-            message.get("tool_calls", [])
-            if isinstance(message, dict)
-            else getattr(message, "tool_calls", [])
-        )
-
-        if tool_calls:
-            for i, tool in enumerate(tool_calls):
-                if isinstance(tool, dict) and "function" in tool:
-                    func_name = tool["function"].get("name", "unknown")
-                    func_args = tool["function"].get("arguments", {})
-                else:
-                    func_name = (
-                        getattr(tool.function, "name", "unknown")
-                        if hasattr(tool, "function")
-                        else "unknown"
-                    )
-                    func_args = (
-                        getattr(tool.function, "arguments", {})
-                        if hasattr(tool, "function")
-                        else {}
-                    )
-
-                print(f"  {i + 1}. {func_name}({json.dumps(func_args, indent=2)})")
 
         return llm_response
 

@@ -12,11 +12,21 @@ import asyncio
 import os
 import re
 import fnmatch
-from typing import Dict, Any, AsyncGenerator, List
 import aiofiles
+from typing import Dict, Any, AsyncGenerator, List
+from thefuzz import fuzz
+from typing import Protocol
 
 
-async def codebase_search(agent: Any, query: str) -> Dict[str, Any]:
+
+class AgentWithWorkspace(Protocol):
+    """
+    Protocol for objects that are expected to have a workspace_path attribute.
+    This defines the minimum interface required by search functions.
+    """
+    workspace_path: str
+
+async def codebase_search(agent: AgentWithWorkspace, query: str) -> Dict[str, Any]:
     """
     Finds code snippets from the codebase most relevant to the search query.
     This function performs a keyword-based search by checking if all significant
@@ -125,7 +135,7 @@ async def codebase_search(agent: Any, query: str) -> Dict[str, Any]:
                                     if len(content) > 500
                                     else content
                                 ),
-                                "relevance_score": 0.75,
+                                "relevance_score": 0.75, # This is a placeholder, real relevance is complex
                             }
                         )
                         if len(results) >= max_result:
@@ -150,7 +160,7 @@ async def codebase_search(agent: Any, query: str) -> Dict[str, Any]:
     return {"query": query, "results": results}
 
 
-def _match_pattern_sync(filename: str, pattern: str) -> bool:
+def match_pattern_sync(filename: str, pattern: str) -> bool:
     """
     Synchronous check if a filename matches a glob pattern.
 
@@ -176,9 +186,9 @@ async def _walk_files_async(dir_path: str) -> AsyncGenerator[str, None]:
 
     def _synchronous_walk():
         paths = []
-        for root, _, files in os.walk(dir_path):
-            for file_name in files:
-                paths.append(os.path.join(root, file_name))
+        for root_dir, _, files_in_dir in os.walk(dir_path):
+            for file_name in files_in_dir:
+                paths.append(os.path.join(root_dir, file_name))
         return paths
 
     try:
@@ -238,29 +248,21 @@ async def grep_search(
             "errors": [{"file": "N/A", "error": f"Invalid regex pattern: {e}"}],
         }
 
-    # Note: A real implementation would ideally use `ripgrep` via a subprocess
-    # for better performance and features. This version uses asyncio.
-
     async for file_path_str in _walk_files_async(agent.workspace_path):
         if len(results) >= max_results:
             break
 
         relative_file_path = os.path.relpath(file_path_str, agent.workspace_path)
         try:
-            # Open and read file asynchronously
             async with aiofiles.open(
                 file_path_str, "r", encoding="utf-8", errors="ignore"
             ) as f:
                 line_number = 0
-                async for line in f:  # Asynchronously iterate over lines
+                async for line in f:
                     line_number += 1
                     if len(results) >= max_results:
-                        break  # Stop reading lines from this file if limit reached
+                        break
 
-                    # re.search can be CPU-bound. For very complex patterns or long lines,
-                    # run it in a thread pool executor to avoid blocking the event loop.
-                    # For simple patterns/short lines, direct call might be acceptable,
-                    # but to_thread is safer for an async function.
                     match = await asyncio.to_thread(compiled_regex.search, line)
                     if match:
                         results.append(
@@ -271,16 +273,14 @@ async def grep_search(
                             }
                         )
                         if len(results) >= max_results:
-                            break  # Stop reading lines from this file
+                            break
         except OSError as e:
             errors.append({"file": relative_file_path, "error": f"OSError: {e}"})
-        except RuntimeError as e:  # Catch other potential errors during file processing
+        except RuntimeError as e:
             errors.append(
                 {"file": relative_file_path, "error": f"Unexpected error: {e}"}
             )
 
-        # This check ensures we break from the file iteration loop if max_results
-        # was hit by processing the current file.
         if len(results) >= max_results:
             break
 
@@ -293,39 +293,53 @@ async def grep_search(
     }
 
 
-async def file_search(agent, query: str) -> Dict[str, Any]:
+async def file_search(agent: AgentWithWorkspace, query: str, threshold: int = 75, max_results: int = 10) -> Dict[str, Any]:
     """
     Fast file search based on fuzzy matching against a file path.
+    Uses the `thefuzz` library to find files with similar names to the query.
 
     Args:
-        agent: Apollo agent instance.
-        query: Fuzzy filename to search for.
+        agent: Apollo agent instance with a `workspace_path` attribute.
+        query: The filename or part of a filename to search for (fuzzy).
+        threshold: The minimum similarity score (0-100) for a match.
+                   Defaults to 75.
+        max_results: The maximum number of results to return.
+        Default to 10.
+
 
     Returns:
-        Dictionary with search results.
+        Dictionary with search results, including total matches and if results were capped.
     """
     results = []
+    query_lower = query.lower()
 
+    # Iterate over files in the workspace
     for root, _, files in os.walk(agent.workspace_path):
-        for file in files:
-            if query.lower() in file.lower():
-                file_path: str | bytes = os.path.join(root, file)
+        for file_name in files:
+            file_name_lower = file_name.lower()
+            score = fuzz.partial_ratio(query_lower, file_name_lower)
+
+            if score >= threshold:
+                # If the score is above the threshold, consider it a match
+                full_file_path = os.path.join(root, file_name)
+                relative_file_path = os.path.relpath(full_file_path, agent.workspace_path)
                 results.append(
                     {
-                        "file_path": os.path.relpath(file_path, agent.workspace_path),
-                        "filename": file,
+                        "file_path": relative_file_path,
+                        "filename": file_name,
+                        "similarity_score": score,
                     }
                 )
 
-                if len(results) >= 10:
+                if len(results) >= max_results:
                     break
 
-        if len(results) >= 10:
+        if len(results) >= max_results:
             break
 
     return {
         "query": query,
         "results": results,
         "total_matches": len(results),
-        "capped": len(results) >= 10,
+        "capped": len(results) >= max_results,
     }

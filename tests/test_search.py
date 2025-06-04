@@ -14,7 +14,7 @@ from apollo.tools.search import (
     codebase_search,
     grep_search,
     file_search,
-    _match_pattern_sync,
+    match_pattern_sync,
 )
 
 
@@ -118,8 +118,8 @@ class TestSearchOperations(IsolatedAsyncioTestCase):
 
     def test_match_pattern_sync(self):
         """Test pattern matching function."""
-        self.assertTrue(_match_pattern_sync("test.txt", "*.txt"))
-        self.assertFalse(_match_pattern_sync("test.py", "*.txt"))
+        self.assertTrue(match_pattern_sync("test.txt", "*.txt"))
+        self.assertFalse(match_pattern_sync("test.py", "*.txt"))
 
 
 if __name__ == "__main__":
