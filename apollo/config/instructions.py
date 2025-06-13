@@ -21,11 +21,11 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "codebase_search",
                 "description": "Performs a semantic search for code snippets "
-                               "within the codebase that are most relevant"
-                               " to a natural language query. Ideal for finding code "
-                               "related to a concept or functionality "
-                               "when the exact syntax is unknown. For optimal results, use "
-                               "the user's original phrasing for the query.",
+                "within the codebase that are most relevant"
+                " to a natural language query. Ideal for finding code "
+                "related to a concept or functionality "
+                "when the exact syntax is unknown. For optimal results, use "
+                "the user's original phrasing for the query.",
                 "parameters": {
                     "type": "object",
                     "required": ["query"],
@@ -43,9 +43,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "list_dir",
                 "description": "Lists all files and subdirectories within "
-                               "a specified directory path, "
-                               "relative to the workspace root. "
-                               "This is useful for exploring the project structure and discovering files.",
+                "a specified directory path, "
+                "relative to the workspace root. "
+                "This is useful for exploring the project structure and discovering files.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file"],
@@ -53,12 +53,12 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "The path to the directory to be listed. Use '.' "
-                                           "to list the contents of the workspace root.",
+                            "to list the contents of the workspace root.",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A clear and concise explanation of why the contents of "
-                                           "this directory are being listed.",
+                            "this directory are being listed.",
                         },
                     },
                 },
@@ -69,10 +69,10 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "grep_search",
                 "description": "Performs a fast, text-based search for an exact "
-                               "string or regular expression pattern within files. "
-                               "This is highly effective for locating specific function names, "
-                               "variable declarations, "
-                               "or log messages when the exact text is known.",
+                "string or regular expression pattern within files. "
+                "This is highly effective for locating specific function names, "
+                "variable declarations, "
+                "or log messages when the exact text is known.",
                 "parameters": {
                     "type": "object",
                     "required": ["query", "explanation"],
@@ -80,12 +80,12 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "query": {
                             "type": "string",
                             "description": "The exact string or regular expression "
-                                           "pattern to search for.",
+                            "pattern to search for.",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A brief explanation of why this search is being "
-                                           "performed or what is being looked for.",
+                            "performed or what is being looked for.",
                         },
                     },
                 },
@@ -96,9 +96,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "file_search",
                 "description": "Finds files by performing a fuzzy search against their paths. "
-                               "This is useful when you "
-                               "know a part of the filename or path but are unsure of "
-                               "the exact location or spelling.",
+                "This is useful when you "
+                "know a part of the filename or path but are unsure of "
+                "the exact location or spelling.",
                 "parameters": {
                     "type": "object",
                     "required": ["query", "explanation"],
@@ -127,12 +127,12 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "The exact path of the file to be deleted, "
-                                           "relative to the workspace root.",
+                            "relative to the workspace root.",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A clear and concise explanation "
-                                           "of why this file is being deleted.",
+                            "of why this file is being deleted.",
                         },
                     },
                 },
@@ -143,7 +143,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "create_file",
                 "description": "Creates a new file with a variety of granular operations. "
-                               "Always provide a clear explanation for the modification.",
+                "Always provide a clear explanation for the modification.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file", "instructions", "explanation"],
@@ -151,18 +151,18 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "The relative path to the file to be modified "
-                                           "or created (e.g., 'src/main.py', 'config.json').",
+                            "or created (e.g., 'src/main.py', 'config.json').",
                         },
                         "instructions": {
                             "type": "object",
                             "description": "A JSON object specifying the editing operation. "
-                                           "Choose ONE of the following: ... "
-                                           "(Your detailed instructions are excellent here and remain unchanged)",
+                            "Choose ONE of the following: ... "
+                            "(Your detailed instructions are excellent here and remain unchanged)",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A clear and concise justification "
-                                           "for why this file modification is necessary.",
+                            "for why this file modification is necessary.",
                         },
                     },
                 },
@@ -173,9 +173,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "edit_file",
                 "description": "Modifies an existing one with a variety of granular operations. "
-                               "It is critical to first inspect the file's content "
-                               "to ensure the edit is appropriate. "
-                               "Always provide a clear explanation for the modification.",
+                "It is critical to first inspect the file's content "
+                "to ensure the edit is appropriate. "
+                "Always provide a clear explanation for the modification.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file", "instructions", "explanation"],
@@ -183,19 +183,19 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "The relative path to the file to be modified or "
-                                           "created (e.g., 'src/main.py', 'config.json').",
+                            "created (e.g., 'src/main.py', 'config.json').",
                         },
                         "instructions": {
                             "type": "object",
                             "description": "A JSON object specifying the editing operation. "
-                                           "Choose ONE of the following: ... "
-                                           "(Your detailed instructions are excellent "
-                                           "here and remain unchanged)",
+                            "Choose ONE of the following: ... "
+                            "(Your detailed instructions are excellent "
+                            "here and remain unchanged)",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A clear and concise justification "
-                                           "for why this file modification is necessary.",
+                            "for why this file modification is necessary.",
                         },
                     },
                 },
@@ -206,7 +206,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "remove_dir",
                 "description": "Recursively and permanently removes a directory and all of "
-                               "its contents. This action is irreversible.",
+                "its contents. This action is irreversible.",
                 "parameters": {
                     "type": "object",
                     "required": ["target_file", "explanation"],
@@ -214,12 +214,12 @@ def get_available_tools() -> List[Dict[str, Any]]:
                         "target_file": {
                             "type": "string",
                             "description": "The path of the directory to be removed, "
-                                           "relative to the workspace root.",
+                            "relative to the workspace root.",
                         },
                         "explanation": {
                             "type": "string",
                             "description": "A clear and concise explanation of why this "
-                                           "directory is being removed.",
+                            "directory is being removed.",
                         },
                     },
                 },
@@ -230,9 +230,9 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "web_search",
                 "description": "Searches the web to find up-to-date information on a given topic."
-                               "This tool is best used for general knowledge, "
-                               "current events, or technical information "
-                               "not present in the local codebase or Wikipedia.",
+                "This tool is best used for general knowledge, "
+                "current events, or technical information "
+                "not present in the local codebase or Wikipedia.",
                 "parameters": {
                     "type": "object",
                     "required": ["query"],
@@ -251,8 +251,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "function": {
                 "name": "wiki_search",
                 "description": "Searches Wikipedia for encyclopedic "
-                               "information on a topic. This is best for historical events, "
-                               "scientific concepts, or detailed biographies.",
+                "information on a topic. This is best for historical events, "
+                "scientific concepts, or detailed biographies.",
                 "parameters": {
                     "type": "object",
                     "required": ["query"],

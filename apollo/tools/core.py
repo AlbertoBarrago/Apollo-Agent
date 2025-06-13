@@ -201,7 +201,11 @@ class ApolloCore:
                     "error": f"Failed to get response from language model: {str(e)}"
                 }
 
-            full_response_message = {"role": "assistant", "content": "", "tool_calls": []}
+            full_response_message = {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [],
+            }
             accumulated_content = ""
             final_tool_calls = None
             total_duration = 0
@@ -234,7 +238,7 @@ class ApolloCore:
 
             simulated_llm_response_for_processing = {
                 "message": full_response_message,
-                "total_duration": total_duration
+                "total_duration": total_duration,
             }
 
             (message_obj, tool_calls, content, duration_val) = (
@@ -243,7 +247,9 @@ class ApolloCore:
             duration_str = format_duration_ns(duration_val)
 
             if message_obj and message_obj.get("role"):
-                save_user_history_to_json(message=message_obj.get("content"), role=message_obj.get("role"))
+                save_user_history_to_json(
+                    message=message_obj.get("content"), role=message_obj.get("role")
+                )
             elif content:
                 save_user_history_to_json(message=content, role="assistant")
 
