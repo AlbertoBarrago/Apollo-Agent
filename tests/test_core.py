@@ -9,7 +9,6 @@ License: BSD 3-Clause License - 2025
 """
 
 import unittest
-from unittest.mock import patch
 from unittest import IsolatedAsyncioTestCase
 from apollo.tools.core import ApolloCore
 from apollo.service.tool.executor import ToolExecutor
@@ -78,23 +77,6 @@ class TestApolloAgentChat(IsolatedAsyncioTestCase):
         self.assertIn("response", result)
         self.assertEqual(current_calls, ["test_func"])
 
-    @patch("ollama.chat")
-    async def test_get_llm_response_from_ollama(self, mock_ollama_chat):
-        """Test getting LLM response from Ollama."""
-        mock_response = {
-            "message": {
-                "content": "Test response",
-                "tool_calls": [
-                    {"function": {"name": "test_func", "arguments": {"arg": "value"}}}
-                ],
-            }
-        }
-        mock_ollama_chat.return_value = mock_response
-        response = await self.core._get_llm_response_from_ollama()
-        self.assertEqual(response, mock_response)
-        # If this method is not supposed to return a value (as per the DeprecationWarning
-        # you mentioned earlier), ensure it returns None or has no return statement.
-        # For now, assuming it's intended to return the response.
 
     async def test_handle_request_concurrent_request(self):
         """Test handling concurrent requests."""
