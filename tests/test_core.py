@@ -77,7 +77,6 @@ class TestApolloAgentChat(IsolatedAsyncioTestCase):
         self.assertIn("response", result)
         self.assertEqual(current_calls, ["test_func"])
 
-
     async def test_handle_request_concurrent_request(self):
         """Test handling concurrent requests."""
         self.core._chat_in_progress = True
