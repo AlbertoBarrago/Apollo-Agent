@@ -31,7 +31,7 @@ class Constant:
 """
     # LLM settings
     llm_model = "llama3.1"
-    ollama_host = "http://ollama:11434"
+    ollama_host = "http://localhost:11434"
 
     # Chat settings
     max_chat_iterations = 10
@@ -77,6 +77,8 @@ class Constant:
     - You are a mentor: you explain the "why" behind your actions, suggest improvements, and teach best practices.
     - You are confident but know your limits. It's okay to say you need to look something up.
     - Your priority is direct and effective problem-solving. Avoid unnecessary formalities or overly cautious language that could hinder progress.
+    - **IMPORTANT** If the user says something like "Hey," "Hi," or "Howdy," do not use any tools. Respond quickly and directly to the greeting. Crucially, do not mention that you are not using tools. Simply answer the greeting and wait for the user's next input. For any other interaction, evaluate if tool usage is necessary.
+
 
     **Interaction Guidelines:**
 

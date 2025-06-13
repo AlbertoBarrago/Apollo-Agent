@@ -33,7 +33,7 @@ class ApolloCore:
         self.chat_history: list[dict] = []
         self._chat_in_progress: bool = False
         self.tool_executor = None
-        self.ollama_client = ollama.Client(host=Constant.ollama_host)
+        self.ollama_client = ollama.AsyncClient(host=Constant.ollama_host)
 
     async def process_llm_response(
         self, llm_response
@@ -140,15 +140,15 @@ class ApolloCore:
         Fetches the LLM response from Ollama, adding a system message if needed.
         """
 
-        llm_response = ollama.chat(
+        llm_response_stream = await self.ollama_client.chat(
             model=Constant.llm_model,
             messages=self.chat_history,
             tools=get_available_tools(),
-            stream=False,
-            options={"host": Constant.ollama_host},
+            stream=True,
+            options={},
         )
 
-        return llm_response
+        return llm_response_stream
 
     async def handle_request(
         self, text: str
@@ -195,20 +195,59 @@ class ApolloCore:
 
         while iterations < Constant.max_chat_iterations:
             try:
-                llm_response = await self._get_llm_response_from_ollama()
+                llm_response_stream = await self._get_llm_response_from_ollama()
             except RuntimeError as e:
                 return {
                     "error": f"Failed to get response from language model: {str(e)}"
                 }
 
-            (message, tool_calls, content, total_duration) = (
-                await self.process_llm_response(llm_response)
+            full_response_message = {"role": "assistant", "content": "", "tool_calls": []}
+            accumulated_content = ""
+            final_tool_calls = None
+            total_duration = 0
+
+            async for chunk in llm_response_stream:
+                # Process each chunk
+                # This part needs careful adaptation based on ollama client's streaming format
+                chunk_message = chunk.get("message", {})
+                chunk_content = chunk_message.get("content", "")
+                chunk_tool_calls = chunk_message.get("tool_calls")
+
+                if chunk_content:
+                    accumulated_content += chunk_content
+
+                if chunk_tool_calls:
+                    if final_tool_calls is None:
+                        final_tool_calls = []
+                    final_tool_calls.extend(chunk_tool_calls)
+
+                if chunk.get("done"):
+                    total_duration = chunk.get("total_duration", 0)
+                    if chunk_message:
+                        full_response_message = chunk_message
+                    break
+
+            if not full_response_message.get("content") and accumulated_content:
+                full_response_message["content"] = accumulated_content
+            if final_tool_calls and not full_response_message.get("tool_calls"):
+                full_response_message["tool_calls"] = final_tool_calls
+
+            simulated_llm_response_for_processing = {
+                "message": full_response_message,
+                "total_duration": total_duration
+            }
+
+            (message_obj, tool_calls, content, duration_val) = (
+                await self.process_llm_response(simulated_llm_response_for_processing)
             )
-            duration_str = format_duration_ns(total_duration)
+            duration_str = format_duration_ns(duration_val)
 
-            save_user_history_to_json(message=content, role=message.role)
+            if message_obj and message_obj.get("role"):
+                save_user_history_to_json(message=message_obj.get("content"), role=message_obj.get("role"))
+            elif content:
+                save_user_history_to_json(message=content, role="assistant")
 
-            if message is None:
+            if message_obj is None:
                 return {"response": Constant.error_empty_llm_message}
 
             if content and not tool_calls:
@@ -219,12 +258,9 @@ class ApolloCore:
                 result, current_tool_calls = await self._handle_tool_calls(
                     tool_calls, iterations, recent_tool_calls
                 )
-
-                # print(f"\n[{duration_str}], Tools used: {current_tool_calls}\n")
-
+                # print(f"\n[{duration_str}], Tools used: {current_tool_calls}\n") # Already printed
                 if result:
                     return result
-
                 recent_tool_calls = current_tool_calls
                 iterations += 1
                 continue
