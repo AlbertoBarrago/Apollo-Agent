@@ -41,7 +41,9 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         return {"error": error_msg}
 
     if not os.path.exists(absolute_target_path):
-        error_msg = f"Path does not exist: {target_file} (resolved to {absolute_target_path})"
+        error_msg = (
+            f"Path does not exist: {target_file} (resolved to {absolute_target_path})"
+        )
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
 
@@ -74,8 +76,9 @@ async def list_dir(agent, target_file: str, explanation: str = None) -> Dict[str
         return {"error": error_msg}
 
 
-async def remove_dir(agent, target_file: str, explanation: str = None) -> Dict[
-    str, Any]:  # Added explanation to match schema
+async def remove_dir(
+    agent, target_file: str, explanation: str = None
+) -> Dict[str, Any]:  # Added explanation to match schema
     """
     Remove dir from the workspace when a user asks for it
     :param agent:
@@ -91,7 +94,9 @@ async def remove_dir(agent, target_file: str, explanation: str = None) -> Dict[
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
     if not os.path.exists(absolute_target_path):
-        error_msg = f"Path does not exist: {target_file} (resolved to {absolute_target_path})"
+        error_msg = (
+            f"Path does not exist: {target_file} (resolved to {absolute_target_path})"
+        )
         print(f"[ERROR] {error_msg}")
         return {"error": error_msg}
     if not os.path.isdir(absolute_target_path):
@@ -100,14 +105,20 @@ async def remove_dir(agent, target_file: str, explanation: str = None) -> Dict[
         return {"error": error_msg}
     try:
         os.rmdir(absolute_target_path)
-        return {"success": True, "message": f"Directory removed: {target_file}", "explanation": explanation}
+        return {
+            "success": True,
+            "message": f"Directory removed: {target_file}",
+            "explanation": explanation,
+        }
     except OSError as e:
         error_msg = f"Failed to remove directory {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
 
-async def delete_file(agent, target_file: str, explanation: str = None) -> Dict[str, Any]:  # Added explanation
+async def delete_file(
+    agent, target_file: str, explanation: str = None
+) -> Dict[str, Any]:  # Added explanation
     """
     Deletes a file at the specified path relative to the workspace root.
 
@@ -128,18 +139,26 @@ async def delete_file(agent, target_file: str, explanation: str = None) -> Dict[
         return {"success": False, "error": error_msg}
 
     if not os.path.exists(absolute_file_path):
-        error_msg = f"File does not exist: {target_file} (resolved to {absolute_file_path})"
+        error_msg = (
+            f"File does not exist: {target_file} (resolved to {absolute_file_path})"
+        )
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
     if not os.path.isfile(absolute_file_path):
-        error_msg = f"Path is not a file: {target_file} (resolved to {absolute_file_path})"
+        error_msg = (
+            f"Path is not a file: {target_file} (resolved to {absolute_file_path})"
+        )
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
     try:
         os.remove(absolute_file_path)
-        return {"success": True, "message": f"File deleted: {target_file}", "explanation": explanation}
+        return {
+            "success": True,
+            "message": f"File deleted: {target_file}",
+            "explanation": explanation,
+        }
     except OSError as e:
         error_msg = f"Failed to delete file {target_file}: {str(e)}"
         print(f"[ERROR] {error_msg}")
@@ -147,7 +166,7 @@ async def delete_file(agent, target_file: str, explanation: str = None) -> Dict[
 
 
 async def create_file(
-        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
 ) -> Dict[str, Any]:
     """
     Create a new file with the specified content or apply other file operations.
@@ -174,12 +193,22 @@ async def create_file(
             actual_instructions = json.loads(instructions)
         except json.JSONDecodeError:
             # If it's a string but not valid JSON, it's an error for the 'instructions' object.
-            print(f"[ERROR] Instructions parameter is a string but not valid JSON: '{instructions}'")
-            return {"success": False, "error": "Instructions parameter is a string but not valid JSON."}
+            print(
+                f"[ERROR] Instructions parameter is a string but not valid JSON: '{instructions}'"
+            )
+            return {
+                "success": False,
+                "error": "Instructions parameter is a string but not valid JSON.",
+            }
 
     if not isinstance(actual_instructions, dict):
-        print(f"[ERROR] Instructions parameter is not a dictionary after parsing: {type(actual_instructions)}")
-        return {"success": False, "error": "Instructions parameter must be a JSON object (dictionary)."}
+        print(
+            f"[ERROR] Instructions parameter is not a dictionary after parsing: {type(actual_instructions)}"
+        )
+        return {
+            "success": False,
+            "error": "Instructions parameter must be a JSON object (dictionary).",
+        }
 
     # print(f"[DEBUG] Parsed instructions: {actual_instructions}") # For deeper debugging
     # print(f"[INFO] Explanation: {explanation}")
@@ -227,9 +256,12 @@ async def create_file(
         # For now, let's return an error if this is the only instruction and content is not primary.
         # You would implement the read-modify-write logic here.
         print(
-            f"[WARNING] 'insert_content_at_line' not fully implemented in this simplified example, requires read-modify-write.")
-        return {"success": False,
-                "error": "'insert_content_at_line' requires more complex handling not shown in this fix."}
+            f"[WARNING] 'insert_content_at_line' not fully implemented in this simplified example, requires read-modify-write."
+        )
+        return {
+            "success": False,
+            "error": "'insert_content_at_line' requires more complex handling not shown in this fix.",
+        }
 
     if file_exists and not overwrite and mode == "w" and content_to_write is not None:
         # If trying to write new content (mode 'w') to an existing file without overwrite flag
@@ -237,12 +269,19 @@ async def create_file(
         print(f"[ERROR] {error_msg}")
         return {"success": False, "error": error_msg}
 
-    if content_to_write is None and mode == "w":  # If no content for 'w' mode, write empty string
+    if (
+        content_to_write is None and mode == "w"
+    ):  # If no content for 'w' mode, write empty string
         content_to_write = ""
-    elif content_to_write is None and mode == "a":  # If no content for 'a' mode, it's a no-op or error
+    elif (
+        content_to_write is None and mode == "a"
+    ):  # If no content for 'a' mode, it's a no-op or error
         print(f"[INFO] No content provided for append operation on file: {target_file}")
-        return {"success": True, "message": f"File '{target_file}' touched (append with no content).",
-                "explanation": explanation}
+        return {
+            "success": True,
+            "message": f"File '{target_file}' touched (append with no content).",
+            "explanation": explanation,
+        }
 
     try:
         async with aiofiles.open(file_path, mode, encoding="utf-8") as f:
@@ -266,7 +305,7 @@ async def create_file(
 
 
 async def _apply_edit(
-        target_file: str, original_content: str, instructions: Dict[str, Any]
+    target_file: str, original_content: str, instructions: Dict[str, Any]
 ) -> Tuple[str, Optional[str]]:
     """
     Apply edit operations on file content
@@ -281,9 +320,15 @@ async def _apply_edit(
         try:
             actual_instructions = json.loads(instructions)
         except json.JSONDecodeError:
-            return original_content, "Instructions parameter for _apply_edit is a string but not valid JSON."
+            return (
+                original_content,
+                "Instructions parameter for _apply_edit is a string but not valid JSON.",
+            )
     if not isinstance(actual_instructions, dict):
-        return original_content, "Instructions parameter for _apply_edit must be a JSON object (dictionary)."
+        return (
+            original_content,
+            "Instructions parameter for _apply_edit must be a JSON object (dictionary).",
+        )
 
     operation = actual_instructions.get("operation")
     if not operation:
@@ -291,10 +336,10 @@ async def _apply_edit(
 
     mime_type, _ = mimetypes.guess_type(target_file)
     is_html = target_file.lower().endswith(".html") or (
-            mime_type and "html" in mime_type
+        mime_type and "html" in mime_type
     )
     is_json = target_file.lower().endswith(".json") or (
-            mime_type and "json" in mime_type
+        mime_type and "json" in mime_type
     )
 
     try:
@@ -302,57 +347,95 @@ async def _apply_edit(
             return actual_instructions.get("content", "") or "", None
 
         if operation == "append":
-            return original_content + str(actual_instructions.get("content", "")), None  # Ensure content is string
+            return (
+                original_content + str(actual_instructions.get("content", "")),
+                None,
+            )  # Ensure content is string
 
         if operation == "prepend":
-            return str(actual_instructions.get("content", "")) + original_content, None  # Ensure content is string
+            return (
+                str(actual_instructions.get("content", "")) + original_content,
+                None,
+            )  # Ensure content is string
 
         if operation == "insert_line":
             line_number = actual_instructions.get("line_number")
             if not isinstance(line_number, int) or line_number <= 0:
-                return original_content, "Invalid or missing 'line_number' (must be a positive integer) for 'insert_line'."
+                return (
+                    original_content,
+                    "Invalid or missing 'line_number' (must be a positive integer) for 'insert_line'.",
+                )
             lines = original_content.splitlines(keepends=True)
             idx = max(0, min(line_number - 1, len(lines)))  # 0-indexed
-            content = str(actual_instructions.get("content", ""))  # Ensure content is string
+            content = str(
+                actual_instructions.get("content", "")
+            )  # Ensure content is string
             lines.insert(idx, content if content.endswith("\n") else content + "\n")
             return "".join(lines), None
 
         if operation == "replace_line":
             line_number = actual_instructions.get("line_number")
             if not isinstance(line_number, int) or line_number <= 0:
-                return original_content, "Invalid or missing 'line_number' (must be a positive integer) for 'replace_line'."
+                return (
+                    original_content,
+                    "Invalid or missing 'line_number' (must be a positive integer) for 'replace_line'.",
+                )
             lines = original_content.splitlines(keepends=True)
             if 0 <= line_number - 1 < len(lines):  # 0-indexed
-                lines[line_number - 1] = str(actual_instructions.get("content", "")) + "\n"  # Ensure content is string
+                lines[line_number - 1] = (
+                    str(actual_instructions.get("content", "")) + "\n"
+                )  # Ensure content is string
                 return "".join(lines), None
-            return original_content, f"Line {line_number} out of bounds (1 to {len(lines)})."
+            return (
+                original_content,
+                f"Line {line_number} out of bounds (1 to {len(lines)}).",
+            )
 
         if operation == "delete_line":
             line_number = actual_instructions.get("line_number")
             if not isinstance(line_number, int) or line_number <= 0:
-                return original_content, "Invalid or missing 'line_number' (must be a positive integer) for 'delete_line'."
+                return (
+                    original_content,
+                    "Invalid or missing 'line_number' (must be a positive integer) for 'delete_line'.",
+                )
             lines = original_content.splitlines(keepends=True)
             if 0 <= line_number - 1 < len(lines):  # 0-indexed
                 del lines[line_number - 1]
                 return "".join(lines), None
-            return original_content, f"Line {line_number} out of bounds (1 to {len(lines)})."
+            return (
+                original_content,
+                f"Line {line_number} out of bounds (1 to {len(lines)}).",
+            )
 
         if operation == "replace_regex":
             regex = actual_instructions.get("regex")
             if regex is None:
                 return original_content, "Missing 'regex' for 'replace_regex'."
             try:
-                new_content_str = str(actual_instructions.get("new_content", ""))  # Ensure content is string
+                new_content_str = str(
+                    actual_instructions.get("new_content", "")
+                )  # Ensure content is string
                 count = actual_instructions.get("count", 0)
-                if not isinstance(count, int): count = 0  # Default to 0 if invalid
-                return re.sub(regex, new_content_str, original_content, count=count), None
+                if not isinstance(count, int):
+                    count = 0  # Default to 0 if invalid
+                return (
+                    re.sub(regex, new_content_str, original_content, count=count),
+                    None,
+                )
             except re.error as e:
                 return original_content, f"Regex error: {e}"
 
         if operation == "insert_html_body" and is_html:
-            html_content_to_insert = str(actual_instructions.get("html_content", ""))  # Ensure content is string
-            if not original_content.strip():  # If original is empty, create basic structure
-                return f"<html><head><title>New Page</title></head><body>{html_content_to_insert}</body></html>", None
+            html_content_to_insert = str(
+                actual_instructions.get("html_content", "")
+            )  # Ensure content is string
+            if (
+                not original_content.strip()
+            ):  # If original is empty, create basic structure
+                return (
+                    f"<html><head><title>New Page</title></head><body>{html_content_to_insert}</body></html>",
+                    None,
+                )
 
             soup = BeautifulSoup(original_content, "html.parser")
             body = soup.find("body")
@@ -364,29 +447,51 @@ async def _apply_edit(
                     soup.append(body)
 
             new_elements_soup = BeautifulSoup(html_content_to_insert, "html.parser")
-            for el in new_elements_soup.contents:  # Append children of the parsed new content
+            for (
+                el
+            ) in (
+                new_elements_soup.contents
+            ):  # Append children of the parsed new content
                 body.append(el.extract() if el.name else el)  # el.extract() to move it
             return str(soup), None
 
         if operation == "update_json_field" and is_json:
             path_str = actual_instructions.get("path")
-            if path_str is None or not isinstance(path_str, str) or not path_str.strip():
-                return original_content, "Missing or invalid 'path' (must be a non-empty string) for 'update_json_field'."
-            value_to_set = actual_instructions.get("value")  # Value can be any JSON-serializable type
+            if (
+                path_str is None
+                or not isinstance(path_str, str)
+                or not path_str.strip()
+            ):
+                return (
+                    original_content,
+                    "Missing or invalid 'path' (must be a non-empty string) for 'update_json_field'.",
+                )
+            value_to_set = actual_instructions.get(
+                "value"
+            )  # Value can be any JSON-serializable type
             try:
                 data = json.loads(original_content) if original_content.strip() else {}
             except json.JSONDecodeError:
-                return original_content, "Original content is not valid JSON for 'update_json_field'."
+                return (
+                    original_content,
+                    "Original content is not valid JSON for 'update_json_field'.",
+                )
 
             keys = path_str.split(".")
             current = data
             for i, key in enumerate(keys):
-                if not key: return original_content, f"Invalid key (empty string) in path '{path_str}'."
+                if not key:
+                    return (
+                        original_content,
+                        f"Invalid key (empty string) in path '{path_str}'.",
+                    )
                 if i == len(keys) - 1:
                     current[key] = value_to_set
                 else:
                     if not isinstance(current.get(key), dict):
-                        current[key] = {}  # Create intermediate dicts if they don't exist or are not dicts
+                        current[key] = (
+                            {}
+                        )  # Create intermediate dicts if they don't exist or are not dicts
                     current = current[key]
             return json.dumps(data, indent=2), None
 
@@ -405,7 +510,7 @@ async def _apply_edit(
 
 
 async def edit_file(
-        agent, target_file: str, instructions: Dict[str, Any], explanation: str
+    agent, target_file: str, instructions: Dict[str, Any], explanation: str
 ) -> Dict[str, Any]:
     """
     Edit an existing file with the specified instructions
@@ -457,7 +562,9 @@ async def edit_file(
 
     try:
         new_content, error = await _apply_edit(
-            target_file, original_content, instructions  # instructions should be a dict here
+            target_file,
+            original_content,
+            instructions,  # instructions should be a dict here
         )
         if error:
             print(f"[ERROR] Failed to apply edit to {target_file}: {error}")

@@ -5,6 +5,7 @@ import os
 
 from apollo.tools.files import list_dir, remove_dir, delete_file, create_file
 
+
 def mock_aiofiles_open_factory(read_data=""):
     """
     Creates a factory for mocking aiofiles.open.
@@ -23,7 +24,9 @@ def mock_aiofiles_open_factory(read_data=""):
         mock_file_object.__aiter__.return_value = async_iterator_lines(read_data)
     else:
         mock_file_object.read.return_value = read_data
-        mock_file_object.__aiter__.return_value = async_iterator_lines(read_data.splitlines(True))
+        mock_file_object.__aiter__.return_value = async_iterator_lines(
+            read_data.splitlines(True)
+        )
 
     mock_file_object.write = AsyncMock()
     mock_file_object.writelines = AsyncMock()
@@ -45,7 +48,9 @@ class TestFileOperations(IsolatedAsyncioTestCase):
         """Set up test fixtures."""
         self.agent = MagicMock()
         self.agent.workspace_path = "/test/workspace"
-        self.full_path = lambda p: os.path.join(self.agent.workspace_path, p.lstrip(os.sep))
+        self.full_path = lambda p: os.path.join(
+            self.agent.workspace_path, p.lstrip(os.sep)
+        )
 
     # --- Add this new test method ---
     async def test_create_file_logged_error_parent_path_is_file(self):
@@ -68,7 +73,7 @@ class TestFileOperations(IsolatedAsyncioTestCase):
 
         # More robust abspath mock:
         def robust_abspath_side_effect(path_arg):
-            if path_arg == self.agent.workspace_path: # Call for workspace_path itself
+            if path_arg == self.agent.workspace_path:  # Call for workspace_path itself
                 return self.agent.workspace_path
             # Call for an already joined path like /test/workspace/workspace/another_file.txt
             if path_arg.startswith(self.agent.workspace_path):
@@ -76,23 +81,32 @@ class TestFileOperations(IsolatedAsyncioTestCase):
             # Should not be reached if create_file calls abspath as expected
             return os.path.join(self.agent.workspace_path, path_arg.lstrip(os.sep))
 
-        mock_exists_patch = patch("os.path.exists", side_effect=lambda
-            p: True if p == calculated_parent_dir else False)
-        mock_isdir_patch = patch("os.path.isdir", side_effect=lambda
-            p: False if p == calculated_parent_dir else True)
+        mock_exists_patch = patch(
+            "os.path.exists",
+            side_effect=lambda p: True if p == calculated_parent_dir else False,
+        )
+        mock_isdir_patch = patch(
+            "os.path.isdir",
+            side_effect=lambda p: False if p == calculated_parent_dir else True,
+        )
 
-        with patch("os.path.abspath", side_effect=robust_abspath_side_effect), \
-             mock_exists_patch as mock_exists, \
-             mock_isdir_patch as mock_isdir, \
-             patch("os.makedirs") as mock_makedirs: # makedirs should not be called
+        with patch(
+            "os.path.abspath", side_effect=robust_abspath_side_effect
+        ), mock_exists_patch as mock_exists, mock_isdir_patch as mock_isdir, patch(
+            "os.makedirs"
+        ) as mock_makedirs:  # makedirs should not be called
 
-            result = await create_file(self.agent, target_file_argument, instructions, explanation)
+            result = await create_file(
+                self.agent, target_file_argument, instructions, explanation
+            )
 
             # Assert that the checks were made on the calculated parent directory
             mock_exists.assert_any_call(calculated_parent_dir)
-            mock_isdir.assert_any_call(calculated_parent_dir) # This call will use the side_effect
+            mock_isdir.assert_any_call(
+                calculated_parent_dir
+            )  # This call will use the side_effect
 
-            mock_makedirs.assert_not_called() # Because parent exists (even if it's a file)
+            mock_makedirs.assert_not_called()  # Because parent exists (even if it's a file)
 
             self.assertIn("error", result)
             expected_error_message = f"Cannot create file; parent path {calculated_parent_dir} exists but is not a directory."
@@ -104,26 +118,39 @@ class TestFileOperations(IsolatedAsyncioTestCase):
         test_file = "parent_is_a_file/new.txt"
         # This is the parent dir that will be calculated by create_file
         # and is intended to be mocked as a file.
-        parent_dir_that_is_a_file = self.full_path("parent_is_a_file") # /test/workspace/parent_is_a_file
+        parent_dir_that_is_a_file = self.full_path(
+            "parent_is_a_file"
+        )  # /test/workspace/parent_is_a_file
         instructions = {"content": "test"}
         explanation = "Test parent is file"
 
         def robust_abspath_side_effect(path_arg):
-            if path_arg == self.agent.workspace_path: return self.agent.workspace_path
-            if path_arg.startswith(self.agent.workspace_path): return path_arg
+            if path_arg == self.agent.workspace_path:
+                return self.agent.workspace_path
+            if path_arg.startswith(self.agent.workspace_path):
+                return path_arg
             return os.path.join(self.agent.workspace_path, path_arg.lstrip(os.sep))
 
         # Mock os.path.exists: parent_dir_that_is_a_file exists, the new file does not.
-        mock_exists_patch = patch("os.path.exists",
-                                  side_effect=lambda p: True if p == parent_dir_that_is_a_file else False)
+        mock_exists_patch = patch(
+            "os.path.exists",
+            side_effect=lambda p: True if p == parent_dir_that_is_a_file else False,
+        )
         # Mock os.path.isdir: parent_dir_that_is_a_file is NOT a dir. Workspace root IS a dir.
-        mock_isdir_patch = patch("os.path.isdir",
-                                 side_effect=lambda p: False if p == parent_dir_that_is_a_file else (True if p == self.agent.workspace_path else True))
+        mock_isdir_patch = patch(
+            "os.path.isdir",
+            side_effect=lambda p: (
+                False
+                if p == parent_dir_that_is_a_file
+                else (True if p == self.agent.workspace_path else True)
+            ),
+        )
 
-        with patch("os.path.abspath", side_effect=robust_abspath_side_effect), \
-             mock_exists_patch as mock_exists, \
-             mock_isdir_patch as mock_isdir, \
-             patch("os.makedirs") as mock_makedirs:
+        with patch(
+            "os.path.abspath", side_effect=robust_abspath_side_effect
+        ), mock_exists_patch as mock_exists, mock_isdir_patch as mock_isdir, patch(
+            "os.makedirs"
+        ) as mock_makedirs:
 
             result = await create_file(self.agent, test_file, instructions, explanation)
 
@@ -131,7 +158,10 @@ class TestFileOperations(IsolatedAsyncioTestCase):
             mock_isdir.assert_any_call(parent_dir_that_is_a_file)
             mock_makedirs.assert_not_called()
             self.assertIn("error", result)
-            self.assertIn(f"Cannot create file; parent path {parent_dir_that_is_a_file} exists but is not a directory.", result["error"])
+            self.assertIn(
+                f"Cannot create file; parent path {parent_dir_that_is_a_file} exists but is not a directory.",
+                result["error"],
+            )
 
 
 if __name__ == "__main__":
