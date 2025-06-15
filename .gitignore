@@ -9,4 +9,4 @@ chat_history.json
 .coverage
 apollo_agent.egg-info
 chat_sessions
-
+dist
