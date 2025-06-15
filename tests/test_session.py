@@ -7,17 +7,12 @@ Author: Alberto Barrago
 License: BSD 3-Clause License - 2025
 """
 
-# tests/test_session.py
 import unittest
 from unittest.mock import patch, mock_open, call
-import json
 import datetime
 import os
 
-# Module to test
 from apollo.service import session as session_service
-
-# Import Constant to be able to patch its attributes where session_service uses them
 from apollo.config import const as apollo_const
 
 
@@ -27,7 +22,6 @@ class TestSessionManagement(unittest.TestCase):
         self.mock_chat_history_dir = "mock_workspace/chat_history"
         self.mock_max_messages = 2
         self.mock_system_new_session_template = "System: New session at {timestamp}"
-        # self.mock_system_new_session_prefix = "System: New session at " # Not directly used
 
         self.mock_today = datetime.date(2023, 10, 26)
         self.mock_strftime_val = "2023-10-26 10:00:00"
@@ -130,12 +124,6 @@ class TestSessionManagement(unittest.TestCase):
                 message_to_save, role_to_save
             )
 
-        # The m_open_mock is the mock for the `open` function itself.
-        # m_open_mock.return_value is the *default* file handle it would return.
-        # If side_effect provided a specific handle for the write call, that's what json.dump got.
-        # For simplicity in assertions, we'll use m_open_mock.return_value if the write was meant to succeed
-        # and not raise an error during the open("w") call itself.
-        # If open_write_effect was an error, json.dump wouldn't be called.
         actual_write_handle = m_open_mock.return_value
         if open_write_effect and not isinstance(open_write_effect, Exception):
             actual_write_handle = open_write_effect

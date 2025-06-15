@@ -20,29 +20,20 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "codebase_search",
-                "description": "Performs a semantic search for code snippets within the codebase that are most relevant"
-                " to a natural language query. This is ideal for finding code related to a concept or "
-                "functionality when the exact syntax is unknown. For optimal results, use the user's "
-                "original phrasing for the query.",
+                "description": "Performs a semantic search for code snippets "
+                "within the codebase that are most relevant"
+                " to a natural language query. Ideal for finding code "
+                "related to a concept or functionality "
+                "when the exact syntax is unknown. For optimal results, use "
+                "the user's original phrasing for the query.",
                 "parameters": {
                     "type": "object",
-                    "required": ["query", "explanation"],
+                    "required": ["query"],
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The natural language search query.",
-                        },
-                        "target_directories": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "A list of glob patterns to constrain the search to specific directories. "
-                            "For example, `['src/components/**']`.",
-                        },
-                        "explanation": {
-                            "type": "string",
-                            "description": "A clear and concise explanation of why this semantic search "
-                            "is being performed.",
-                        },
+                            "description": "The natural language search query for semantic understanding.",
+                        }
                     },
                 },
             },
@@ -51,7 +42,8 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "list_dir",
-                "description": "Lists all files and subdirectories within a specified directory path, "
+                "description": "Lists all files and subdirectories within "
+                "a specified directory path, "
                 "relative to the workspace root. "
                 "This is useful for exploring the project structure and discovering files.",
                 "parameters": {
@@ -76,8 +68,10 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "grep_search",
-                "description": "Performs a fast, text-based search for an exact string or regular expression pattern within files. "
-                "This is highly effective for locating specific function names, variable declarations, "
+                "description": "Performs a fast, text-based search for an exact "
+                "string or regular expression pattern within files. "
+                "This is highly effective for locating specific function names, "
+                "variable declarations, "
                 "or log messages when the exact text is known.",
                 "parameters": {
                     "type": "object",
@@ -85,23 +79,13 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The exact string or regular expression pattern to search for.",
-                        },
-                        "case_sensitive": {
-                            "type": "boolean",
-                            "description": "Specifies whether the search should be case-sensitive. Defaults to false if not provided.",
-                        },
-                        "include_pattern": {
-                            "type": "string",
-                            "description": "A glob pattern to restrict the search to files with matching paths (e.g., '*.py', 'src/**/*.js').",
-                        },
-                        "exclude_pattern": {
-                            "type": "string",
-                            "description": "A glob pattern to exclude files from the search (e.g., '*.log', 'node_modules/**').",
+                            "description": "The exact string or regular expression "
+                            "pattern to search for.",
                         },
                         "explanation": {
                             "type": "string",
-                            "description": "A clear and concise explanation of why this specific pattern is being searched for.",
+                            "description": "A brief explanation of why this search is being "
+                            "performed or what is being looked for.",
                         },
                     },
                 },
@@ -111,8 +95,10 @@ def get_available_tools() -> List[Dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "file_search",
-                "description": "Finds files by performing a fuzzy search against their paths. This is useful when you "
-                "know a part of the filename or path but are unsure of the exact location or spelling.",
+                "description": "Finds files by performing a fuzzy search against their paths. "
+                "This is useful when you "
+                "know a part of the filename or path but are unsure of "
+                "the exact location or spelling.",
                 "parameters": {
                     "type": "object",
                     "required": ["query", "explanation"],
@@ -196,13 +182,15 @@ def get_available_tools() -> List[Dict[str, Any]]:
                     "properties": {
                         "target_file": {
                             "type": "string",
-                            "description": "The relative path to the file to be modified or created (e.g., 'src/main.py', 'config.json').",
+                            "description": "The relative path to the file to be modified or "
+                            "created (e.g., 'src/main.py', 'config.json').",
                         },
                         "instructions": {
                             "type": "object",
                             "description": "A JSON object specifying the editing operation. "
                             "Choose ONE of the following: ... "
-                            "(Your detailed instructions are excellent here and remain unchanged)",
+                            "(Your detailed instructions are excellent "
+                            "here and remain unchanged)",
                         },
                         "explanation": {
                             "type": "string",

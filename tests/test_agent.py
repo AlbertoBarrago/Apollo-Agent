@@ -82,9 +82,7 @@ class TestApolloAgent(IsolatedAsyncioTestCase):
 
     @patch("builtins.print")
     @patch("builtins.input", side_effect=EOFError)
-    async def test_chat_terminal_eof(
-        self, _, mock_print
-    ):  # Corrected mock order
+    async def test_chat_terminal_eof(self, _, mock_print):  # Corrected mock order
         """Test chat terminal EOF handling."""
         await ApolloAgent.chat_terminal()
         mock_print.assert_any_call("\nExiting chat.")

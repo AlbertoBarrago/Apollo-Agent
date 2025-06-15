@@ -1,6 +1,6 @@
 """Unit tests for the version module information
 
-This module contains version informations and metadata about ApolloAgent,
+This module contains version information and metadata about ApolloAgent,
 
 
 Author: Alberto Barrago
@@ -99,10 +99,10 @@ class TestVersion(unittest.TestCase):
                 "requests",
                 "ollama",
                 "beautifulsoup4",
-                "requests",  # Duplicate
-                "python-dotenv",
                 "httpx",
+                "aiofiles",
                 "setuptools",
+                "thefuzz",
             ],
         )
 
@@ -110,7 +110,7 @@ class TestVersion(unittest.TestCase):
         """Test that __python_requires__ exists and is a string."""
         self.assertTrue(hasattr(version, "__python_requires__"))
         self.assertIsInstance(version.__python_requires__, str)
-        self.assertEqual(version.__python_requires__, ">=3.8")
+        self.assertEqual(version.__python_requires__, ">=3.10")
 
     if __name__ == "__main__":
         unittest.main()
