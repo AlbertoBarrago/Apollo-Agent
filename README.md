@@ -3,7 +3,6 @@
 ApolloAgent is a custom AI agent that implements various functions for code assistance.
 
 [![PyPI version](https://img.shields.io/pypi/v/apollo-agent)](https://pypi.org/appo-agent)
-[![codecov](https://codecov.io/gh/AlbertoBarrago/ApolloAgent/graph/badge.svg?token=SD0LGLSUY6)](https://codecov.io/gh/AlbertoBarrago/ApolloAgent)
 [![Black Code Formatter](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml/badge.svg)](https://github.com/AlbertoBarrago/ApolloAgent/actions/workflows/black.yml)
 
 > "_ApolloAgent is a versatile PoC showcasing how AI-driven tools can simplify coding tasks and enhance productivity._"
