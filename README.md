@@ -12,7 +12,7 @@ ApolloAgent provides the following functionality:
 - **Web Search**: Get info from duck duck.
 - **Wiki Search**: Get info from Wikipedia.
 - **Grep Search**: Perform fast, text-based regex searches within files or directories.
-- **File Search**: Locate files quickly using fuzzy matching on file paths.
+- **File Search**: (Broken for now) Locate files quickly using fuzzy matching on file paths.
 - **File Operations**: Delete and edit files directly through the agent.
 - **Session**: Each session is stored in a separate file inside the chat_sessions folder 
 
