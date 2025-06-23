@@ -35,7 +35,7 @@ If no `requirements.txt` is included, install dependencies manually as needed.
 
 ## Usage
 
-To start ApolloAgent, simply run:
+To start ApolloAgent, run:
 
 ```bash
 python main.py
